@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PageBand, pageWrap } from "@/components/PageBand";
 import { ProgressBar } from "@/components/ProgressBar";
-import { SHORTCUTS } from "@/components/Shortcuts";
+import { SHORTCUTS } from "@/lib/shortcuts";
 import { todayKST } from "@/lib/date";
 import { CURRENT_USER, demo } from "@/lib/demo";
 
