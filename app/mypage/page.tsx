@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { PageBand, pageWrap } from "@/components/PageBand";
+import { ProgressBar } from "@/components/ProgressBar";
 import { todayKST } from "@/lib/date";
 import { CURRENT_USER, demo } from "@/lib/demo";
 
@@ -46,14 +47,14 @@ async function Mine() {
 
           <h2 className={`${h2} mt-14`}>내 담당 캠페인</h2>
           <ul className="mt-5 border-t-2 border-ink-900">
-            {mine.map((c) => (
-              <li key={c.id} className="border-b border-line">
-                <Link href={`/campaigns/${c.id}`} className="flex items-center justify-between gap-4 py-4 hover:text-primary-600">
-                  <span className="font-semibold">
-                    {c.brand} {c.product}
-                  </span>
-                  <span className="text-[14px] text-ink-600 tabular-nums">크리에이터 {c.creators.length}명</span>
+            {mine.map((c, i) => (
+              <li key={c.id} className="border-b border-line py-4">
+                <Link href={`/campaigns/${c.id}`} className="font-semibold underline-offset-4 hover:text-primary-600 hover:underline">
+                  {c.brand} {c.product}
                 </Link>
+                <div className="mt-2">
+                  <ProgressBar label={`${c.brand} ${c.product}`} stages={c.creators.map((cc) => cc.stage)} delay={200 + i * 120} />
+                </div>
               </li>
             ))}
           </ul>

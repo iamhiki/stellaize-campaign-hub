@@ -3,7 +3,8 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PageBand, pageWrap, table } from "@/components/PageBand";
 import { WAITING } from "@/components/badges";
-import { progressPct, todayKST } from "@/lib/date";
+import { todayKST } from "@/lib/date";
+import { ProgressBar } from "@/components/ProgressBar";
 import { demo, type WaitingOn } from "@/lib/demo";
 
 export const metadata = { title: "캠페인 │ Campaign Hub │ 스텔라이즈" };
@@ -46,8 +47,6 @@ async function Campaigns() {
             </thead>
             <tbody>
               {campaigns.map((c, i) => {
-                const pct = progressPct(c.creators.map((cc) => cc.stage));
-                const finished = c.creators.filter((cc) => cc.stage === "완료").length;
                 return (
                 <tr key={c.id} className="hover:bg-[#f5f7fa]">
                   <td className={table.td}>
@@ -60,22 +59,7 @@ async function Campaigns() {
                     </span>
                   </td>
                   <td className={`${table.td} w-[200px]`}>
-                    <p className="flex items-baseline justify-between">
-                      <b className="text-[20px] tracking-[-0.02em] text-ink-900 tabular-nums">{pct}%</b>
-                      <span className="text-[13px] text-ink-600 tabular-nums">
-                        완료 {finished}/{c.creators.length}명
-                      </span>
-                    </p>
-                    <div
-                      role="progressbar"
-                      aria-label={`${c.brand} ${c.product} 진행률`}
-                      aria-valuenow={pct}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      className="mt-2 h-1.5 bg-line"
-                    >
-                      <div className="grow-x h-full bg-primary-600" style={{ width: `${pct}%`, "--delay": `${200 + i * 120}ms` } as React.CSSProperties} />
-                    </div>
+                    <ProgressBar label={`${c.brand} ${c.product}`} stages={c.creators.map((cc) => cc.stage)} delay={200 + i * 120} />
                   </td>
                   <td className={table.td}>{c.advertiser}</td>
                   <td className={table.td}>{c.channel}</td>

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { PageBand } from "@/components/PageBand";
 import { KanbanBoard } from "@/components/KanbanBoard";
+import { ProgressBar } from "@/components/ProgressBar";
 import { WAITING, OVERDUE_DAYS, DdayText } from "@/components/badges";
 import { daysBetween, reportDue, todayKST } from "@/lib/date";
 import { demo, type WaitingOn } from "@/lib/demo";
@@ -48,6 +49,10 @@ async function Campaign({ params }: PageProps<"/campaigns/[id]">) {
       </PageBand>
 
       <main className="mx-auto max-w-[1260px] px-5 md:px-[30px]">
+        <section className="border-b border-line py-8">
+          <h2 className="mb-3 text-[16px] font-bold text-ink-900">캠페인 진행률</h2>
+          <ProgressBar size="lg" label={`${campaign.brand} ${campaign.product}`} stages={creators.map((cc) => cc.stage)} />
+        </section>
         {/* Incross news bar: 4 equal columns split by 1px vertical lines */}
         <section className="grid grid-cols-2 gap-y-8 border-b border-line py-8 md:grid-cols-4 md:divide-x md:divide-line md:py-9">
           {parties.map((p) => {

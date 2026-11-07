@@ -7,7 +7,6 @@ const MENU = [
   { href: "/campaigns", label: "캠페인" },
   { href: "/creators", label: "크리에이터 DB" },
   { href: "/templates", label: "메일 템플릿" },
-  { href: "/glossary", label: "용어 사전" },
 ];
 
 // Incross #header: transparent over the hero, logo | centered GNB | utility, 2px underline on the active menu.

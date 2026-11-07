@@ -27,7 +27,7 @@ const AFTER = [
   { title: "단계별 체크리스트", body: "단가 회신부터 피저체크, 날인본, 최종본 컨펌까지 카드 안에서 체크합니다." },
 ];
 
-const NEXT = ["실제 데이터 연결 (Supabase)", "로그인 (아이디·비밀번호)", "대외비 캠페인 접근 제한", "메일 템플릿", "용어 사전"];
+const NEXT = ["실제 데이터 연결 (Supabase)", "로그인 (아이디·비밀번호)", "대외비 캠페인 접근 제한", "메일 템플릿"];
 
 // Sample cards in the opening band: the waiting party rotates, which is the product's whole idea in one motion.
 const HERO_CARDS: { name: string; stage: string; states: [WaitingOn, number][]; indent: string }[] = [

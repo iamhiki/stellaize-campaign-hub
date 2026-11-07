@@ -7,7 +7,7 @@ export default function NotFound() {
     <>
       <PageBand title="아직 만들지 않은 화면입니다" />
       <main className={`${pageWrap} py-12`}>
-        <p className="text-[17px] leading-relaxed text-ink-800">메일 템플릿과 용어 사전은 순서대로 만들 예정입니다.</p>
+        <p className="text-[17px] leading-relaxed text-ink-800">메일 템플릿은 순서대로 만들 예정입니다.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/today" className="inline-flex h-12 items-center bg-primary-600 px-6 text-[16px] font-bold text-white hover:bg-primary-700">
             오늘 할 일로 가기
