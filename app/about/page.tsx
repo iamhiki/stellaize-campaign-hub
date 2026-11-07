@@ -50,12 +50,12 @@ export default function AboutPage() {
         <div className={`${wrap} grid w-full flex-1 items-center gap-12 pb-20 pt-[140px] md:grid-cols-[1.25fr_1fr] md:pt-[120px]`}>
           <div>
             <h1 className="text-[40px] font-bold leading-[1.15] tracking-[-0.04em] md:text-[72px]">
-              <span className="rise-in block">누가, 어디서,</span>
+              <span className="rise-in block">누가 어디서</span>
               <span className="rise-in block" style={delay(120)}>
-                누구를 기다리는지.
+                누구를 기다리는지
               </span>
               <span className="rise-in block" style={delay(240)}>
-                한 화면에서.
+                한 화면에서
               </span>
             </h1>
             <p className="rise-in mt-8 max-w-[520px] text-[17px] font-medium leading-relaxed md:text-[20px]" style={delay(420)}>

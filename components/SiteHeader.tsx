@@ -17,9 +17,14 @@ export function SiteHeader({ userName }: { userName: string }) {
   return (
     <header className="absolute inset-x-0 top-0 z-20">
       <div className="mx-auto flex max-w-[1720px] flex-wrap items-center justify-between px-5 text-white md:h-[72px] md:flex-nowrap md:px-[30px]">
-        {/* shortcut: text wordmark in the logo's style until the official file is in public/ */}
-        <Link href="/" className="flex h-14 items-center text-[24px] font-semibold tracking-[-0.03em] md:h-auto md:text-[26px]">
-          stell<span className="text-primary-200">ai</span>ze
+        {/* Official Stellaize symbol (stellaize.com favicon). The site's wordmark is a small gray PNG that
+            disappears on blue, so the word is set in white with the logo's sky-blue "ai". */}
+        <Link href="/" aria-label="stellaize 소개로 이동" className="flex h-14 items-center gap-2.5 text-[24px] font-semibold tracking-[-0.03em] md:h-auto md:text-[26px]">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static 32px SVG, no optimization needed */}
+          <img src="/logo-symbol.svg" alt="" width={32} height={32} className="size-8 rounded-[7px]" />
+          <span>
+            stell<span className="text-primary-200">ai</span>ze
+          </span>
         </Link>
         <nav className="order-last -mx-5 flex h-12 w-[calc(100%+2.5rem)] gap-7 overflow-x-auto px-5 [scrollbar-width:none] md:order-none md:mx-0 md:h-full md:w-auto md:gap-14 md:overflow-visible md:px-0">
           {MENU.map((m) => (
