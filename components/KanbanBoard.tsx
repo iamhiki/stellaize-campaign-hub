@@ -3,14 +3,18 @@ import { useState } from "react";
 import type { CampaignCreator } from "@/lib/demo";
 import { STAGES } from "@/lib/date";
 import { CreatorCard } from "./CreatorCard";
+import { useDropped } from "@/lib/dropped";
 
 export type BoardCard = { cc: CampaignCreator; waitingDays: number; dday: { label: string; days: number } | null };
 
 // Columns follow the Incross board: 2px dark top rule, header row, rows split by 1px lines.
 const head = "flex h-14 items-center justify-between border-b border-line";
 
-export function KanbanBoard({ cards }: { cards: BoardCard[] }) {
+export function KanbanBoard({ cards: all }: { cards: BoardCard[] }) {
   const [showDone, setShowDone] = useState(false);
+  const { dropped, drop, restore } = useDropped();
+  const cards = all.filter((c) => !dropped.has(c.cc.id));
+  const out = all.filter((c) => dropped.has(c.cc.id));
   const done = cards.filter((c) => c.cc.stage === "완료");
   return (
     // Phone: stages stack top to bottom instead of scrolling sideways.
@@ -23,7 +27,7 @@ export function KanbanBoard({ cards }: { cards: BoardCard[] }) {
               <span className="text-[17px] font-bold text-ink-900">{stage}</span>
               <span className="text-[15px] font-semibold tabular-nums text-ink-600">{list.length}</span>
             </h3>
-            {list.map((c) => <CreatorCard key={c.cc.id} {...c} />)}
+            {list.map((c) => <CreatorCard key={c.cc.id} {...c} onDrop={() => drop(c.cc.id)} />)}
             {list.length === 0 && <p className="py-8 text-center text-[14px] text-ink-600">진행 중인 건이 없습니다</p>}
           </section>
         );
@@ -45,6 +49,17 @@ export function KanbanBoard({ cards }: { cards: BoardCard[] }) {
         >
           완료 <span className="tabular-nums">{done.length}</span>
         </button>
+      )}
+      {out.length > 0 && (
+        <section className="flex-1 border-t-2 border-line-strong md:min-w-[190px]">
+          <h3 className={head}>
+            <span className="text-[17px] font-bold text-ink-600">드랍</span>
+            <span className="text-[15px] font-semibold tabular-nums text-ink-600">{out.length}</span>
+          </h3>
+          {out.map((c) => (
+            <CreatorCard key={c.cc.id} {...c} onRestore={() => restore(c.cc.id)} />
+          ))}
+        </section>
       )}
     </div>
   );

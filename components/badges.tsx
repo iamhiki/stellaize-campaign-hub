@@ -1,6 +1,9 @@
 import type { WaitingOn } from "@/lib/demo";
 
 export const OVERDUE_DAYS = 3; // waiting this long or more turns red. Team decides.
+/** A creator who has not answered this long can be dropped (planner: no reply → leave them out). */
+export const canDrop = (waitingOn: WaitingOn | null, days: number) => waitingOn === "creator" && days >= OVERDUE_DAYS;
+
 export const URGENT_DAYS = 1; // D-1, D-Day and past turn red; sooner-than-a-week is bold ink. Team decides.
 
 // Incross-style status: a small square bullet + text, no pills. Square is the party color; red only for problems.

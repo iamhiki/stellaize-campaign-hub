@@ -1,13 +1,16 @@
 "use client";
 import { useState } from "react";
 import type { CampaignCreator } from "@/lib/demo";
-import { WaitingLine, DdayLine } from "./badges";
+import { WaitingLine, DdayLine, canDrop } from "./badges";
+import { DropButton } from "./DropButton";
 
 // Incross board row: no box, separated by a 1px line.
-export function CreatorCard({ cc, waitingDays, dday }: {
+export function CreatorCard({ cc, waitingDays, dday, onDrop, onRestore }: {
   cc: CampaignCreator;
   waitingDays: number;
   dday: { label: string; days: number } | null;
+  onDrop?: () => void;
+  onRestore?: () => void;
 }) {
   // shortcut: checks live in component state only, lost on reload. Save to Supabase when it exists.
   const [checklist, setChecklist] = useState(cc.checklist);
@@ -20,6 +23,16 @@ export function CreatorCard({ cc, waitingDays, dday }: {
       </p>
       <WaitingLine on={cc.waitingOn} days={waitingDays} />
       {dday && <DdayLine label={dday.label} days={dday.days} />}
+      {onDrop && canDrop(cc.waitingOn, waitingDays) && (
+        <div className="pt-1">
+          <DropButton name={cc.name} onDrop={onDrop} />
+        </div>
+      )}
+      {onRestore && (
+        <button type="button" onClick={onRestore} className="min-h-9 w-fit text-[13px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700">
+          되돌리기
+        </button>
+      )}
       <details className="pt-1 text-[13px] text-ink-800">
         <summary className="w-fit cursor-pointer py-2 text-ink-600 hover:text-primary-600 md:py-0">
           체크 <span className="tabular-nums">{done}/{checklist.length}</span>
