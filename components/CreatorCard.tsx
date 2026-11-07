@@ -1,15 +1,14 @@
 "use client";
 import { useState } from "react";
 import type { CampaignCreator } from "@/lib/demo";
-import { WaitingLine, DdayLine, canDrop } from "./badges";
-import { DropButton } from "./DropButton";
+import { WaitingLine, DdayLine } from "./badges";
+import { FollowUp } from "./FollowUp";
 
 // Incross board row: no box, separated by a 1px line.
-export function CreatorCard({ cc, waitingDays, dday, onDrop, onRestore }: {
+export function CreatorCard({ cc, waitingDays, dday, onRestore }: {
   cc: CampaignCreator;
   waitingDays: number;
   dday: { label: string; days: number } | null;
-  onDrop?: () => void;
   onRestore?: () => void;
 }) {
   // shortcut: checks live in component state only, lost on reload. Save to Supabase when it exists.
@@ -23,9 +22,9 @@ export function CreatorCard({ cc, waitingDays, dday, onDrop, onRestore }: {
       </p>
       <WaitingLine on={cc.waitingOn} days={waitingDays} />
       {dday && <DdayLine label={dday.label} days={dday.days} />}
-      {onDrop && canDrop(cc.waitingOn, waitingDays) && (
-        <div className="pt-1">
-          <DropButton name={cc.name} onDrop={onDrop} />
+      {!onRestore && (
+        <div className="pt-1 empty:hidden">
+          <FollowUp entryId={cc.id} name={cc.name} waitingOn={cc.waitingOn} days={waitingDays} />
         </div>
       )}
       {onRestore && (

@@ -12,7 +12,7 @@ const head = "flex h-14 items-center justify-between border-b border-line";
 
 export function KanbanBoard({ cards: all }: { cards: BoardCard[] }) {
   const [showDone, setShowDone] = useState(false);
-  const { dropped, drop, restore } = useDropped();
+  const { dropped, restore } = useDropped();
   const cards = all.filter((c) => !dropped.has(c.cc.id));
   const out = all.filter((c) => dropped.has(c.cc.id));
   const done = cards.filter((c) => c.cc.stage === "완료");
@@ -27,7 +27,7 @@ export function KanbanBoard({ cards: all }: { cards: BoardCard[] }) {
               <span className="text-[17px] font-bold text-ink-900">{stage}</span>
               <span className="text-[15px] font-semibold tabular-nums text-ink-600">{list.length}</span>
             </h3>
-            {list.map((c) => <CreatorCard key={c.cc.id} {...c} onDrop={() => drop(c.cc.id)} />)}
+            {list.map((c) => <CreatorCard key={c.cc.id} {...c} />)}
             {list.length === 0 && <p className="py-8 text-center text-[14px] text-ink-600">진행 중인 건이 없습니다</p>}
           </section>
         );

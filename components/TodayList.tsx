@@ -2,8 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { pageWrap, table } from "./PageBand";
-import { WaitingLine, DdayText, OVERDUE_DAYS } from "./badges";
-import { DropButton } from "./DropButton";
+import { WaitingLine, DdayText } from "./badges";
+import { FollowUp, needsFollowUp } from "./FollowUp";
 import { useDropped } from "@/lib/dropped";
 import type { WaitingOn } from "@/lib/demo";
 
@@ -45,7 +45,7 @@ function Toggle<T extends string>({ label, value, options, onChange }: { label: 
 export function TodayList({ buckets, rows: all, userName }: { buckets: Bucket[]; rows: TodayRow[]; userName: string }) {
   const [scope, setScope] = useState<Scope>("mine");
   const [sort, setSort] = useState<Sort>("kind");
-  const { dropped, drop } = useDropped();
+  const { dropped } = useDropped();
 
   const order = buckets.map((b) => b.key);
   const rows = all
@@ -113,10 +113,8 @@ export function TodayList({ buckets, rows: all, userName }: { buckets: Bucket[];
                       )}
                     </td>
                     <td className={table.td}>
-                      {r.kind === "drop" && r.entryId && r.creator ? (
-                        <DropButton name={r.creator} onDrop={() => drop(r.entryId!)} />
-                      ) : r.kind === "confirm" && r.waitingDays >= OVERDUE_DAYS ? (
-                        <span className="font-semibold text-danger-700">답변 독촉</span>
+                      {r.entryId && r.creator && needsFollowUp(r.waitingOn, r.waitingDays) ? (
+                        <FollowUp entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} />
                       ) : (
                         <span className="text-ink-600">—</span>
                       )}
