@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/* Values measured from stellaize.com (colors) and incross.com (layout), 2026-11-07.
+   Rule: #1F8CFF only for fills/lines without text; text and text-bearing blue use primary-600/700 (WCAG AA). */
+@theme {
+  /* Drop Tailwind defaults so "AI default" classes (bg-indigo-500, rounded-2xl, shadow-lg) generate nothing */
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-primary-100: #e8f3ff;
+  --color-primary-200: #c6e2ff;
+  --color-primary-500: #1f8cff;
+  --color-primary-600: #1876d6;
+  --color-primary-700: #125cad;
+  /* Stellaize grays (from its components, not Tailwind gray) */
+  --color-ink-900: #282a3a;
+  --color-ink-800: #404252;
+  --color-ink-600: #5b5d6b;
+  --color-line: #dddfe2;
+  --color-line-strong: #c5ccd4;
+
+  /* party squares are decorative; the label next to them carries the meaning */
+  --color-party-advertiser: #ff8000;
+  --color-party-creator: #12ab92;
+  /* red = a problem only (overdue, due soon) */
+  --color-danger-700: #b33434;
+
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+
+}
+
+@layer base {
+  html {
+    letter-spacing: -0.01em;
+    word-break: keep-all; /* incross: don't split Korean words */
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--color-ink-800);
+    background: var(--color-white);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+  }
+}

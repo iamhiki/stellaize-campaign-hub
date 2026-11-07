@@ -11,6 +11,47 @@
 
 ---
 
+## 내 컴퓨터에서 화면 보기
+
+지금은 **캠페인 칸반 화면 1개**만 있고, 데이터는 예시 데이터다(Supabase 연결 전). 어떤 캠페인 주소로 들어가도 같은 예시가 보이고, 체크한 내용은 새로고침하면 사라진다.
+
+**준비물:** [Node.js](https://nodejs.org) 20.9 이상(LTS 버전 설치 권장), Git. 터미널에서 `node -v`로 버전을 확인한다.
+
+```bash
+git clone https://github.com/iamhiki/stellaize-campaign-hub.git
+cd stellaize-campaign-hub
+npm install      # 처음 한 번만
+npm run dev
+```
+
+브라우저에서 **http://localhost:3000** 을 열면 칸반 화면(`/campaigns/demo`)으로 바로 이동한다. 끄려면 터미널에서 `Ctrl+C`.
+
+- 이미 받은 뒤 최신 내용을 보려면: `git pull` → `npm install` → `npm run dev`
+- `Port 3000 is in use`가 나오면 이미 켜져 있는 것이다. 그대로 http://localhost:3000 을 열거나 `npm run dev -- -p 3001`로 다른 포트를 쓴다.
+- 메뉴의 다른 화면(오늘 할 일, 크리에이터 DB 등)은 아직 없어서 404가 뜬다. "오늘 할 일"은 지금은 칸반으로 이동한다.
+
+## 폴더 구성
+
+```
+app/campaigns/[id]/page.tsx   캠페인 칸반 화면
+components/                   상단 메뉴(SiteHeader), 칸반, 크리에이터 카드, 대기 상태 표시
+lib/date.ts                   D-day·대기 일수 계산 (한국 시간 기준)
+lib/date.check.ts             날짜 계산 자동 검사: node lib/date.check.ts
+lib/demo.ts                   예시 데이터 (Supabase 연결 시 교체)
+app/globals.css               색·폰트 (스텔라이즈 색 값)
+PRODUCT.md                    사용자, 목적, 브랜드 약속, 원칙
+```
+
+## 디자인 방향
+
+- **화면 구성은 [인크로스 홈](https://incross.com/ko/)**: 파란 배너 위 상단 메뉴와 큰 제목, 세로선으로 나눈 4칸 요약, 위 2px 진한 선과 1px 구분선으로 나눈 목록.
+- **배경과 색은 [스텔라이즈](https://www.stellaize.com/)**: 브랜드 파랑 그라데이션, 스텔라이즈 회색 글자(`#282A3A`, `#404252`, `#5B5D6B`)와 구분선(`#DDDFE2`). 폰트는 두 사이트 공통인 Pretendard.
+- **AI 앱처럼 보이지 않게**: Tailwind 기본 색·둥근 모서리·그림자를 테마에서 지워서 쓸 수 없게 했다. 알약 배지와 그림자 카드 대신 작은 네모(■)와 글자로 상태를 표시한다.
+- **빨강은 문제일 때만**: 3일 이상 대기, 마감 3일 이하.
+- 사이트의 CSS·JS·이미지 파일은 복사하지 않고 값만 옮겼다. 로고는 공식 파일을 받기 전까지 글자 로고로 둔다.
+
+---
+
 ## 데이터 모델
 
 ```
@@ -81,12 +122,12 @@ Campaign (캠페인)          1 ─── N  CampaignCreator (캠페인별 크�
 /glossary              용어 사전
 ```
 
-## 기술 스택 (제안)
+## 기술 스택
 
 - 웹앱 (.exe 아님: 여러 명이 같은 데이터를 동시에 본다)
-- Next.js (App Router) + TypeScript + Tailwind
-- Supabase (Postgres, Auth, Storage — 계약서/서류 파일)
-- 배포: Vercel
+- Next.js 16 (App Router) + TypeScript + Tailwind v4 — 적용됨
+- Supabase (Postgres, Auth, Storage — 계약서/서류 파일) — 아직 연결 전
+- 배포: Vercel — 아직 연결 전
 
 ## 제안가 계산 규칙 (팀 확인 필요)
 
