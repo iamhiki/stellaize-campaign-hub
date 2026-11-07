@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { RevealOnScroll } from "@/components/RevealOnScroll";
 import { WAITING } from "@/components/badges";
 import { STAGES } from "@/lib/date";
-import type { WaitingOn } from "@/lib/demo";
+import { CURRENT_USER, type WaitingOn } from "@/lib/demo";
 import board from "@/public/board-preview.webp";
 
 export const metadata: Metadata = { title: "소개 │ Campaign Hub │ 스텔라이즈" };
@@ -27,7 +27,7 @@ const AFTER = [
   { title: "단계별 체크리스트", body: "단가 회신부터 피저체크, 날인본, 최종본 컨펌까지 카드 안에서 체크합니다." },
 ];
 
-const NEXT = ["실제 데이터 연결 (Supabase)", "오늘 할 일 대시보드", "크리에이터 DB", "대외비 캠페인 접근 제한", "메일 템플릿"];
+const NEXT = ["실제 데이터 연결 (Supabase)", "로그인 (아이디·비밀번호)", "대외비 캠페인 접근 제한", "메일 템플릿", "용어 사전"];
 
 // Sample cards in the opening band: the waiting party rotates, which is the product's whole idea in one motion.
 const HERO_CARDS: { name: string; stage: string; states: [WaitingOn, number][]; indent: string }[] = [
@@ -46,7 +46,7 @@ export default function AboutPage() {
       <RevealOnScroll />
       {/* Incross-style opening band, Stellaize blues; white text stays >= 4.5:1 on both stops */}
       <section className="relative flex min-h-[min(88svh,820px)] flex-col overflow-hidden bg-[linear-gradient(103deg,#125cad_0%,#1876d6_100%)] text-white">
-        <SiteHeader userName="김하늘 님" />
+        <SiteHeader userName={`${CURRENT_USER.name} 님`} />
         <div className={`${wrap} grid w-full flex-1 items-center gap-12 pb-20 pt-[140px] md:grid-cols-[1.25fr_1fr] md:pt-[120px]`}>
           <div>
             <h1 className="text-[40px] font-bold leading-[1.15] tracking-[-0.04em] md:text-[72px]">
@@ -59,14 +59,14 @@ export default function AboutPage() {
               </span>
             </h1>
             <p className="rise-in mt-8 max-w-[520px] text-[17px] font-medium leading-relaxed md:text-[20px]" style={delay(420)}>
-              캠페인 허브는 인크로스 스텔라이즈 부서가 인플루언서 캠페인을 운영하는 사내 도구입니다.
+              광고 한 건에 크리에이터 여러 명, 그런 광고 여러 개를 동시에. 캠페인 허브는 스텔라이즈 부서가 인플루언서 광고의 진행 상황을 한곳에서 관리하는 사내 웹 도구입니다.
             </p>
             <Link
-              href="/campaigns/demo"
+              href="/today"
               className="rise-in mt-10 inline-flex h-14 w-fit items-center bg-white px-8 text-[17px] font-bold text-primary-700 transition-colors hover:bg-primary-100"
               style={delay(540)}
             >
-              캠페인 보드 보기
+              시작하기
             </Link>
           </div>
 
@@ -101,8 +101,8 @@ export default function AboutPage() {
               스텔라이즈 부서
             </h2>
             <p data-reveal style={delay(120)} className="text-[17px] leading-[1.8] text-ink-800 md:text-[19px]">
-              스텔라이즈는 인크로스의 부서입니다. 광고주의 의뢰를 받아 캠페인에 맞는 크리에이터를 찾고, 섭외하고, 콘텐츠가 올라가
-              리포트가 나올 때까지 인플루언서 캠페인 전 과정을 운영합니다.
+              스텔라이즈는 인플루언서 광고를 운영하는 부서입니다. 광고주가 광고를 의뢰하면 어울리는 크리에이터를 찾아 제안하고,
+              섭외와 계약, 콘텐츠 제작과 업로드를 거쳐 성과 리포트가 나올 때까지 모든 과정을 챙깁니다.
             </p>
           </div>
           <div className="mt-16">
@@ -166,7 +166,7 @@ export default function AboutPage() {
             <div data-reveal>
               <h2 className={h2}>지금 단계</h2>
               <p className="mt-5 text-[17px] leading-relaxed text-ink-800">
-                캠페인 칸반 화면 하나가 예시 데이터로 동작합니다. 실제 캠페인 데이터는 아직 연결 전입니다.
+                오늘 할 일, 캠페인 목록과 진행 보드, 크리에이터 DB, 마이페이지가 예시 데이터로 동작합니다. 실제 캠페인 데이터와 로그인은 아직 연결 전입니다.
               </p>
             </div>
             <div>

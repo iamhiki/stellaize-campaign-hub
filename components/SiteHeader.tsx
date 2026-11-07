@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const MENU = [
-  { href: "/", label: "오늘 할 일" },
+  { href: "/today", label: "오늘 할 일" },
   { href: "/campaigns", label: "캠페인" },
   { href: "/creators", label: "크리에이터 DB" },
   { href: "/templates", label: "메일 템플릿" },
@@ -14,7 +14,7 @@ const MENU = [
 // Phone: logo and user on one row, the menu becomes a swipeable row under it.
 export function SiteHeader({ userName }: { userName: string }) {
   const path = usePathname();
-  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const active = (href: string) => path.startsWith(href);
   return (
     <header className="absolute inset-x-0 top-0 z-20">
       <div className="mx-auto flex max-w-[1720px] flex-wrap items-center justify-between px-5 text-white md:h-[72px] md:flex-nowrap md:px-[30px]">
@@ -40,7 +40,9 @@ export function SiteHeader({ userName }: { userName: string }) {
           <Link href="/about" aria-current={path === "/about" ? "page" : undefined} className="underline-offset-4 hover:underline aria-[current=page]:underline">
             소개
           </Link>
-          <span>{userName}</span>
+          <Link href="/mypage" aria-current={path === "/mypage" ? "page" : undefined} className="underline-offset-4 hover:underline aria-[current=page]:underline">
+            {userName}
+          </Link>
         </div>
       </div>
     </header>

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
-import { SiteHeader } from "@/components/SiteHeader";
+import { notFound } from "next/navigation";
+import { PageBand } from "@/components/PageBand";
 import { KanbanBoard } from "@/components/KanbanBoard";
 import { WAITING, OVERDUE_DAYS, DdayText } from "@/components/badges";
 import { daysBetween, reportDue, todayKST } from "@/lib/date";
@@ -15,10 +16,12 @@ export default function CampaignPage(props: PageProps<"/campaigns/[id]">) {
 }
 
 async function Campaign({ params }: PageProps<"/campaigns/[id]">) {
-  await params; // shortcut: every id shows the demo campaign until Supabase is wired
+  const { id } = await params;
   await connection(); // "today" must be computed per request, not frozen at build time
   const today = todayKST();
-  const { campaign, creators } = demo(today);
+  const campaign = demo(today).campaigns.find((c) => c.id === id);
+  if (!campaign) notFound();
+  const creators = campaign.creators;
 
   // Campaign-wide deadlines show once in 일정; a card only carries its own date (report due after upload).
   const cards = creators.map((cc) => ({
@@ -33,22 +36,16 @@ async function Campaign({ params }: PageProps<"/campaigns/[id]">) {
 
   return (
     <>
-      {/* Incross visual language (blue band, GNB, large tight headline), kept low so the board is above the fold.
-          Stellaize primary-700 -> primary-600: white text stays >= 4.5:1 across the whole band. */}
-      <section className="relative bg-[linear-gradient(103deg,#125cad_0%,#1876d6_100%)] text-white">
-        <SiteHeader userName="김하늘 님" />
-        <div className="mx-auto max-w-[1260px] px-5 pb-8 pt-[120px] md:px-[30px] md:pt-[96px]">
-          <h1 className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[30px] font-bold leading-tight tracking-[-0.04em] md:text-[40px]">
+      <PageBand
+        title={
+          <>
             {campaign.brand} {campaign.product}
-            {campaign.confidential && (
-              <span className="border border-white px-1.5 py-0.5 text-[13px] font-semibold tracking-normal">대외비</span>
-            )}
-          </h1>
-          <p className="mt-2 text-[15px] font-medium md:text-[17px]">
-            {campaign.advertiser} · {campaign.channel} · 예산 {campaign.budget} · 담당 {campaign.owners.join(", ")}
-          </p>
-        </div>
-      </section>
+            {campaign.confidential && <span className="border border-white px-1.5 py-0.5 text-[13px] font-semibold tracking-normal">대외비</span>}
+          </>
+        }
+      >
+        {campaign.advertiser} · {campaign.channel} · 예산 {campaign.budget} · 담당 {campaign.owners.join(", ")}
+      </PageBand>
 
       <main className="mx-auto max-w-[1260px] px-5 md:px-[30px]">
         {/* Incross news bar: 4 equal columns split by 1px vertical lines */}
