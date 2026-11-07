@@ -3,7 +3,6 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PageBand, pageWrap } from "@/components/PageBand";
 import { ProgressBar } from "@/components/ProgressBar";
-import { SHORTCUTS } from "@/lib/shortcuts";
 import { todayKST } from "@/lib/date";
 import { CURRENT_USER, demo } from "@/lib/demo";
 
@@ -78,18 +77,6 @@ async function Mine() {
             </p>
           </form>
 
-          <h2 className={`${h2} mt-14`}>키보드 단축키</h2>
-          <ul className="mt-5 border-t-2 border-ink-900 text-[15px]">
-            {SHORTCUTS.map(([key, , label]) => (
-              <li key={key} className="flex items-center justify-between border-b border-line py-3">
-                <span className="text-ink-800">{label}</span>
-                <span className="flex gap-1.5 font-semibold text-ink-900">
-                  <kbd className="min-w-7 border border-line px-2 py-0.5 text-center">G</kbd>
-                  <kbd className="min-w-7 border border-line px-2 py-0.5 text-center">{key.toUpperCase()}</kbd>
-                </span>
-              </li>
-            ))}
-          </ul>
         </section>
       </main>
     </>
