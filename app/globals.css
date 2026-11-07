@@ -84,6 +84,12 @@
     transform: none;
   }
 
+  /* progress bars fill from the left on load */
+  @keyframes grow-x {
+    from { transform: scaleX(0); }
+  }
+  .grow-x { transform-origin: left; animation: grow-x 1.2s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--delay, 0ms); }
+
   /* hero cards: drift gently, and the waiting status rotates through the three parties */
   @keyframes drift {
     50% { transform: translateY(-10px); }

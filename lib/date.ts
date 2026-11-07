@@ -9,5 +9,9 @@ const addDays = (ymd: string, n: number) => new Date(Date.parse(ymd) + n * DAY).
 export const STAGES = ["리스트업", "광고주 컨펌", "섭외·계약", "제작", "업로드", "완료"] as const;
 export type Stage = (typeof STAGES)[number];
 
+/** Campaign progress: each creator scores 0% at 리스트업 up to 100% at 완료, averaged. */
+export const progressPct = (stages: Stage[]) =>
+  stages.length ? Math.round((stages.reduce((sum, s) => sum + STAGES.indexOf(s), 0) / (stages.length * (STAGES.length - 1))) * 100) : 0;
+
 /** The report is due 14 days after upload. */
 export const reportDue = (uploadedAt: string) => addDays(uploadedAt, 14);
