@@ -21,16 +21,16 @@ export function CreatorCard({ cc, waitingDays, dday }: {
       <WaitingLine on={cc.waitingOn} days={waitingDays} />
       {dday && <DdayLine label={dday.label} days={dday.days} />}
       <details className="pt-1 text-[13px] text-ink-800">
-        <summary className="w-fit cursor-pointer text-ink-600 hover:text-primary-600">
+        <summary className="w-fit cursor-pointer py-2 text-ink-600 hover:text-primary-600 md:py-0">
           체크 <span className="tabular-nums">{done}/{checklist.length}</span>
         </summary>
         <ul className="mt-2 flex flex-col gap-1.5">
           {checklist.map((c) => (
             <li key={c.id}>
-              <label className="flex items-start gap-1.5">
+              <label className="flex items-start gap-2 py-1 md:gap-1.5 md:py-0">
                 <input
                   type="checkbox"
-                  className="mt-0.5 size-4 shrink-0 accent-primary-600"
+                  className="mt-0.5 size-5 shrink-0 accent-primary-600 md:size-4"
                   checked={c.done}
                   onChange={(e) => setChecklist((l) => l.map((x) => (x.id === c.id ? { ...x, done: e.target.checked } : x)))}
                 />

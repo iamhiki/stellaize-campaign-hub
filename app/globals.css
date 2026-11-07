@@ -49,3 +49,26 @@
     outline-offset: 2px;
   }
 }
+
+/* About page motion: content is visible by default; motion only layers on when the user allows it. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(28px); }
+  }
+  .rise-in {
+    animation: rise 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: var(--delay, 0ms);
+  }
+  @supports (animation-timeline: view()) {
+    .rise-on-view {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 5% entry 45%;
+    }
+  }
+}
+
+::selection {
+  background: var(--color-primary-200);
+  color: var(--color-ink-900);
+}

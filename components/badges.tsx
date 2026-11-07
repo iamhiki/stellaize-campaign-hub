@@ -1,7 +1,7 @@
 import type { WaitingOn } from "@/lib/demo";
 
 export const OVERDUE_DAYS = 3; // waiting this long or more turns red. Team decides.
-export const URGENT_DAYS = 3; // a deadline this close or past turns red. Team decides.
+export const URGENT_DAYS = 1; // D-1, D-Day and past turn red; sooner-than-a-week is bold ink. Team decides.
 
 // Incross-style status: a small square bullet + text, no pills. Square is the party color; red only for problems.
 export const WAITING: Record<WaitingOn, { label: string; square: string }> = {
@@ -22,12 +22,16 @@ export function WaitingLine({ on, days }: { on: WaitingOn | null; days: number }
   );
 }
 
-export function DdayLine({ label, days }: { label: string; days: number }) {
+export function DdayText({ days }: { days: number }) {
   const text = days === 0 ? "D-Day" : days > 0 ? `D-${days}` : `D+${-days}`;
-  const urgent = days <= URGENT_DAYS;
+  return <b className={`ml-1 tabular-nums ${days <= URGENT_DAYS ? "text-danger-700" : "text-ink-900"}`}>{text}</b>;
+}
+
+export function DdayLine({ label, days }: { label: string; days: number }) {
   return (
     <p className="text-[14px] text-ink-600">
-      {label} <span className={`tabular-nums font-semibold ${urgent ? "text-danger-700" : "text-ink-800"}`}>{text}</span>
+      {label}
+      <DdayText days={days} />
     </p>
   );
 }

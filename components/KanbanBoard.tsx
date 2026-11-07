@@ -13,11 +13,12 @@ export function KanbanBoard({ cards }: { cards: BoardCard[] }) {
   const [showDone, setShowDone] = useState(false);
   const done = cards.filter((c) => c.cc.stage === "완료");
   return (
-    <div className="flex gap-6 overflow-x-auto pb-2">
+    // Phone: stages stack top to bottom instead of scrolling sideways.
+    <div className="flex flex-col gap-8 pb-2 md:flex-row md:gap-6 md:overflow-x-auto">
       {STAGES.slice(0, 5).map((stage) => {
         const list = cards.filter((c) => c.cc.stage === stage);
         return (
-          <section key={stage} className="min-w-[190px] flex-1 border-t-2 border-ink-900">
+          <section key={stage} className="flex-1 border-t-2 border-ink-900 md:min-w-[190px]">
             <h3 className={head}>
               <span className="text-[17px] font-bold text-ink-900">{stage}</span>
               <span className="text-[15px] font-semibold tabular-nums text-ink-600">{list.length}</span>
@@ -28,10 +29,10 @@ export function KanbanBoard({ cards }: { cards: BoardCard[] }) {
         );
       })}
       {showDone ? (
-        <section className="min-w-[190px] flex-1 border-t-2 border-ink-900">
+        <section className="flex-1 border-t-2 border-ink-900 md:min-w-[190px]">
           <h3 className={head}>
             <span className="text-[17px] font-bold text-ink-900">완료</span>
-            <button onClick={() => setShowDone(false)} className="text-[14px] text-ink-600 hover:text-primary-600">접기</button>
+            <button onClick={() => setShowDone(false)} aria-expanded="true" className="min-h-11 text-[14px] text-ink-600 hover:text-primary-600">접기</button>
           </h3>
           {done.map((c) => <CreatorCard key={c.cc.id} {...c} />)}
         </section>
@@ -39,7 +40,8 @@ export function KanbanBoard({ cards }: { cards: BoardCard[] }) {
         <button
           onClick={() => setShowDone(true)}
           aria-label={`완료 ${done.length}건 펼치기`}
-          className="w-12 shrink-0 border-t-2 border-line-strong pt-4 text-[15px] font-semibold text-ink-600 [writing-mode:vertical-rl] hover:text-primary-600"
+          aria-expanded="false"
+          className="flex h-12 shrink-0 items-center border-t-2 border-line-strong text-[15px] font-semibold text-ink-600 hover:text-primary-600 md:h-auto md:w-12 md:items-start md:pt-4 md:[writing-mode:vertical-rl]"
         >
           완료 <span className="tabular-nums">{done.length}</span>
         </button>
