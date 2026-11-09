@@ -1,6 +1,7 @@
 "use client";
 import { STEPS, REPORT, doneList, entryStatus, type Campaign } from "@/lib/campaigns";
 import { toggleStep, updateEntry } from "@/lib/store";
+import { contractLink } from "@/lib/contract";
 import { DeadlineLine, WaitingLine } from "./badges";
 import { FollowUp } from "./FollowUp";
 
@@ -48,6 +49,15 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                     <th scope="row" className={`${td} ${sticky} px-3 text-left font-normal group-hover:bg-[#f5f7fa]`}>
                       <span className="block text-[16px] font-bold text-ink-900">{e.name}</span>
                       <span className="block text-[13px] text-ink-600">{e.channel}</span>
+                      <a
+                        href={contractLink(campaign, e)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-flex min-h-8 items-center text-[13px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700"
+                      >
+                        계약서 작성<span aria-hidden>↗</span>
+                        <span className="sr-only"> (계약서 앱, 새 탭)</span>
+                      </a>
                     </th>
                     <td className={`${td} group-hover:bg-[#f5f7fa]`}>
                       <p className="text-[14px] font-bold text-ink-900">
