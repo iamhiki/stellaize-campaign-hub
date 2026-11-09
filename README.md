@@ -106,6 +106,8 @@ npm run dev
 - 허브의 **계약서 작성** 링크 = `http://localhost:8501/?from=campaign-hub&campaign=…&advertiser=…&upload=…&creator=…`
 - 넘기는 값은 캠페인명·광고주·업로드 날짜·크리에이터명뿐이다. 서류와 개인정보는 허브로 오지 않는다.
 - 계약서 앱이 이 값을 칸에 채우려면 `app.py`에 함수 하나를 넣어야 한다: [docs/contract-app/](docs/contract-app/README.md). 넣기 전에도 링크는 빈 앱을 연다.
+- 실제 계약서 앱 v3.1에 넣어 허브 링크 → 미리 채우기까지 확인했다(2026-11-09). 팀원 PC에서도 채워지게 하려면 배포본(드라이브 zip)의 `app.py`에 같은 수정이 들어가야 한다.
+- 허브 화면 안에 넣지 않고 **새 탭으로 연다.** 서류를 서버로 올리지 않기 위해 계약서 앱을 허브 서버에 합치지도 않는다.
 - 앱을 다른 주소로 띄운다면 `.env.local`에 `NEXT_PUBLIC_CONTRACT_APP_URL=http://…`를 넣고 다시 빌드한다.
 - 왼쪽 아래 검은 동그라미 "N"은 개발 모드에서만 보이는 Next.js 도구 버튼이다. 실제 배포 화면에는 나오지 않는다.
 
