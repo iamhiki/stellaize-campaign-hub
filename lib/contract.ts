@@ -1,7 +1,7 @@
 import type { Campaign, Entry } from "./campaigns";
 
 /**
- * 계약서 자동작성 앱(팀장 제작, Streamlit). 정산서류 개인정보 때문에 각자 PC에서 실행.bat 으로 켜고
+ * 계약서 자동작성 앱(기획자 제작, Streamlit). 정산서류 개인정보 때문에 각자 PC에서 실행.bat 으로 켜고
  * localhost:8501 에서만 열린다. 그래서 링크는 서버가 아니라 "보는 사람의 PC"를 가리킨다.
  * 다른 주소로 띄웠다면 NEXT_PUBLIC_CONTRACT_APP_URL 로 바꾼다.
  */

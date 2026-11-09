@@ -3,7 +3,7 @@ import { PageBand, pageWrap } from "@/components/PageBand";
 
 export const metadata = { title: "계약서 │ Campaign Hub │ 스텔라이즈" };
 
-// 계약서 자동작성 앱(팀장 제작)으로 넘기는 탭. 앱은 정산서류 개인정보 때문에 각자 PC에서만 열리므로
+// 계약서 자동작성 앱(기획자 제작)으로 넘기는 탭. 앱은 정산서류 개인정보 때문에 각자 PC에서만 열리므로
 // 이 허브는 앱을 품지 않고, 캠페인 정보를 담은 링크로 연다.
 const STEPS = [
   { title: "계약서 앱 켜기", body: "공유 드라이브의 계약서 자동작성 시스템 폴더를 내 PC로 복사하고 실행.bat 을 더블클릭합니다. 검은 창은 닫지 않습니다." },

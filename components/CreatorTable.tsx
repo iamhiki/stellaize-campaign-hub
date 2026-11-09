@@ -10,7 +10,7 @@ const td = "border-b border-line px-2 py-3 align-top";
 // The name column stays put while the steps scroll sideways on narrow screens.
 const sticky = "sticky left-0 z-10 bg-white";
 
-// 팀장 피드백 11/7: 크리에이터마다 부킹 요청 → 업로드 한 프로세스를 끝날 때마다 체크. 리포트 작성은 업로드 뒤 마무리.
+// 기획자 피드백 11/7: 크리에이터마다 부킹 요청 → 업로드 한 프로세스를 끝날 때마다 체크. 리포트 작성은 업로드 뒤 마무리.
 export function CreatorTable({ campaign, today }: { campaign: Campaign; today: string }) {
   const live = campaign.entries.filter((e) => !e.droppedAt);
   const dropped = campaign.entries.filter((e) => e.droppedAt);

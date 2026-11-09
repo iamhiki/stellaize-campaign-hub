@@ -4,7 +4,7 @@ import { daysBetween, reportDue } from "./date";
 export type WaitingOn = "advertiser" | "creator" | "us";
 
 /**
- * One creator's process in a campaign, in order (팀장 피드백 2026-11-07: 리스트업 제외, 부킹 요청 → 업로드).
+ * One creator's process in a campaign, in order (기획자 피드백 2026-11-07: 리스트업 제외, 부킹 요청 → 업로드).
  * `waits` is who the step is waiting on while it's the next unchecked one. 리포트 작성 closes the process.
  */
 export const STEPS: { label: string; waits: WaitingOn }[] = [
@@ -65,7 +65,7 @@ export function entryStatus(e: Entry, c: Campaign, today: string) {
     waitingOn: next === -1 ? null : STEPS[next].waits,
     waitingDays: next === -1 ? 0 : daysBetween(last, today),
     deadline,
-    /** Red means a deadline has passed (팀장 피드백: 마감 기한이 지난 건은 빨간색). */
+    /** Red means a deadline has passed (기획자 피드백: 마감 기한이 지난 건은 빨간색). */
     overdue: !!deadline && deadline.days < 0,
   };
 }

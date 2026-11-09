@@ -53,7 +53,7 @@ export function CampaignDetail({ id }: { id: string }) {
       </PageBand>
 
       <main className={pageWrap}>
-        {/* 팀장 피드백 11/7: 크리에이터 리스트가 제일 위 */}
+        {/* 기획자 피드백 11/7: 크리에이터 리스트가 제일 위 */}
         <section className="py-10 md:py-12">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <h2 className="text-[26px] font-bold tracking-[-0.04em] text-ink-900 md:text-[32px]">

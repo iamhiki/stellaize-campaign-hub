@@ -9,7 +9,7 @@ import { CampaignForm } from "./CampaignForm";
 import { Loading, table, ui } from "./PageBand";
 import { ProgressBar } from "./ProgressBar";
 
-// 팀장 피드백 11/7: 목록에는 캠페인 이름, 광고주, 채널, 업로드 날짜, 담당자. 진행률은 한눈에 보려고 남겼다.
+// 기획자 피드백 11/7: 목록에는 캠페인 이름, 광고주, 채널, 업로드 날짜, 담당자. 진행률은 한눈에 보려고 남겼다.
 export function CampaignList() {
   const campaigns = useCampaigns();
   const [adding, setAdding] = useState(false);

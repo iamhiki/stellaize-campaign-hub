@@ -46,7 +46,7 @@ function Toggle<T extends string>({ label, value, options, onChange }: { label: 
 
 const SOON = 3; // a report due this many days out or closer counts as today's work
 
-// Four buckets across campaigns (팀장 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저).
+// Four buckets across campaigns (기획자 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저).
 const BUCKETS: Bucket[] = [
   { key: "overdue", label: "마감 지남", hint: "업로드 날짜나 리포트 마감이 지난 건" },
   { key: "report", label: "리포트 작성", hint: `업로드 후 14일 마감 ${SOON}일 안` },

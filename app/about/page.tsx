@@ -12,7 +12,7 @@ import board from "@/public/board-preview.png";
 export const metadata: Metadata = { title: "소개 │ Campaign Hub │ 스텔라이즈" };
 
 // Copy states only confirmed facts (README, PRODUCT.md, incross.com). No invented metrics.
-// 팀장 피드백 11/7의 업무 흐름 그대로.
+// 기획자 피드백 11/7의 업무 흐름 그대로.
 const FLOW = ["접수", "리스트업", "부킹", "제작", "업로드", "리포트 작성", "완료"];
 
 const BEFORE = [
