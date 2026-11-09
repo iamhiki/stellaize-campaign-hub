@@ -4,14 +4,7 @@ const DAY = 86_400_000;
 /** Today in Korea. Vercel servers run in UTC, so never slice `new Date()` directly. */
 export const todayKST = (now = new Date()) => now.toLocaleDateString("sv-SE", { timeZone: "Asia/Seoul" });
 export const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / DAY);
-const addDays = (ymd: string, n: number) => new Date(Date.parse(ymd) + n * DAY).toISOString().slice(0, 10);
-
-export const STAGES = ["리스트업", "광고주 컨펌", "섭외·계약", "제작", "업로드", "완료"] as const;
-export type Stage = (typeof STAGES)[number];
-
-/** Campaign progress: each creator scores 0% at 리스트업 up to 100% at 완료, averaged. */
-export const progressPct = (stages: Stage[]) =>
-  stages.length ? Math.round((stages.reduce((sum, s) => sum + STAGES.indexOf(s), 0) / (stages.length * (STAGES.length - 1))) * 100) : 0;
+export const addDays = (ymd: string, n: number) => new Date(Date.parse(ymd) + n * DAY).toISOString().slice(0, 10);
 
 /** The report is due 14 days after upload. */
 export const reportDue = (uploadedAt: string) => addDays(uploadedAt, 14);

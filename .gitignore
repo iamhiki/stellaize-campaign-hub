@@ -9,3 +9,5 @@ node_modules/
 next-env.d.ts
 .claude/skills/
 .impeccable/
+.claude/agents/
+.claude/settings.local.json

@@ -1,7 +1,7 @@
-import type { WaitingOn } from "@/lib/demo";
+import type { Deadline, WaitingOn } from "@/lib/campaigns";
 
-export const OVERDUE_DAYS = 3; // waiting this long or more turns red. Team decides.
-export const URGENT_DAYS = 1; // D-1, D-Day and past turn red; sooner-than-a-week is bold ink. Team decides.
+export const FOLLOW_UP_DAYS = 3; // no reply this long shows 답변 독촉 (and 드랍 for creators). Team decides.
+export const SOON_DAYS = 7; // deadlines within a week are bold ink; only a passed deadline is red (팀장 피드백 11/7).
 
 // Incross-style status: a small square bullet + text, no pills. Square is the party color; red only for problems.
 export const WAITING: Record<WaitingOn, { label: string; square: string }> = {
@@ -12,26 +12,27 @@ export const WAITING: Record<WaitingOn, { label: string; square: string }> = {
 
 export function WaitingLine({ on, days }: { on: WaitingOn | null; days: number }) {
   if (!on) return <p className="text-[14px] text-ink-600">대기 없음</p>;
-  const overdue = days >= OVERDUE_DAYS;
   return (
-    <p className="flex items-center gap-1.5 text-[14px] font-medium text-ink-800">
+    <p className="flex items-center gap-1.5 whitespace-nowrap text-[14px] font-medium text-ink-800">
       <span aria-hidden className={`size-2 shrink-0 ${WAITING[on].square}`} />
       {WAITING[on].label}
-      {days > 0 && <span className={`tabular-nums ${overdue ? "font-bold text-danger-700" : "text-ink-600"}`}>{days}일째</span>}
+      {days > 0 && <span className="tabular-nums text-ink-600">{days}일째</span>}
     </p>
   );
 }
 
 export function DdayText({ days }: { days: number }) {
   const text = days === 0 ? "D-Day" : days > 0 ? `D-${days}` : `D+${-days}`;
-  return <b className={`ml-1 tabular-nums ${days <= URGENT_DAYS ? "text-danger-700" : "text-ink-900"}`}>{text}</b>;
+  const tone = days < 0 ? "text-danger-700" : days <= SOON_DAYS ? "text-ink-900" : "font-semibold text-ink-600";
+  return <b className={`ml-1 tabular-nums ${tone}`}>{text}{days < 0 && " 지남"}</b>;
 }
 
-export function DdayLine({ label, days }: { label: string; days: number }) {
+export function DeadlineLine({ deadline }: { deadline: Deadline | null }) {
+  if (!deadline) return <p className="text-[14px] text-ink-600">마감 없음</p>;
   return (
-    <p className="text-[14px] text-ink-600">
-      {label}
-      <DdayText days={days} />
+    <p className="whitespace-nowrap text-[14px] text-ink-600">
+      {deadline.label}
+      <DdayText days={deadline.days} />
     </p>
   );
 }

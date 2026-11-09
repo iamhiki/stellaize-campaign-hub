@@ -23,3 +23,16 @@ export const table = {
   th: "border-b border-line bg-[#f5f7fa] px-3 py-3 text-left text-[14px] font-semibold text-ink-800",
   td: "border-b border-line px-3 py-4 align-top text-ink-800",
 };
+
+// Forms and buttons in the same square, line-ruled language.
+export const ui = {
+  label: "flex flex-col gap-2 text-[15px] font-medium text-ink-800",
+  input: "h-12 min-w-0 border border-line bg-white px-4 text-[16px] text-ink-900 placeholder:text-ink-600 hover:border-line-strong focus:border-primary-600 focus:outline-none",
+  primary: "inline-flex h-12 shrink-0 items-center justify-center bg-primary-600 px-6 text-[16px] font-bold text-white hover:bg-primary-700",
+  secondary: "inline-flex h-12 shrink-0 items-center justify-center border border-line bg-white px-6 text-[16px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-600",
+};
+
+/** Shown while the browser-stored data loads (one frame) so the layout doesn't jump. */
+export function Loading() {
+  return <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">불러오는 중입니다.</p>;
+}

@@ -1,30 +1,15 @@
-import { Suspense } from "react";
-import Link from "next/link";
-import { connection } from "next/server";
 import { PageBand, pageWrap } from "@/components/PageBand";
-import { ProgressBar } from "@/components/ProgressBar";
-import { todayKST } from "@/lib/date";
-import { CURRENT_USER, demo } from "@/lib/demo";
+import { MyCampaigns } from "@/components/MyCampaigns";
+import { CURRENT_USER } from "@/lib/demo";
 
 export const metadata = { title: "마이페이지 │ Campaign Hub │ 스텔라이즈" };
-
-export default function MyPage() {
-  return (
-    <Suspense fallback={null}>
-      <Mine />
-    </Suspense>
-  );
-}
 
 const h2 = "text-[22px] font-bold tracking-[-0.03em] text-ink-900";
 const field = "h-12 w-full border border-line bg-[#f5f7fa] px-4 text-[16px] text-ink-600";
 
 // shortcut: login isn't connected yet. Account fields and password change are laid out but disabled;
 // wire them to Supabase Auth when login exists.
-async function Mine() {
-  await connection();
-  const mine = demo(todayKST()).campaigns.filter((c) => c.owners.includes(CURRENT_USER.name));
-
+export default function MyPage() {
   return (
     <>
       <PageBand title="마이페이지">내 계정과 내가 맡은 캠페인을 봅니다. 로그인을 연결하면 본인 아이디와 비밀번호로 들어옵니다.</PageBand>
@@ -34,7 +19,7 @@ async function Mine() {
           <dl className="mt-5 border-t-2 border-ink-900 text-[16px]">
             {[
               ["이름", CURRENT_USER.name],
-              ["부서", CURRENT_USER.team],
+              ["소속", CURRENT_USER.team],
               ["아이디", "로그인 연결 후 표시"],
               ["이메일", "로그인 연결 후 표시"],
             ].map(([k, v]) => (
@@ -46,18 +31,7 @@ async function Mine() {
           </dl>
 
           <h2 className={`${h2} mt-14`}>내 담당 캠페인</h2>
-          <ul className="mt-5 border-t-2 border-ink-900">
-            {mine.map((c, i) => (
-              <li key={c.id} className="border-b border-line py-4">
-                <Link href={`/campaigns/${c.id}`} className="font-semibold underline-offset-4 hover:text-primary-600 hover:underline">
-                  {c.brand} {c.product}
-                </Link>
-                <div className="mt-2">
-                  <ProgressBar label={`${c.brand} ${c.product}`} stages={c.creators.map((cc) => cc.stage)} delay={200 + i * 120} />
-                </div>
-              </li>
-            ))}
-          </ul>
+          <MyCampaigns />
         </section>
 
         <section>

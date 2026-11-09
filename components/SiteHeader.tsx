@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// 팀장 피드백 11/7: 캠페인 · 오늘 할 일 · 계약서만. 크리에이터 DB(시트가 흩어져 있음)와 메일 템플릿(사내 AI로 작성)은 뺐다.
 const MENU = [
-  { href: "/today", label: "오늘 할 일" },
   { href: "/campaigns", label: "캠페인" },
-  { href: "/creators", label: "크리에이터 DB" },
-  { href: "/templates", label: "메일 템플릿" },
+  { href: "/today", label: "오늘 할 일" },
+  { href: "/contracts", label: "계약서" },
 ];
 
 // Incross #header: transparent over the hero, logo | centered GNB | utility, 2px underline on the active menu.
