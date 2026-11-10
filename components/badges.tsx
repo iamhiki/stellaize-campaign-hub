@@ -31,7 +31,7 @@ export function DeadlineLine({ deadline }: { deadline: Deadline | null }) {
   if (!deadline) return <p className="text-[14px] text-ink-600">마감 없음</p>;
   return (
     <p className="whitespace-nowrap text-[14px] text-ink-600">
-      {deadline.label}
+      {deadline.label} 마감
       <DdayText days={deadline.days} />
     </p>
   );

@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loading, pageWrap, table } from "./PageBand";
 import { WaitingLine, DdayText, FOLLOW_UP_DAYS } from "./badges";
-import { FollowUp, needsFollowUp } from "./FollowUp";
+import { FollowUp, canChase, needsFollowUp } from "./FollowUp";
 import { entryStatus, type WaitingOn } from "@/lib/campaigns";
 import { CURRENT_USER } from "@/lib/demo";
 import { useCampaigns, useToday } from "@/lib/store";
@@ -48,8 +48,8 @@ const SOON = 3; // a report due this many days out or closer counts as today's w
 
 // Four buckets across campaigns (기획자 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저).
 const BUCKETS: Bucket[] = [
-  { key: "overdue", label: "마감 지남", hint: "업로드 날짜나 리포트 마감이 지난 건" },
-  { key: "report", label: "리포트 작성", hint: `업로드 후 14일 마감 ${SOON}일 안` },
+  { key: "overdue", label: "마감 지남", hint: "단계별 마감, 업로드 날짜, 리포트 마감이 지난 건" },
+  { key: "report", label: "리포트 작성", hint: `리포트 마감(기본 업로드 후 14일) ${SOON}일 안` },
   { key: "chase", label: "답변 독촉", hint: `크리에이터·광고주 회신 ${FOLLOW_UP_DAYS}일 이상 없음` },
   { key: "confirm", label: "컨펌 대기", hint: "광고주 컨펌을 기다리는 건" },
 ];
@@ -70,7 +70,7 @@ export function TodayList() {
       const s = entryStatus(e, c, today);
       const base = { entryId: e.id, creator: e.name, remindedAt: e.remindedAt, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays };
       if (s.overdue) all.push({ ...base, kind: "overdue", due: s.deadline });
-      else if (s.deadline?.label === "리포트" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
+      else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
       if (needsFollowUp(s.waitingOn, s.waitingDays)) all.push({ ...base, kind: "chase", due: s.deadline });
       else if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
     }
@@ -138,7 +138,7 @@ export function TodayList() {
                     <td className={`${table.td} whitespace-nowrap`}>
                       {r.due ? (
                         <>
-                          <span className="text-ink-600">{r.due.label}</span>
+                          <span className="text-ink-600">{r.due.label} 마감</span>
                           <DdayText days={r.due.days} />
                         </>
                       ) : (
@@ -146,7 +146,7 @@ export function TodayList() {
                       )}
                     </td>
                     <td className={table.td}>
-                      {needsFollowUp(r.waitingOn, r.waitingDays) ? (
+                      {canChase(r.waitingOn) ? (
                         <FollowUp campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} remindedAt={r.remindedAt} />
                       ) : (
                         <span className="text-ink-600">—</span>

@@ -49,7 +49,7 @@ export function CampaignDetail({ id }: { id: string }) {
   return (
     <>
       <PageBand title={campaign.name}>
-        {campaign.advertiser} · {campaign.channel} · 업로드 {campaign.uploadDate} · 담당 {campaign.owners.join(", ")}
+        {campaign.advertiser} · {campaign.channel} · 기본 업로드 {campaign.uploadDate} · 담당 {campaign.owners.join(", ")}
       </PageBand>
 
       <main className={pageWrap}>
@@ -96,7 +96,7 @@ export function CampaignDetail({ id }: { id: string }) {
                 <dd className="tabular-nums text-ink-800">{campaign.createdAt}</dd>
               </div>
               <div className="flex justify-between gap-2">
-                <dt className="text-ink-600">업로드</dt>
+                <dt className="text-ink-600">기본 업로드</dt>
                 <dd className="tabular-nums text-ink-800">
                   {campaign.uploadDate}
                   <DdayText days={daysBetween(today, campaign.uploadDate)} />
@@ -108,7 +108,7 @@ export function CampaignDetail({ id }: { id: string }) {
               </div>
             </dl>
             <p className="mt-3 text-[13px] text-ink-600">
-              업로드 날짜 기준이면 {reportDue(campaign.uploadDate)}. 크리에이터별 리포트 마감은 실제 업로드를 체크한 날부터 셉니다.
+              업로드 날짜와 단계별 마감은 크리에이터마다 &lsquo;마감 설정&rsquo;에서 정합니다. 리포트 마감은 따로 정하지 않으면 업로드를 체크한 날부터 14일(기본 업로드 기준 {reportDue(campaign.uploadDate)})입니다.
             </p>
           </article>
         </section>

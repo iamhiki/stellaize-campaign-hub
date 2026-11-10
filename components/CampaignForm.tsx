@@ -53,7 +53,10 @@ export function CampaignForm({ onClose }: { onClose: () => void }) {
         </label>
         <label className={ui.label}>
           업로드 날짜
-          <input name="uploadDate" type="date" required className={`${ui.input} tabular-nums`} />
+          <input name="uploadDate" type="date" required aria-describedby="upload-hint" className={`${ui.input} tabular-nums`} />
+          <span id="upload-hint" className="text-[13px] font-normal text-ink-600">
+            크리에이터마다 다르면 상세 화면의 마감 설정에서 바꿉니다
+          </span>
         </label>
         <label className={ui.label}>
           담당자

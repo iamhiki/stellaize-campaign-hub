@@ -5,9 +5,15 @@ import { updateEntry } from "@/lib/store";
 import { FOLLOW_UP_DAYS } from "./badges";
 import { DropButton } from "./DropButton";
 
-// No reply for FOLLOW_UP_DAYS+: chase anyone (답변 독촉); a creator can also be dropped (planner: no reply → leave them out).
+/**
+ * 답변 독촉 records the day we chased someone (카톡·메일·전화 are done outside the hub; nothing is sent from here).
+ * 기획자 답변 11/10: 언제든 누를 수 있게 — so the button shows whenever a creator or advertiser owes us a reply.
+ * After FOLLOW_UP_DAYS without a reply the row also lands in 오늘 할 일 → 답변 독촉, and a creator can be dropped.
+ */
+export const canChase = (waitingOn: WaitingOn | null) => waitingOn === "creator" || waitingOn === "advertiser";
+
 export function needsFollowUp(waitingOn: WaitingOn | null, days: number) {
-  return (waitingOn === "creator" || waitingOn === "advertiser") && days >= FOLLOW_UP_DAYS;
+  return canChase(waitingOn) && days >= FOLLOW_UP_DAYS;
 }
 
 export function FollowUp({ campaignId, entryId, name, waitingOn, days, remindedAt }: {
@@ -18,22 +24,27 @@ export function FollowUp({ campaignId, entryId, name, waitingOn, days, remindedA
   days: number;
   remindedAt: string | null;
 }) {
-  if (!needsFollowUp(waitingOn, days)) return null;
+  if (!canChase(waitingOn)) return null;
+  const today = todayKST();
+  const remind = () => updateEntry(campaignId, entryId, () => ({ remindedAt: today }));
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {remindedAt ? (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      {remindedAt === today ? (
         <span className="flex min-h-9 items-center gap-2 whitespace-nowrap text-[13px] text-ink-800">
-          <b className="font-semibold">{remindedAt === todayKST() ? "오늘 독촉함" : `${remindedAt.slice(5).replace("-", "/")} 독촉함`}</b>
+          <b className="font-semibold">오늘 독촉함</b>
           <button type="button" onClick={() => updateEntry(campaignId, entryId, () => ({ remindedAt: null }))} className="text-ink-600 underline underline-offset-4 hover:text-primary-600">
             취소
           </button>
         </span>
       ) : (
-        <button type="button" onClick={() => updateEntry(campaignId, entryId, () => ({ remindedAt: todayKST() }))} className="min-h-9 whitespace-nowrap bg-primary-600 px-3 text-[13px] font-semibold text-white hover:bg-primary-700">
-          답변 독촉
-        </button>
+        <>
+          <button type="button" onClick={remind} className="min-h-9 whitespace-nowrap bg-primary-600 px-3 text-[13px] font-semibold text-white hover:bg-primary-700">
+            {remindedAt ? "다시 독촉" : "답변 독촉"}
+          </button>
+          {remindedAt && <span className="whitespace-nowrap text-[13px] text-ink-600">{remindedAt.slice(5).replace("-", "/")} 독촉함</span>}
+        </>
       )}
-      {waitingOn === "creator" && <DropButton name={name} onDrop={() => updateEntry(campaignId, entryId, () => ({ droppedAt: todayKST() }))} />}
+      {waitingOn === "creator" && days >= FOLLOW_UP_DAYS && <DropButton name={name} onDrop={() => updateEntry(campaignId, entryId, () => ({ droppedAt: today }))} />}
     </div>
   );
 }
