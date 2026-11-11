@@ -170,7 +170,8 @@ export function TodayList() {
                     </td>
                     <td className={table.td}>
                       {canDrop(r.waitingOn, r.waitingDays) ? (
-                        <LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} />
+                        // pulled into the text line so rows with and without the button are the same height
+                        <div className="-my-1.5"><LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} /></div>
                       ) : (
                         <span className="text-ink-600">—</span>
                       )}

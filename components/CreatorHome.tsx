@@ -8,6 +8,10 @@ import { Loading, pageWrap, table, ui } from "./PageBand";
 
 const short = (d: string) => d.slice(5).replace("-", "/");
 const WHO = { creator: "내 차례", advertiser: "광고주 확인 중", us: "스텔라이즈팀 확인 중" };
+// The same party squares staff see (badges.tsx WAITING), from the creator's side.
+const SQUARE = { creator: "bg-party-creator", advertiser: "bg-party-advertiser", us: "bg-primary-500" };
+// Phone layout for a table cell: the row carries the rule and padding, not each cell.
+const CELL = "max-md:border-b-0 max-md:px-0 max-md:py-0";
 type Choice = { entryId: string; label: string };
 
 // 기획자 11/11: 크리에이터는 자기 할 일만 본다. 협의한 일정과 마감, 기획안·가편안·수정본 제출.
@@ -105,9 +109,11 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
           마감이 지났습니다: {late.map((s) => `${s.label.replace(" 수급", "")} (${short(s.due!)})`).join(", ")}. 제출하거나 담당자에게 일정을 알려 주세요.
         </p>
       )}
-      <div className="mt-6 overflow-x-auto">
-        <table className={table.wrap}>
-          <thead>
+      {/* Creators open this on a phone. Below md each step is a stacked block (step + state, deadline, hand-in),
+          so the hand-in button is never off-screen behind a sideways scroll. */}
+      <div className="mt-6">
+        <table className={`${table.wrap} max-md:block max-md:min-w-0`}>
+          <thead className="max-md:sr-only">
             <tr>
               {["단계", "마감", "상태", "제출"].map((h) => (
                 <th key={h} scope="col" className={table.th}>
@@ -116,16 +122,17 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
               ))}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="max-md:block">
             {item.steps.map((s) => {
               const mine = item.submissions.filter((x) => x.step === s.step);
               return (
-                <tr key={s.step} className={s.next ? "bg-primary-100" : undefined}>
-                  <th scope="row" className={`${table.td} whitespace-nowrap text-left font-semibold text-ink-900`}>
+                <tr key={s.step} className={`max-md:grid max-md:grid-cols-[1fr_auto] max-md:gap-x-3 max-md:gap-y-1.5 max-md:border-b max-md:border-line max-md:px-3 max-md:py-4 ${s.next ? "bg-primary-100" : ""}`}>
+                  <th scope="row" className={`${table.td} ${CELL} whitespace-nowrap text-left font-semibold text-ink-900`}>
                     <span className="mr-2 text-[12px] font-medium tabular-nums text-ink-600">{String(s.step + 1).padStart(2, "0")}</span>
                     {s.label}
                   </th>
-                  <td className={`${table.td} whitespace-nowrap tabular-nums`}>
+                  <td className={`${table.td} ${CELL} whitespace-nowrap tabular-nums max-md:col-span-2 max-md:row-start-2 max-md:text-[14px]`}>
+                    <span className="mr-1.5 text-ink-600 md:hidden">마감</span>
                     {s.due ? (
                       <>
                         {s.due}
@@ -135,10 +142,19 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
                       <span className="text-ink-600">미정</span>
                     )}
                   </td>
-                  <td className={`${table.td} whitespace-nowrap`}>
-                    {s.done ? <span className="text-ink-600">완료 {short(s.done)}</span> : s.next ? <b className="font-bold text-ink-900">{WHO[s.waits]}</b> : <span className="text-ink-600">예정</span>}
+                  <td className={`${table.td} ${CELL} whitespace-nowrap max-md:col-start-2 max-md:row-start-1 max-md:text-[14px]`}>
+                    {s.done ? (
+                      <span className="text-ink-600">완료 {short(s.done)}</span>
+                    ) : s.next ? (
+                      <b className="inline-flex items-center gap-1.5 font-bold text-ink-900">
+                        <span aria-hidden className={`size-2 shrink-0 ${SQUARE[s.waits]}`} />
+                        {WHO[s.waits]}
+                      </b>
+                    ) : (
+                      <span className="text-ink-600">예정</span>
+                    )}
                   </td>
-                  <td className={table.td}>
+                  <td className={`${table.td} ${CELL} max-md:col-span-2 ${s.submit && !preview || mine.length > 0 ? "max-md:pt-1.5" : "max-md:hidden"}`}>
                     {mine.length > 0 && (
                       <ul className="mb-3 space-y-1">
                         {mine.map((x) => (
@@ -171,7 +187,7 @@ function SubmitLink({ entryId, step, label, again, onChange }: { entryId: string
 
   if (!open)
     return (
-      <button type="button" onClick={() => setOpen(true)} className={again ? "min-h-9 text-[14px] text-ink-600 underline underline-offset-4 hover:text-primary-600" : `${ui.secondary} h-10 px-4 text-[14px]`}>
+      <button type="button" onClick={() => setOpen(true)} className={again ? "min-h-9 text-[14px] text-ink-600 underline underline-offset-4 hover:text-primary-600" : "inline-flex h-11 w-full items-center justify-center border border-line bg-white px-4 text-[14px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-600 md:-my-1.5 md:h-9 md:w-auto"}>
         {again ? "다시 제출" : `${label} 제출`}
       </button>
     );

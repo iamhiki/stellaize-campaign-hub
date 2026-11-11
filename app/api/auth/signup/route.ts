@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     else return fail(403, "가입 코드가 맞지 않습니다.");
   }
 
-  const out = mutate((db) => {
+  const out = await mutate((db) => {
     if (db.users.some((u) => u.email === email)) return { error: "이미 가입한 이메일입니다. 로그인해 주세요." };
     const found = invite ? findByInvite(db, invite) : null;
     if (invite && !found) return { error: "초대 링크가 만료됐거나 이미 사용됐습니다. 담당자에게 새 링크를 요청해 주세요." };

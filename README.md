@@ -9,7 +9,7 @@
 - **쓰는 사람:** 스텔라이즈팀 운영 담당 3~4명. 초대받은 크리에이터는 자기 일정 화면만 본다(기획자 요청 11/11)
 - **업무 흐름:** 접수 → 리스트업 → 부킹 → 제작 → 업로드 → 리포트 작성 → 완료
 - **크리에이터별 진행 단계:** 부킹 요청 → 부킹 완료 → 정산 서류 수급 → 기획안 수급 → 기획안 컨펌 → 가편안 수급 → 가편안 컨펌 → 수정본 수급 → 수정본 컨펌 → 업로드 → (리포트 작성)
-- **지금 상태:** 로그인해서 쓴다. 입력한 내용은 **허브를 켠 컴퓨터의 `data/hub.json` 파일**에 저장되고, 같은 서버에 접속한 사람은 모두 같은 데이터를 본다. 처음 켜면 예시 캠페인 3개가 들어 있다. 마감 알림 **메일은 아직 보내지 않는다**(크리에이터 화면에만 표시).
+- **지금 상태:** 로그인해서 쓴다. 입력한 내용은 Supabase를 연결했으면 **Supabase**에, 연결하지 않았으면 **허브를 켠 컴퓨터의 `data/hub.json` 파일**에 저장된다(아래 "Supabase 연결"). 같은 서버에 접속한 사람은 모두 같은 데이터를 본다. 처음 켜면 예시 캠페인 3개가 들어 있다. 마감 알림 **메일은 아직 보내지 않는다**(크리에이터 화면에만 표시).
 - **최근 변경:** 2026-11-11 기획자 요청 반영: 답변 독촉 버튼 삭제, 담당자·크리에이터 로그인, 크리에이터 링크 제출, 마감 알림 (아래 "계정과 크리에이터 화면" 참고)
 
 ---
@@ -149,8 +149,46 @@ npm run dev
 - 최신 내용 받기: `git pull` → `npm install` → `npm run dev`
 - `Port 3000 is in use`가 나오면 이미 켜져 있는 것이다. 그대로 http://localhost:3000 을 열거나 `npm run dev -- -p 3001`로 다른 포트를 쓴다.
 - **처음 한 번:** `.env.example`을 `.env.local`로 복사하고 `STAFF_JOIN_CODE=`(팀 가입 코드)와 `DEV_JOIN_CODE=`(개발자 코드) 뒤에 코드를 정해 넣는다. 그다음 http://localhost:3000/signup 에서 그 코드로 계정을 만든다. 자세한 내용은 위 "계정과 크리에이터 화면".
-- 등록하고 체크한 내용, 계정, 제출 링크는 `data/hub.json`에 저장된다(git에 올라가지 않는다). 비밀번호는 원문이 아니라 해시로 저장한다. 이 파일을 지우고 다시 켜면 계정이 모두 사라지고 예시 캠페인 3개로 돌아간다.
-- 같은 서버에 접속한 사람끼리만 데이터를 같이 본다. 각자 자기 PC에서 켜면 데이터도 각자다.
+- Supabase를 연결하지 않으면 등록하고 체크한 내용, 계정, 제출 링크는 `data/hub.json`에 저장된다(git에 올라가지 않는다). 비밀번호는 원문이 아니라 해시로 저장한다. 이 파일을 지우고 다시 켜면 계정이 모두 사라지고 예시 캠페인 3개로 돌아간다.
+- 파일에 저장할 때는 같은 서버에 접속한 사람끼리만 데이터를 같이 본다. 각자 자기 PC에서 켜면 데이터도 각자다. Supabase를 연결하면 같은 Supabase 프로젝트를 쓰는 허브끼리 같은 데이터를 본다.
+
+### 임시 테스트 계정
+
+화면을 시험해 볼 계정을 한 번에 만들고, 끝나면 한 번에 지운다. 프로젝트 폴더의 터미널에서 실행한다.
+
+| 명령 | 하는 일 |
+|---|---|
+| `node scripts/test-accounts.mjs create` | 담당자 1명(`staff@test.local`)과 크리에이터 2명(`creator1@test.local`, `creator2@test.local`)을 만들고 비밀번호를 보여 준다 |
+| `node scripts/test-accounts.mjs list` | 지금 있는 테스트 계정을 보여 준다 |
+| `node scripts/test-accounts.mjs delete` | 테스트 계정, 그 로그인, 크리에이터 연결을 지운다 |
+
+- 비밀번호는 만들 때마다 새로 정해지고 그때 한 번만 보인다. 잊었으면 `delete` 후 다시 `create` 한다.
+- 크리에이터 계정은 아직 아무도 가입하지 않은 크리에이터 행에 연결된다(캠페인마다 첫 행, 최대 2개).
+- 이메일이 `@test.local`로 끝나는 계정만 지운다. 실제 계정은 그대로다. 테스트하면서 체크한 단계와 제출한 링크는 캠페인에 남는다.
+- 허브가 쓰는 저장소를 따라간다. Supabase를 연결했으면 Supabase에, 아니면 `data/hub.json`에 만든다.
+- 여러 사람이 접속하는 서버에 올린 뒤에는 시험이 끝나면 꼭 `delete` 한다.
+
+### Supabase 연결
+
+자료를 PC의 파일이 아니라 Supabase(인터넷의 DB)에 저장하는 설정이다. 베타 동안은 Supabase 무료 요금제로 충분하다.
+
+1. [supabase.com](https://supabase.com)에서 계정을 만들고 **New project**로 프로젝트를 만든다. 지역은 **Northeast Asia (Seoul)** 을 고른다.
+2. 왼쪽 메뉴 **SQL Editor**에 이 저장소의 `supabase/schema.sql` 내용을 붙여 넣고 **Run**을 누른다. 표 하나(`hub_state`)가 생긴다.
+3. **Project Settings → API Keys**에서 **Project URL**과 **secret 키**(`sb_secret_…`, 예전 화면이면 `service_role`)를 복사한다.
+4. `.env.local`에 두 줄을 넣고 저장한 뒤 허브를 껐다 켠다.
+
+   ```
+   SUPABASE_URL=https://프로젝트주소.supabase.co
+   SUPABASE_SECRET_KEY=복사한_secret_키
+   ```
+
+5. 허브를 열면 Supabase에 예시 캠페인 3개가 들어간 새 저장소로 시작한다. `/signup`에서 계정을 다시 만든다.
+
+알아둘 점
+- secret 키는 자료 전체를 읽고 쓸 수 있는 키다. `.env.local`에만 두고 git, 이슈, 카톡에 적지 않는다. 새어 나갔으면 Supabase에서 키를 새로 만든다.
+- `data/hub.json`에 있던 계정과 캠페인은 자동으로 옮겨지지 않는다. 두 줄을 지우면 다시 파일을 쓴다.
+- 무료 요금제는 자동 백업이 없고, 1주일 동안 접속이 없으면 프로젝트가 일시정지된다. 정지되면 Supabase 대시보드에서 다시 켠다.
+- 지금은 허브 자료 전체를 표의 한 행에 통째로 넣는다(베타용). 캠페인이 수백 개로 늘기 전에 표를 나누는 작업이 필요하다.
 
 ### 계약서 앱 연결
 
@@ -184,7 +222,7 @@ lib/campaigns.ts      데이터 모양과 규칙: 진행 단계, 대기 주체, 
 lib/store.ts          화면이 쓰는 서버 데이터 사본: 바로 반영하고 서버에 저장, 20초마다 새로 받음
 lib/ops.ts            담당자가 할 수 있는 변경 목록과 입력 검사 (화면과 서버가 같이 쓴다)
 lib/me.ts             로그인한 계정
-lib/server/           서버 전용: db(data/hub.json 읽기·쓰기), auth(비밀번호 해시·세션·권한), creator(크리에이터에게 보낼 범위), notices(마감 알림)
+lib/server/           서버 전용: db(Supabase 또는 data/hub.json 읽기·쓰기), auth(비밀번호 해시·세션·권한), creator(크리에이터에게 보낼 범위), notices(마감 알림)
 lib/contract.ts       계약서 앱 링크 만들기
 lib/demo.ts           처음 켤 때 들어가는 예시 캠페인 3개 (담당자 홍가영·이세연)
 lib/date.ts           D-day·대기 일수 계산 (한국 시간 기준). 자동 검사: node lib/date.check.ts
@@ -280,8 +318,8 @@ Notice (마감 알림)   어느 진행 건의 어느 단계 · 마감 · 화면�
 
 - 웹앱 (.exe 아님: 여러 명이 같은 데이터를 동시에 본다)
 - Next.js 16 (App Router) + TypeScript + Tailwind v4 — 적용됨
-- 저장: 지금은 서버의 JSON 파일 하나(`data/hub.json`)와 직접 만든 로그인(scrypt 해시, HttpOnly 쿠키 세션). 외부 계정 없이 바로 돌리기 위한 임시 방식이다. 읽기·쓰기는 `lib/server/db.ts`만 거치므로 Supabase(Postgres, Auth)로 바꿀 때 그 파일을 바꾼다. 계약서 서류 파일은 계약서 앱이 각자 PC에서 처리하므로 허브에 저장하지 않는다
-- 배포: 아직 없음. Vercel 같은 서버리스 배포는 파일 저장이 유지되지 않으므로, 배포하려면 먼저 DB(Supabase)를 연결해야 한다
+- 저장: Supabase(Postgres)의 표 하나에 자료 전체를 jsonb 한 행으로 넣는다(`supabase/schema.sql`). `SUPABASE_URL`, `SUPABASE_SECRET_KEY`가 없으면 서버의 JSON 파일 하나(`data/hub.json`)를 쓴다. 로그인은 직접 만든 것(scrypt 해시, HttpOnly 쿠키 세션)이고 Supabase Auth는 쓰지 않는다. 읽기·쓰기는 `lib/server/db.ts`만 거친다. 표를 종류별로 나누는 것과 RLS는 아직 하지 않았다. 계약서 서류 파일은 계약서 앱이 각자 PC에서 처리하므로 허브에 저장하지 않는다
+- 배포: 아직 없음. Vercel 같은 서버리스 배포는 파일 저장이 유지되지 않으므로, 배포할 때는 Supabase 연결이 꼭 있어야 한다
 
 ## 제안가 계산 규칙 (팀 확인 필요)
 

@@ -7,17 +7,17 @@ const GONE = "초대 링크가 만료됐거나 이미 사용됐습니다. 담당
 
 /** What an invite link is for, so the join page can say it before anyone signs up. */
 export async function GET(req: NextRequest) {
-  const found = findByInvite(readDb(), req.nextUrl.searchParams.get("t") ?? "");
+  const found = findByInvite(await readDb(), req.nextUrl.searchParams.get("t") ?? "");
   if (!found) return fail(404, GONE);
   return NextResponse.json({ campaign: found.campaign.name, creator: found.entry.name }, { headers: { "Cache-Control": "no-store" } });
 }
 
 /** A creator who already has an account adds another campaign to it. */
 export async function POST(req: NextRequest) {
-  const g = guard(req, "creator");
+  const g = await guard(req, "creator");
   if (g.deny) return g.deny;
   const token = str((await body(req)).invite, 100);
-  const ok = mutate((db) => {
+  const ok = await mutate((db) => {
     const found = findByInvite(db, token);
     if (found) link(found.entry, g.user.id);
     return !!found;

@@ -9,12 +9,12 @@ export async function POST(req: NextRequest) {
   const password = typeof b.password === "string" ? b.password.slice(0, 200) : "";
   if (throttled(email)) return fail(429, "여러 번 틀렸습니다. 1분 뒤에 다시 시도해 주세요.");
 
-  const user = readDb().users.find((u) => u.email === email);
+  const user = (await readDb()).users.find((u) => u.email === email);
   const ok = !!user && checkPassword(password, user);
   recordTry(email, ok);
   // The same message either way, so the form doesn't reveal which emails have accounts.
   if (!user || !ok) return fail(401, "이메일 또는 비밀번호가 맞지 않습니다.");
 
-  const token = mutate((db) => startSession(db, user.id));
+  const token = await mutate((db) => startSession(db, user.id));
   return withSession(NextResponse.json({ me: publicUser(user) }), req, token);
 }

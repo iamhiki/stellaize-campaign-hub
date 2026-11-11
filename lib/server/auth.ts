@@ -56,9 +56,9 @@ export function sameOrigin(req: NextRequest) {
 }
 
 /** The signed-in user with the given role, or the response to send back instead. Changes also need sameOrigin. */
-export function guard(req: NextRequest, role: Role | "any"): { user: User; deny?: undefined } | { deny: NextResponse; user?: undefined } {
+export async function guard(req: NextRequest, role: Role | "any"): Promise<{ user: User; deny?: undefined } | { deny: NextResponse; user?: undefined }> {
   if (req.method !== "GET" && !sameOrigin(req)) return { deny: fail(403, "다른 사이트에서 보낸 요청입니다.") };
-  const user = userOf(readDb(), req.cookies.get(COOKIE)?.value);
+  const user = userOf(await readDb(), req.cookies.get(COOKIE)?.value);
   if (!user) return { deny: fail(401, "로그인이 필요합니다.") };
   const allowed = role === "any" || user.role === role || (role === "staff" && user.role === "dev");
   if (!allowed) return { deny: fail(403, "이 화면을 볼 권한이 없습니다.") };

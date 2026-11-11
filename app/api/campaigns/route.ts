@@ -22,22 +22,22 @@ const snapshot = (db: Db) => {
 const send = (db: Db) => NextResponse.json(snapshot(db), { headers: { "Cache-Control": "no-store" } });
 
 export async function GET(req: NextRequest) {
-  const g = guard(req, "staff");
+  const g = await guard(req, "staff");
   if (g.deny) return g.deny;
   // No scheduler on this setup: passed deadlines are picked up whenever staff have the hub open.
   const today = todayKST();
-  const db = readDb();
-  return send(queueNotices(db, today) > 0 ? mutate((d) => (queueNotices(d, today), d)) : db);
+  const db = await readDb();
+  return send(queueNotices(db, today) > 0 ? await mutate((d) => (queueNotices(d, today), d)) : db);
 }
 
 export async function POST(req: NextRequest) {
-  const g = guard(req, "staff");
+  const g = await guard(req, "staff");
   if (g.deny) return g.deny;
   const op = parseOp(await body(req));
   if (!op) return fail(400, "저장할 수 없는 요청입니다.");
   if (op.op === "invite" && op.token !== null) op.token = newToken();
   return send(
-    mutate((db) => {
+    await mutate((db) => {
       db.campaigns = applyOp(db.campaigns, op, todayKST());
       if (op.op === "deleteCampaign") {
         db.submissions = db.submissions.filter((s) => s.campaignId !== op.id);

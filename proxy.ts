@@ -7,8 +7,8 @@ import { readDb } from "@/lib/server/db";
  * creators, both for developers, the login form for everyone else. This is only the redirect. What data a role may read or change
  * is decided again in every API route (lib/server/auth.ts guard), so skipping this file exposes nothing.
  */
-export function proxy(req: NextRequest) {
-  const user = userOf(readDb(), req.cookies.get(COOKIE)?.value);
+export async function proxy(req: NextRequest) {
+  const user = userOf(await readDb(), req.cookies.get(COOKIE)?.value);
   const path = req.nextUrl.pathname;
   const to = (p: string) => NextResponse.redirect(new URL(p, req.url));
   const home = user?.role === "creator" ? "/creator" : "/campaigns";

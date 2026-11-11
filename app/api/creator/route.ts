@@ -9,12 +9,12 @@ import { queueNotices } from "@/lib/server/notices";
 const send = (db: Db, userId: string) => NextResponse.json({ items: creatorView(db, userId) }, { headers: { "Cache-Control": "no-store" } });
 
 export async function GET(req: NextRequest) {
-  const g = guard(req, "any");
+  const g = await guard(req, "any");
   if (g.deny) return g.deny;
   if (g.user.role === "staff") return fail(403, "이 화면을 볼 권한이 없습니다.");
   const today = todayKST();
-  const read = readDb();
-  const db = queueNotices(read, today) > 0 ? mutate((d) => (queueNotices(d, today), d)) : read;
+  const read = await readDb();
+  const db = queueNotices(read, today) > 0 ? await mutate((d) => (queueNotices(d, today), d)) : read;
   if (g.user.role === "creator") return send(db, g.user.id);
   // Developer: pick any row and see it as that creator would. Handing in a link stays creator-only (POST below).
   const entryId = req.nextUrl.searchParams.get("entry") ?? "";
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
  * staff checking "수급" by hand, so the row moves on to the advertiser's confirmation.
  */
 export async function POST(req: NextRequest) {
-  const g = guard(req, "creator");
+  const g = await guard(req, "creator");
   if (g.deny) return g.deny;
   const b = await body(req);
   const entryId = str(b.entryId, 120);
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") return fail(400, "링크 주소를 확인해 주세요. https:// 로 시작해야 합니다.");
 
-  const out = mutate((db) => {
+  const out = await mutate((db) => {
     const campaign = db.campaigns.find((c) => c.entries.some((e) => e.id === entryId && e.creatorId === g.user.id && !e.droppedAt));
     const entry = campaign?.entries.find((e) => e.id === entryId);
     if (!campaign || !entry) return null; // not this creator's row
