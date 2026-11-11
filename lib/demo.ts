@@ -1,11 +1,10 @@
 import { addDays } from "./date";
 import { STEPS, UPLOAD, type Campaign, type Entry } from "./campaigns";
 
-// The signed-in user until login exists. 홍가영 and 이세연 run this project.
-export const CURRENT_USER = { name: "홍가영", team: "스텔라이즈팀" };
+export const TEAM = "스텔라이즈팀";
 
 /**
- * Example campaigns shown until someone edits data in this browser. Dates are relative to today so the
+ * Example campaigns the server starts with (data/hub.json, first run). Owners are 홍가영 and 이세연. Dates are relative to today so the
  * demo keeps showing the same situations (waiting, due soon, overdue).
  */
 export function demoCampaigns(today: string): Campaign[] {

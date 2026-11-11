@@ -3,7 +3,7 @@ import { CampaignDetail } from "@/components/CampaignDetail";
 
 export const metadata = { title: "캠페인 │ Campaign Hub │ 스텔라이즈" };
 
-// Campaigns live in the browser until Supabase exists, so the page itself renders on the client.
+// The id comes from the address; the campaign itself is loaded in the browser (lib/store.ts).
 export default function CampaignPage(props: PageProps<"/campaigns/[id]">) {
   return (
     <Suspense fallback={null}>

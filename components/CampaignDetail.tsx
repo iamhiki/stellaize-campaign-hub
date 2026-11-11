@@ -33,7 +33,7 @@ export function CampaignDetail({ id }: { id: string }) {
       <>
         <PageBand title="캠페인을 찾을 수 없습니다" />
         <main className={`${pageWrap} py-12`}>
-          <p className="text-[17px] text-ink-800">삭제했거나 다른 브라우저에서 등록한 캠페인입니다. 지금은 등록한 브라우저에서만 보입니다.</p>
+          <p className="text-[17px] text-ink-800">삭제된 캠페인이거나 주소가 잘못됐습니다.</p>
           <Link href="/campaigns" className={`${ui.primary} mt-8`}>
             캠페인 목록으로
           </Link>
@@ -146,14 +146,14 @@ function AddCreator({ campaignId }: { campaignId: string }) {
   );
 }
 
-// Deleting can't be undone in the browser-only demo, so it asks once inline (same pattern as 드랍).
+// Deleting can't be undone, so it asks once inline (same pattern as 드랍).
 function DeleteCampaign({ name, onDelete }: { name: string; onDelete: () => void }) {
   const [asking, setAsking] = useState(false);
   return (
     <div className="flex flex-wrap items-center gap-3 border-t border-line py-8 text-[14px]">
       {asking ? (
         <>
-          <span className="text-ink-800">{name} 캠페인을 삭제할까요? 크리에이터 진행 기록도 함께 지워집니다.</span>
+          <span className="text-ink-800">{name} 캠페인을 삭제할까요? 크리에이터 진행 기록과 제출 링크도 함께 지워집니다.</span>
           <button type="button" onClick={onDelete} className="min-h-10 bg-danger-700 px-4 font-semibold text-white hover:bg-[#8c2525]">
             삭제
           </button>

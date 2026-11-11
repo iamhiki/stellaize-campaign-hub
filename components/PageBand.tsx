@@ -1,14 +1,14 @@
 import { SiteHeader } from "./SiteHeader";
-import { CURRENT_USER } from "@/lib/demo";
 
 // Incross visual language: blue band with the GNB and a tight headline. Stellaize primary-700 -> primary-600
 // keeps white text >= 4.5:1 across the band. Kept low so the work sits above the fold.
-export function PageBand({ title, children }: { title: React.ReactNode; children?: React.ReactNode }) {
+// `center` is for the pages that are one narrow form (로그인, 가입, 초대): text and form share the middle.
+export function PageBand({ title, children, center }: { title: React.ReactNode; children?: React.ReactNode; center?: boolean }) {
   return (
     <section className="relative bg-[linear-gradient(103deg,#125cad_0%,#1876d6_100%)] text-white">
-      <SiteHeader userName={`${CURRENT_USER.name} 님`} />
-      <div className="mx-auto max-w-[1260px] px-5 pb-8 pt-[120px] md:px-[30px] md:pt-[96px]">
-        <h1 className="flex flex-wrap items-center gap-x-3 gap-y-2 text-[30px] font-bold leading-tight tracking-[-0.04em] md:text-[40px]">{title}</h1>
+      <SiteHeader />
+      <div className={`mx-auto px-5 pb-8 pt-[120px] md:px-[30px] md:pt-[96px] ${center ? "max-w-[620px] text-center" : "max-w-[1260px]"}`}>
+        <h1 className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${center ? "justify-center" : ""} text-[30px] font-bold leading-tight tracking-[-0.04em] md:text-[40px]`}>{title}</h1>
         {children && <div className="mt-2 text-[15px] font-medium leading-relaxed md:text-[17px]">{children}</div>}
       </div>
     </section>
@@ -32,7 +32,7 @@ export const ui = {
   secondary: "inline-flex h-12 shrink-0 items-center justify-center border border-line bg-white px-6 text-[16px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-600",
 };
 
-/** Shown while the browser-stored data loads (one frame) so the layout doesn't jump. */
+/** Shown until the server answers, so the layout doesn't jump. */
 export function Loading() {
   return <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">불러오는 중입니다.</p>;
 }

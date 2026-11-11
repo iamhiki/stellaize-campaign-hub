@@ -1,7 +1,6 @@
 "use client";
 import type { WaitingOn } from "@/lib/campaigns";
-import { todayKST } from "@/lib/date";
-import { updateEntry } from "@/lib/store";
+import { dropEntry } from "@/lib/store";
 import { FOLLOW_UP_DAYS } from "./badges";
 import { DropButton } from "./DropButton";
 
@@ -24,5 +23,5 @@ export function LateDrop({ campaignId, entryId, name, waitingOn, days }: {
   days: number;
 }) {
   if (!canDrop(waitingOn, days)) return null;
-  return <DropButton name={name} onDrop={() => updateEntry(campaignId, entryId, () => ({ droppedAt: todayKST() }))} />;
+  return <DropButton name={name} onDrop={() => dropEntry(campaignId, entryId, true)} />;
 }

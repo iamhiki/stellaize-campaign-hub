@@ -5,7 +5,7 @@ import { Loading, pageWrap, table } from "./PageBand";
 import { WaitingLine, DdayText, FOLLOW_UP_DAYS } from "./badges";
 import { LateDrop, canDrop, needsFollowUp } from "./FollowUp";
 import { entryStatus, type WaitingOn } from "@/lib/campaigns";
-import { CURRENT_USER } from "@/lib/demo";
+import { useMe } from "@/lib/me";
 import { useCampaigns, useToday } from "@/lib/store";
 
 type Bucket = { key: string; label: string; hint: string };
@@ -61,7 +61,7 @@ export function TodayList() {
   const listRef = useRef<HTMLElement>(null);
   const today = useToday();
   const buckets = BUCKETS;
-  const userName = CURRENT_USER.name;
+  const userName = useMe()?.name ?? "";
 
   const all: TodayRow[] = [];
   for (const c of campaigns ?? []) {
@@ -92,7 +92,7 @@ export function TodayList() {
   return (
     <main className={pageWrap}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line py-5">
-        <Toggle label="범위" value={scope} onChange={setScope} options={[["mine", `${userName} 님 담당`], ["all", "전체"]]} />
+        <Toggle label="범위" value={scope} onChange={setScope} options={[["mine", userName ? `${userName} 님 담당` : "내 담당"], ["all", "전체"]]} />
         <Toggle label="정렬" value={sort} onChange={setSort} options={[["kind", "구분순"], ["waiting", "대기일순"]]} />
       </div>
 

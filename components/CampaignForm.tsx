@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addCampaign } from "@/lib/store";
-import { CURRENT_USER } from "@/lib/demo";
+import { useMe } from "@/lib/me";
 import { ui } from "./PageBand";
 
 const CHANNELS = ["인스타그램 릴스", "인스타그램 피드", "유튜브", "유튜브 쇼츠", "틱톡", "블로그"];
@@ -12,6 +12,7 @@ const CHANNELS = ["인스타그램 릴스", "인스타그램 피드", "유튜브
 export function CampaignForm({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const myName = useMe()?.name ?? "";
 
   function submit(form: FormData) {
     const get = (k: string) => String(form.get(k) ?? "").trim();
@@ -60,7 +61,7 @@ export function CampaignForm({ onClose }: { onClose: () => void }) {
         </label>
         <label className={ui.label}>
           담당자
-          <input name="owners" required defaultValue={CURRENT_USER.name} aria-describedby="owners-hint" className={ui.input} />
+          <input key={myName} name="owners" required defaultValue={myName} aria-describedby="owners-hint" className={ui.input} />
           <span id="owners-hint" className="text-[13px] font-normal text-ink-600">
             여러 명이면 쉼표로 구분
           </span>

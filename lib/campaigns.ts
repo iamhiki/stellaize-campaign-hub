@@ -1,6 +1,6 @@
 import { daysBetween, reportDue } from "./date";
 
-// shortcut: no Supabase yet. Campaigns live in this browser (lib/store.ts); these are the shapes and the rules.
+// The shapes and the rules. The data itself lives on the server (lib/server/db.ts) and reaches screens through lib/store.ts.
 export type WaitingOn = "advertiser" | "creator" | "us";
 
 /**
@@ -37,7 +37,20 @@ export type Entry = {
   /** Missing in data saved before 11/10; read it through dueList. */
   due?: (string | null)[];
   droppedAt: string | null;
+  /** One-time code in the creator's invite link, until they join (기획자 11/11: 크리에이터 로그인). Staff only. */
+  invite?: string | null;
+  /** The creator account linked to this row. That account sees this row and nothing else. */
+  creatorId?: string | null;
 };
+
+/** Steps where the creator hands something in (기획자 11/11: 기획안, 가편안, 수정본을 플랫폼에서 받기). */
+export const SUBMIT_STEPS = ["기획안 수급", "가편안 수급", "수정본 수급"].map((l) => STEPS.findIndex((s) => s.label === l));
+
+/** A link the creator handed in for one step. Files stay where the creator keeps them (드라이브, 유튜브 등). */
+export type Submission = { id: string; campaignId: string; entryId: string; step: number; url: string; note: string; at: string };
+
+/** A passed deadline the creator was told about. `emailedAt` stays null until a mail account is connected. */
+export type Notice = { id: string; key: string; userId: string; campaignId: string; entryId: string; step: number; due: string; createdAt: string; emailedAt: string | null };
 
 export type Campaign = {
   id: string;

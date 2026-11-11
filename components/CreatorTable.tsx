@@ -1,8 +1,9 @@
 "use client";
 import { Fragment, useState } from "react";
 import { STEPS, REPORT, UPLOAD, doneList, dueList, entryStatus, type Campaign, type Entry } from "@/lib/campaigns";
+import { CreatorAccess } from "./CreatorAccess";
 import { daysBetween } from "@/lib/date";
-import { setDue, setDueForAll, toggleStep, updateEntry } from "@/lib/store";
+import { dropEntry, setDue, setDueForAll, toggleStep, useSubmissions } from "@/lib/store";
 import { contractLink } from "@/lib/contract";
 import { DeadlineLine, WaitingLine } from "./badges";
 import { LateDrop } from "./FollowUp";
@@ -17,6 +18,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
   const live = campaign.entries.filter((e) => !e.droppedAt);
   const dropped = campaign.entries.filter((e) => e.droppedAt);
   const [editing, setEditing] = useState<string | null>(null);
+  const submissions = useSubmissions();
 
   return (
     <>
@@ -55,6 +57,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                     <th scope="row" className={`${td} ${sticky} px-3 text-left font-normal group-hover:bg-[#f5f7fa]`}>
                       <span className="block text-[16px] font-bold text-ink-900">{e.name}</span>
                       <span className="block text-[13px] text-ink-600">{e.channel}</span>
+                      {(e.creatorId || e.invite) && <span className="block text-[12px] text-ink-600">{e.creatorId ? "계정 연결됨" : "초대 링크 만듦"}</span>}
                       <a
                         href={contractLink(campaign, e)}
                         target="_blank"
@@ -70,7 +73,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                         onClick={() => setEditing(open ? null : e.id)}
                         className="block min-h-8 text-[13px] text-ink-600 underline underline-offset-4 hover:text-primary-600"
                       >
-                        {open ? "마감 닫기" : "마감 설정"}
+                        {open ? "닫기" : "마감 · 초대"}
                       </button>
                     </th>
                     <td className={`${td} group-hover:bg-[#f5f7fa]`}>
@@ -85,7 +88,10 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                         </div>
                       </div>
                     </td>
-                    {STEPS.map((step, i) => (
+                    {STEPS.map((step, i) => {
+                      // 기획자 11/11: 크리에이터가 낸 기획안·가편안·수정본 링크. The newest one opens; the count shows resubmits.
+                      const handed = submissions.filter((x) => x.entryId === e.id && x.step === i);
+                      return (
                       <td
                         key={step.label}
                         className={`${td} text-center ${i === next ? "bg-primary-100" : "group-hover:bg-[#f5f7fa]"} ${i === REPORT ? "border-l-2 border-l-line-strong" : ""}`}
@@ -101,13 +107,28 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                           <span className="text-[12px] tabular-nums text-ink-600">{done[i] ? done[i]!.slice(5).replace("-", "/") : ""}</span>
                           {!done[i] && dues[i] && <DueMark date={dues[i]!} today={today} own={i !== UPLOAD || !!e.due?.[UPLOAD]} />}
                         </label>
+                        {handed.length > 0 && (
+                          <a
+                            href={handed.at(-1)!.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={handed.at(-1)!.note || undefined}
+                            className="mt-1 inline-flex min-h-8 items-center text-[12px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700"
+                          >
+                            제출본{handed.length > 1 ? ` ${handed.length}` : ""}
+                            <span aria-hidden>↗</span>
+                            <span className="sr-only"> ({e.name} {step.label}, 새 탭)</span>
+                          </a>
+                        )}
                       </td>
-                    ))}
+                      );
+                    })}
                   </tr>
                   {open && (
                     <tr>
                       <td colSpan={STEPS.length + 2} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
                         <DueEditor campaign={campaign} entry={e} />
+                        <CreatorAccess campaign={campaign} entry={e} />
                       </td>
                     </tr>
                   )}
@@ -119,7 +140,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
         </div>
       )}
       <p className="mt-3 text-[13px] text-ink-600">
-        체크하면 오늘 날짜가 기록됩니다. 파란 칸이 크리에이터마다 다음에 할 단계입니다. 체크칸 아래 &lsquo;~날짜&rsquo;는 그 단계의 마감이고, 지나면 빨간색입니다.
+        체크하면 오늘 날짜가 기록됩니다. 파란 칸이 크리에이터마다 다음에 할 단계입니다. 체크칸 아래 &lsquo;~날짜&rsquo;는 그 단계의 마감이고, 지나면 빨간색입니다. 크리에이터가 링크를 제출하면 그 단계가 체크되고 &lsquo;제출본&rsquo;이 붙습니다.
       </p>
 
       {dropped.length > 0 && (
@@ -136,7 +157,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                 </span>
                 <button
                   type="button"
-                  onClick={() => updateEntry(campaign.id, e.id, () => ({ droppedAt: null }))}
+                  onClick={() => dropEntry(campaign.id, e.id, false)}
                   className="min-h-9 text-[13px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700"
                 >
                   되돌리기
