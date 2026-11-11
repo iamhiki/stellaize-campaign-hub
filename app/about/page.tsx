@@ -43,7 +43,8 @@ const ACCOUNTS = [
   },
 ];
 
-const NEXT = ["크리에이터도 열 수 있는 서버와 DB", "마감 알림 메일 발송", "대외비 캠페인 접근 제한", "계약서 작성 앱 연동"];
+// Keep in step with README "지금 단계와 다음에 만들 것".
+const NEXT = ["크리에이터도 열 수 있게 인터넷 서버에 올리기", "마감 알림 메일 발송", "대외비 캠페인 접근 제한", "계약서 앱 배포본에 미리 채우기 넣기"];
 
 // Sample cards in the opening band: the waiting party rotates, which is the product's whole idea in one motion.
 const HERO_CARDS: { name: string; stage: string; states: [WaitingOn, number][]; indent: string }[] = [
@@ -206,7 +207,7 @@ export default function AboutPage() {
             <div data-reveal>
               <h2 className={h2}>지금 단계</h2>
               <p className="mt-5 text-[17px] leading-relaxed text-ink-800">
-                캠페인 등록과 크리에이터별 진행 체크, 오늘 할 일, 로그인, 크리에이터의 링크 제출이 동작합니다. 지금은 허브를 켠 컴퓨터에서만 열리고, 마감 알림은 크리에이터 화면에만 표시됩니다.
+                캠페인 등록과 크리에이터별 진행 체크, 오늘 할 일, 로그인, 크리에이터의 링크 제출이 동작합니다. 지금은 허브를 켠 컴퓨터와 같은 와이파이 안에서만 열리고, 마감 알림은 크리에이터 화면에만 표시됩니다.
               </p>
             </div>
             <div>
