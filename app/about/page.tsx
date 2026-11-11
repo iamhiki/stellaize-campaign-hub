@@ -124,7 +124,8 @@ export default function AboutPage() {
                 <article key={a.who} data-reveal style={delay(i * 140)} className="flex flex-col border-t-2 border-ink-900 pt-6 md:px-8 md:first:pl-0 md:last:pr-0">
                   <h3 className="text-[19px] font-bold text-ink-900 md:text-[21px]">{a.who}</h3>
                   <p className="mt-3 text-[16px] leading-relaxed text-ink-800">{a.body}</p>
-                  <p className="mt-2 text-[15px] leading-relaxed text-ink-600">{a.how}</p>
+                  {/* grows, so both buttons sit on the same line whatever the text length */}
+                  <p className="mt-2 flex-1 text-[15px] leading-relaxed text-ink-600">{a.how}</p>
                   <Link href="/login" className="mt-6 inline-flex h-12 w-fit items-center bg-primary-600 px-6 text-[16px] font-bold text-white hover:bg-primary-700">
                     {a.action}
                   </Link>
