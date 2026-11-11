@@ -20,7 +20,6 @@ export function demoCampaigns(today: string): Campaign[] {
     done: STEPS.map((_, i) => (i < checked ? shift(-(lastAgo + (checked - 1 - i) * 2)) : null)),
     due: STEPS.map((_, i) => (i in dues ? shift(dues[i]) : null)),
     droppedAt: null,
-    remindedAt: null,
   });
   const PLAN = 3; // 기획안 수급
   const DRAFT = 5; // 가편안 수급

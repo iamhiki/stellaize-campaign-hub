@@ -5,7 +5,7 @@ import { daysBetween } from "@/lib/date";
 import { setDue, setDueForAll, toggleStep, updateEntry } from "@/lib/store";
 import { contractLink } from "@/lib/contract";
 import { DeadlineLine, WaitingLine } from "./badges";
-import { FollowUp } from "./FollowUp";
+import { LateDrop } from "./FollowUp";
 
 const th = "border-b border-line bg-[#f5f7fa] px-2 py-3 text-[13px] font-semibold leading-tight text-ink-800";
 const td = "border-b border-line px-2 py-3 align-top";
@@ -81,7 +81,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                         {!s.finished && <WaitingLine on={s.waitingOn} days={s.waitingDays} />}
                         {s.deadline && <DeadlineLine deadline={s.deadline} />}
                         <div className="empty:hidden">
-                          <FollowUp campaignId={campaign.id} entryId={e.id} name={e.name} waitingOn={s.waitingOn} days={s.waitingDays} remindedAt={e.remindedAt} />
+                          <LateDrop campaignId={campaign.id} entryId={e.id} name={e.name} waitingOn={s.waitingOn} days={s.waitingDays} />
                         </div>
                       </div>
                     </td>

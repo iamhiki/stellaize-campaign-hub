@@ -37,7 +37,6 @@ export type Entry = {
   /** Missing in data saved before 11/10; read it through dueList. */
   due?: (string | null)[];
   droppedAt: string | null;
-  remindedAt: string | null;
 };
 
 export type Campaign = {

@@ -59,7 +59,7 @@ export function deleteCampaign(id: string) {
 }
 
 export function addEntry(campaignId: string, name: string, channel: string) {
-  const entry: Entry = { id: newId(), name, channel, addedAt: todayKST(), done: STEPS.map(() => null), due: STEPS.map(() => null), droppedAt: null, remindedAt: null };
+  const entry: Entry = { id: newId(), name, channel, addedAt: todayKST(), done: STEPS.map(() => null), due: STEPS.map(() => null), droppedAt: null };
   write(read().map((c) => (c.id === campaignId ? { ...c, entries: [...c.entries, entry] } : c)));
 }
 
@@ -71,14 +71,10 @@ export function updateEntry(campaignId: string, entryId: string, change: (e: Ent
   );
 }
 
-/**
- * Check or uncheck one step; a checked step records today's date (KST). Checking clears the 독촉 record,
- * because that was about the step that just got its answer.
- */
+/** Check or uncheck one step; a checked step records today's date (KST). */
 export const toggleStep = (campaignId: string, entryId: string, step: number, on: boolean) =>
   updateEntry(campaignId, entryId, (e) => ({
     done: STEPS.map((_, i) => (i === step ? (on ? todayKST() : null) : (e.done[i] ?? null))),
-    ...(on ? { remindedAt: null } : {}),
   }));
 
 const withDue = (e: Entry, step: number, date: string | null) => STEPS.map((_, i) => (i === step ? date || null : (e.due?.[i] ?? null)));

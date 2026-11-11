@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Loading, pageWrap, table } from "./PageBand";
 import { WaitingLine, DdayText, FOLLOW_UP_DAYS } from "./badges";
-import { FollowUp, canChase, needsFollowUp } from "./FollowUp";
+import { LateDrop, canDrop, needsFollowUp } from "./FollowUp";
 import { entryStatus, type WaitingOn } from "@/lib/campaigns";
 import { CURRENT_USER } from "@/lib/demo";
 import { useCampaigns, useToday } from "@/lib/store";
@@ -13,7 +13,6 @@ type TodayRow = {
   entryId: string;
   kind: string;
   creator: string;
-  remindedAt: string | null;
   campaignId: string;
   campaign: string;
   mine: boolean;
@@ -50,7 +49,7 @@ const SOON = 3; // a report due this many days out or closer counts as today's w
 const BUCKETS: Bucket[] = [
   { key: "overdue", label: "마감 지남", hint: "단계별 마감, 업로드 날짜, 리포트 마감이 지난 건" },
   { key: "report", label: "리포트 작성", hint: `리포트 마감(기본 업로드 후 14일) ${SOON}일 안` },
-  { key: "chase", label: "답변 독촉", hint: `크리에이터·광고주 회신 ${FOLLOW_UP_DAYS}일 이상 없음` },
+  { key: "late", label: "회신 지연", hint: `크리에이터·광고주 회신 ${FOLLOW_UP_DAYS}일 이상 없음` },
   { key: "confirm", label: "컨펌 대기", hint: "광고주 컨펌을 기다리는 건" },
 ];
 
@@ -58,6 +57,8 @@ export function TodayList() {
   const campaigns = useCampaigns();
   const [scope, setScope] = useState<Scope>("mine");
   const [sort, setSort] = useState<Sort>("kind");
+  const [only, setOnly] = useState<string | null>(null); // a bucket card narrows the list to that kind
+  const listRef = useRef<HTMLElement>(null);
   const today = useToday();
   const buckets = BUCKETS;
   const userName = CURRENT_USER.name;
@@ -68,10 +69,10 @@ export function TodayList() {
     for (const e of c.entries) {
       if (e.droppedAt) continue;
       const s = entryStatus(e, c, today);
-      const base = { entryId: e.id, creator: e.name, remindedAt: e.remindedAt, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays };
+      const base = { entryId: e.id, creator: e.name, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays };
       if (s.overdue) all.push({ ...base, kind: "overdue", due: s.deadline });
       else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
-      if (needsFollowUp(s.waitingOn, s.waitingDays)) all.push({ ...base, kind: "chase", due: s.deadline });
+      if (needsFollowUp(s.waitingOn, s.waitingDays)) all.push({ ...base, kind: "late", due: s.deadline });
       else if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
     }
   }
@@ -81,6 +82,12 @@ export function TodayList() {
     .filter((r) => scope === "all" || r.mine)
     .sort((a, b) => (sort === "waiting" ? b.waitingDays - a.waitingDays : order.indexOf(a.kind) - order.indexOf(b.kind)));
   const labelOf = Object.fromEntries(buckets.map((b) => [b.key, b.label]));
+  const shown = only ? rows.filter((r) => r.kind === only) : rows;
+  const pick = (key: string) => {
+    const next = only === key ? null : key;
+    setOnly(next);
+    if (next) listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <main className={pageWrap}>
@@ -91,25 +98,41 @@ export function TodayList() {
 
       <section className="grid grid-cols-2 gap-y-8 border-b border-line py-8 md:grid-cols-4 md:divide-x md:divide-line md:py-9">
         {buckets.map((b) => (
-          <article key={b.key} className="pr-4 md:px-7 md:first:pl-0">
-            <h2 className="text-[16px] font-bold text-ink-900">{b.label}</h2>
-            <p className="mt-4 text-[32px] font-bold leading-none tracking-[-0.03em] text-ink-900 tabular-nums">
+          <button
+            key={b.key}
+            type="button"
+            aria-pressed={only === b.key}
+            onClick={() => pick(b.key)}
+            className="group pr-4 text-left hover:bg-[#f5f7fa] aria-pressed:bg-primary-100 md:px-7 md:first:pl-0 md:aria-pressed:first:pl-7"
+          >
+            <span className="block text-[16px] font-bold text-ink-900 group-hover:text-primary-600">
+              {b.label}
+              <span className="ml-1 text-[13px] font-medium text-ink-600">{only === b.key ? "· 보는 중" : "목록 보기 ›"}</span>
+            </span>
+            <span className="mt-4 block text-[32px] font-bold leading-none tracking-[-0.03em] text-ink-900 tabular-nums">
               {rows.filter((r) => r.kind === b.key).length}
               <span className="ml-1 text-[16px] font-medium text-ink-600">건</span>
-            </p>
-            <p className="mt-3 text-[14px] text-ink-600">{b.hint}</p>
-          </article>
+            </span>
+            <span className="mt-3 block text-[14px] text-ink-600">{b.hint}</span>
+          </button>
         ))}
       </section>
 
-      <section className="py-10 md:py-14">
-        <h2 className="mb-6 text-[26px] font-bold tracking-[-0.04em] text-ink-900 md:mb-7 md:text-[32px]">
-          처리할 건 <span className="text-[18px] font-medium tracking-normal text-ink-600 tabular-nums">{rows.length}건</span>
-        </h2>
+      <section ref={listRef} className="scroll-mt-4 py-10 md:py-14">
+        <div className="mb-6 flex flex-wrap items-baseline gap-x-4 gap-y-2 md:mb-7">
+          <h2 className="text-[26px] font-bold tracking-[-0.04em] text-ink-900 md:text-[32px]">
+            {only ? labelOf[only] : "처리할 건"} <span className="text-[18px] font-medium tracking-normal text-ink-600 tabular-nums">{shown.length}건</span>
+          </h2>
+          {only && (
+            <button type="button" onClick={() => setOnly(null)} className="min-h-9 text-[14px] text-ink-600 underline underline-offset-4 hover:text-primary-600">
+              전체 보기
+            </button>
+          )}
+        </div>
         {!campaigns ? (
           <Loading />
-        ) : rows.length === 0 ? (
-          <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">오늘 처리할 건이 없습니다.</p>
+        ) : shown.length === 0 ? (
+          <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">{only ? `${labelOf[only]} 건이 없습니다.` : "오늘 처리할 건이 없습니다."}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className={table.wrap}>
@@ -123,7 +146,7 @@ export function TodayList() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {shown.map((r) => (
                   <tr key={`${r.kind}-${r.entryId}`}>
                     <td className={`${table.td} font-semibold text-ink-900`}>{labelOf[r.kind]}</td>
                     <td className={table.td}>{r.creator}</td>
@@ -146,8 +169,8 @@ export function TodayList() {
                       )}
                     </td>
                     <td className={table.td}>
-                      {canChase(r.waitingOn) ? (
-                        <FollowUp campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} remindedAt={r.remindedAt} />
+                      {canDrop(r.waitingOn, r.waitingDays) ? (
+                        <LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} />
                       ) : (
                         <span className="text-ink-600">—</span>
                       )}
