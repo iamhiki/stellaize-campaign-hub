@@ -1,10 +1,9 @@
-import { after, NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { SUBMIT_STEPS } from "@/lib/campaigns";
 import { todayKST } from "@/lib/date";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
 import { creatorView, previewChoices, previewView } from "@/lib/server/creator";
 import { mutate, readDb, type Db } from "@/lib/server/db";
-import { queueNotices, sendNoticeMail } from "@/lib/server/notices";
 
 const send = (db: Db, userId: string) => NextResponse.json({ items: creatorView(db, userId) }, { headers: { "Cache-Control": "no-store" } });
 
@@ -12,10 +11,7 @@ export async function GET(req: NextRequest) {
   const g = await guard(req, "any");
   if (g.deny) return g.deny;
   if (g.user.role === "staff") return fail(403, "이 화면을 볼 권한이 없습니다.");
-  const today = todayKST();
-  const read = await readDb();
-  const db = queueNotices(read, today) > 0 ? await mutate((d) => (queueNotices(d, today), d)) : read;
-  after(sendNoticeMail);
+  const db = await readDb();
   if (g.user.role === "creator") return send(db, g.user.id);
   // Developer: pick any row and see it as that creator would. Handing in a link stays creator-only (POST below).
   const entryId = req.nextUrl.searchParams.get("entry") ?? "";

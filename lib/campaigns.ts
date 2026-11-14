@@ -1,4 +1,4 @@
-import { daysBetween, reportDue } from "./date";
+import { daysBetween, dueWords, reportDue } from "./date";
 
 // The shapes and the rules. The data itself lives on the server (lib/server/db.ts) and reaches screens through lib/store.ts.
 export type WaitingOn = "advertiser" | "creator" | "us";
@@ -57,7 +57,7 @@ export const SUBMIT_STEPS = ["기획안 수급", "가편안 수급", "수정본 
 /** A link the creator handed in for one step. Files stay where the creator keeps them (드라이브, 유튜브 등). */
 export type Submission = { id: string; campaignId: string; entryId: string; step: number; url: string; note: string; at: string };
 
-/** A deadline reminder for one step (made the day before the deadline). `emailedAt` stays null until the mail has gone out. */
+/** A reminder mail staff sent about one step (11/14: staff press 메일 보내기; nothing goes out by itself). `emailedAt` is the day it went. */
 export type Notice = { id: string; key: string; userId: string; campaignId: string; entryId: string; step: number; due: string; createdAt: string; emailedAt: string | null };
 
 export type Campaign = {
@@ -131,4 +131,27 @@ export function progress(entries: Entry[]) {
   const pct = live.length ? Math.round((checked / (live.length * STEPS.length)) * 100) : 0;
   const finished = live.filter((e) => doneList(e).every(Boolean)).length;
   return { pct, finished, total: live.length };
+}
+
+/**
+ * The reminder mail staff start from when they press 메일 보내기: about the creator's next step and its deadline.
+ * Staff can change every word before sending.
+ */
+export function reminderDraft(c: Campaign, e: Entry, creatorName: string, today: string) {
+  const step = Math.max(0, doneList(e).findIndex((d) => !d));
+  const what = STEPS[step].label.replace(" 수급", "");
+  const due = dueList(e, c)[step];
+  const words = due && today ? dueWords(daysBetween(today, due), due.slice(5).replace("-", "/")) : "진행 확인 부탁드립니다";
+  return {
+    step,
+    subject: `[스텔라이즈] ${c.name} ${what} ${words}`,
+    text: [
+      `${creatorName} 님, 안녕하세요. 스텔라이즈팀입니다.`,
+      "",
+      due ? `${c.name} 캠페인의 ${what} ${words}.` : `${c.name} 캠페인의 ${what} 진행 상황을 확인 부탁드립니다.`,
+      "업로드 일정이 정해져 있어 기한 안에 부탁드립니다. 일정이 어려우시면 가능한 날짜를 미리 알려 주세요.",
+      "",
+      `담당: ${c.owners.join(", ")}`,
+    ].join("\n"),
+  };
 }

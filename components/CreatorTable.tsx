@@ -16,16 +16,31 @@ const sticky = "sticky left-0 z-10 bg-white";
 
 // 기획자 피드백 11/7: 크리에이터마다 부킹 요청 → 업로드 한 프로세스를 끝날 때마다 체크. 리포트 작성은 업로드 뒤 마무리.
 export function CreatorTable({ campaign, today }: { campaign: Campaign; today: string }) {
-  const live = campaign.entries.filter((e) => !e.droppedAt);
+  const active = campaign.entries.filter((e) => !e.droppedAt);
   const dropped = campaign.entries.filter((e) => e.droppedAt);
+  // 11/14: creators with a passed deadline are kept out of the main table, under their own 마감 지난 건 tab.
+  const [view, setView] = useState<"live" | "late">("live");
+  const lateIds = new Set(active.filter((e) => entryStatus(e, campaign, today).overdue).map((e) => e.id));
+  const live = active.filter((e) => (view === "late") === lateIds.has(e.id));
   const [editing, setEditing] = useState<string | null>(null);
   const submissions = useSubmissions();
 
   return (
     <>
+      {(lateIds.size > 0 || view === "late") && (
+        <div role="group" aria-label="보기" className="mb-4 flex w-fit border border-line">
+          {([["live", `진행 중 ${active.length - lateIds.size}`], ["late", `마감 지난 건 ${lateIds.size}`]] as const).map(([v, text]) => (
+            <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className="min-h-10 px-4 text-[14px] font-semibold tabular-nums text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white">
+              {text}
+            </button>
+          ))}
+        </div>
+      )}
       {live.length > 0 && <p className="mb-2 text-[13px] text-ink-600 md:hidden">표를 옆으로 밀면 단계별 체크칸이 나옵니다.</p>}
       {live.length === 0 ? (
-        <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">아직 크리에이터가 없습니다. 위에서 이름과 채널을 넣어 추가하세요.</p>
+        <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">
+          {active.length === 0 ? "아직 크리에이터가 없습니다. 위에서 이름과 채널을 넣어 추가하세요." : view === "late" ? "마감 지난 건이 없습니다." : "진행 중인 크리에이터는 모두 마감이 지났습니다. 마감 지난 건에서 확인하세요."}
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1080px] border-t-2 border-ink-900 text-[14px]">

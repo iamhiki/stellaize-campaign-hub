@@ -1,10 +1,11 @@
 "use client";
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import Link from "next/link";
 import { Loading, pageWrap, table } from "./PageBand";
 import { WaitingLine, DdayText } from "./badges";
-import { LateDrop, canDrop } from "./FollowUp";
-import { entryStatus, type WaitingOn } from "@/lib/campaigns";
+import { LateDrop } from "./FollowUp";
+import { entryStatus, type Campaign, type Entry, type WaitingOn } from "@/lib/campaigns";
+import { MailForm } from "./MailForm";
 import { useMe } from "@/lib/me";
 import { useCampaigns, useToday } from "@/lib/store";
 
@@ -19,6 +20,8 @@ type TodayRow = {
   waitingOn: WaitingOn | null;
   waitingDays: number;
   due: { label: string; days: number } | null;
+  c: Campaign;
+  e: Entry;
 };
 
 type Scope = "mine" | "all";
@@ -45,9 +48,11 @@ function Toggle<T extends string>({ label, value, options, onChange }: { label: 
 
 const SOON = 3; // a report due this many days out or closer counts as today's work
 
-// Three buckets across campaigns (기획자 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저; 11/13: 회신 3일 기준 삭제).
+// Buckets across campaigns (기획자 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저; 11/13: 회신 3일 기준 삭제;
+// 11/14: 마감 임박, where staff send the reminder mail before the deadline).
 const BUCKETS: Bucket[] = [
   { key: "overdue", label: "마감 지남", hint: "단계별 마감, 업로드 날짜, 리포트 마감이 지난 건" },
+  { key: "soon", label: "마감 임박", hint: `크리에이터 차례이고 마감이 ${SOON}일 안인 건. 메일 보내기로 미리 알립니다` },
   { key: "report", label: "리포트 작성", hint: `리포트 마감(기본 업로드 후 14일) ${SOON}일 안` },
   { key: "confirm", label: "컨펌 대기", hint: "광고주 컨펌을 기다리는 건" },
 ];
@@ -57,6 +62,7 @@ export function TodayList() {
   const [scope, setScope] = useState<Scope>("mine");
   const [sort, setSort] = useState<Sort>("kind");
   const [only, setOnly] = useState<string | null>(null); // a bucket card narrows the list to that kind
+  const [mailing, setMailing] = useState<string | null>(null); // the row whose mail draft is open
   const listRef = useRef<HTMLElement>(null);
   const today = useToday();
   const buckets = BUCKETS;
@@ -68,9 +74,10 @@ export function TodayList() {
     for (const e of c.entries) {
       if (e.droppedAt) continue;
       const s = entryStatus(e, c, today);
-      const base = { entryId: e.id, creator: e.name, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays };
+      const base = { entryId: e.id, creator: e.name, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays, c, e };
       if (s.overdue) all.push({ ...base, kind: "overdue", due: s.deadline });
       else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
+      else if (s.waitingOn === "creator" && s.deadline && s.deadline.days <= SOON) all.push({ ...base, kind: "soon", due: s.deadline });
       // One row per creator: a passed deadline shows under 마감 지남 only, not again under 컨펌 대기.
       else if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
     }
@@ -96,7 +103,7 @@ export function TodayList() {
         <Toggle label="정렬" value={sort} onChange={setSort} options={[["kind", "구분순"], ["waiting", "대기일순"]]} />
       </div>
 
-      <section className="grid grid-cols-2 gap-y-8 border-b border-line py-8 md:grid-cols-3 md:divide-x md:divide-line md:py-9">
+      <section className="grid grid-cols-2 gap-y-8 border-b border-line py-8 md:grid-cols-4 md:divide-x md:divide-line md:py-9">
         {buckets.map((b) => (
           <button
             key={b.key}
@@ -146,8 +153,11 @@ export function TodayList() {
                 </tr>
               </thead>
               <tbody>
-                {shown.map((r) => (
-                  <tr key={`${r.kind}-${r.entryId}`}>
+                {shown.map((r) => {
+                  const key = `${r.kind}-${r.entryId}`;
+                  return (
+                  <Fragment key={key}>
+                  <tr>
                     <td className={`${table.td} font-semibold text-ink-900`}>{labelOf[r.kind]}</td>
                     <td className={table.td}>{r.creator}</td>
                     <td className={table.td}>
@@ -169,15 +179,34 @@ export function TodayList() {
                       )}
                     </td>
                     <td className={table.td}>
-                      {canDrop(r.waitingOn) ? (
-                        // pulled into the text line so rows with and without the button are the same height
-                        <div className="-my-1.5"><LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} /></div>
+                      {r.waitingOn === "creator" ? (
+                        // pulled into the text line so rows with and without buttons are the same height
+                        <div className="-my-1.5 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            aria-expanded={mailing === key}
+                            onClick={() => setMailing(mailing === key ? null : key)}
+                            className="min-h-9 w-fit border border-primary-600 px-3 text-[13px] font-semibold text-primary-600 hover:bg-primary-600 hover:text-white"
+                          >
+                            메일 보내기
+                          </button>
+                          <LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} />
+                        </div>
                       ) : (
                         <span className="text-ink-600">—</span>
                       )}
                     </td>
                   </tr>
-                ))}
+                  {mailing === key && (
+                    <tr>
+                      <td colSpan={6} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
+                        <MailForm campaign={r.c} entry={r.e} onClose={() => setMailing(null)} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -1,10 +1,10 @@
-import { after, NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { canSee } from "@/lib/campaigns";
 import { todayKST } from "@/lib/date";
 import { applyOp, parseOp } from "@/lib/ops";
 import { body, fail, guard, newToken } from "@/lib/server/auth";
 import { mutate, readDb, type Db } from "@/lib/server/db";
-import { queueNotices, sendNoticeMail } from "@/lib/server/notices";
+import { mailReady } from "@/lib/server/mail";
 
 /**
  * What a staff screen gets: the campaigns this account may see (대외비 ones only for their 담당자), and the links,
@@ -15,11 +15,16 @@ const snapshot = (db: Db, userName: string) => {
   const shown = new Set(campaigns.map((c) => c.id));
   const joined = new Map(db.users.filter((u) => u.role === "creator").map((u) => [u.id, u.name]));
   const accounts: Record<string, string> = {};
+  const emails: Record<string, string> = {}; // entry id → the linked creator's login mail, where 메일 보내기 starts from
+  const mailOf = new Map(db.users.map((u) => [u.id, u.email]));
   // Shipping info and which documents are in, per row whose creator filled them in. The files themselves come from /api/files.
   const profiles: Record<string, { userId: string; legalName: string; phone: string; address: string; idDoc: boolean; bankCopy: boolean }> = {};
   for (const c of campaigns)
     for (const e of c.entries) {
-      if (e.creatorId && joined.has(e.creatorId)) accounts[e.id] = joined.get(e.creatorId)!;
+      if (e.creatorId && joined.has(e.creatorId)) {
+        accounts[e.id] = joined.get(e.creatorId)!;
+        emails[e.id] = mailOf.get(e.creatorId)!;
+      }
       const p = e.creatorId ? db.profiles?.[e.creatorId] : undefined;
       if (p) profiles[e.id] = { userId: e.creatorId!, legalName: p.legalName, phone: p.phone, address: p.address, idDoc: !!p.idDoc, bankCopy: !!p.bankCopy };
     }
@@ -27,7 +32,11 @@ const snapshot = (db: Db, userName: string) => {
     profiles,
     campaigns,
     submissions: db.submissions.filter((x) => shown.has(x.campaignId)),
-    notices: db.notices.filter((n) => shown.has(n.campaignId)).map(({ id, entryId, step, due, createdAt, emailedAt }) => ({ id, entryId, step, due, createdAt, emailedAt })),
+    emails,
+    /** Whether a mail service is connected, and the team address every reminder is copied to. */
+    mail: { ready: mailReady, teamCc: (process.env.MAIL_CC ?? "").trim() },
+    // Only mails that went out. Rows from the earlier automatic notices (never mailed) are left out.
+    notices: db.notices.filter((n) => shown.has(n.campaignId) && n.emailedAt).map(({ id, entryId, step, due, createdAt, emailedAt }) => ({ id, entryId, step, due, createdAt, emailedAt })),
     /** entry id → the name on the linked creator account */
     accounts,
   };
@@ -38,11 +47,7 @@ const send = (db: Db, userName: string) => NextResponse.json(snapshot(db, userNa
 export async function GET(req: NextRequest) {
   const g = await guard(req, "staff");
   if (g.deny) return g.deny;
-  // No scheduler on this setup: passed deadlines are picked up whenever staff have the hub open.
-  const today = todayKST();
-  const db = await readDb();
-  after(sendNoticeMail); // 기획자 11/13: 마감 알림은 메일로. Runs once the page has its answer.
-  return send(queueNotices(db, today) > 0 ? await mutate((d) => (queueNotices(d, today), d)) : db, g.user.name);
+  return send(await readDb(), g.user.name);
 }
 
 export async function POST(req: NextRequest) {

@@ -9,7 +9,8 @@ import { applyOp, type CampaignInput, type Op } from "./ops";
 // seconds and when the tab comes back, so a teammate's check or a creator's link shows up without reloading.
 export type NoticeInfo = { id: string; entryId: string; step: number; due: string; createdAt: string; emailedAt: string | null };
 export type ProfileInfo = { userId: string; legalName: string; phone: string; address: string; idDoc: boolean; bankCopy: boolean };
-type Snapshot = { campaigns: Campaign[]; submissions: Submission[]; notices: NoticeInfo[]; accounts: Record<string, string>; profiles?: Record<string, ProfileInfo> };
+type Snapshot = { campaigns: Campaign[]; submissions: Submission[]; notices: NoticeInfo[]; accounts: Record<string, string>; profiles?: Record<string, ProfileInfo>; emails?: Record<string, string>; mail?: MailInfo };
+export type MailInfo = { ready: boolean; teamCc: string };
 
 const listeners = new Set<() => void>();
 let cache: Snapshot | null = null;
@@ -85,17 +86,24 @@ const EMPTY_SUBMISSIONS: Submission[] = [];
 const EMPTY_NOTICES: NoticeInfo[] = [];
 const EMPTY_ACCOUNTS: Record<string, string> = {};
 const EMPTY_PROFILES: Record<string, ProfileInfo> = {};
+const NO_MAIL: MailInfo = { ready: false, teamCc: "" };
 
 /** All campaigns, or null until the server has answered. */
 export const useCampaigns = () => useSyncExternalStore(subscribe, () => cache?.campaigns ?? null, () => null);
 /** Links creators handed in. */
 export const useSubmissions = () => useSyncExternalStore(subscribe, () => cache?.submissions ?? EMPTY_SUBMISSIONS, () => EMPTY_SUBMISSIONS);
-/** Deadline notices shown to creators so far. */
+/** Reminder mails staff sent. */
 export const useNotices = () => useSyncExternalStore(subscribe, () => cache?.notices ?? EMPTY_NOTICES, () => EMPTY_NOTICES);
 /** entry id → name on the creator account linked to it. */
 export const useAccounts = () => useSyncExternalStore(subscribe, () => cache?.accounts ?? EMPTY_ACCOUNTS, () => EMPTY_ACCOUNTS);
 /** entry id → shipping info the creator typed in, and which documents they uploaded. */
 export const useProfiles = () => useSyncExternalStore(subscribe, () => cache?.profiles ?? EMPTY_PROFILES, () => EMPTY_PROFILES);
+/** entry id → the linked creator's login mail. */
+export const useEmails = () => useSyncExternalStore(subscribe, () => cache?.emails ?? EMPTY_ACCOUNTS, () => EMPTY_ACCOUNTS);
+/** Whether mail can go out yet, and the team address copied on every mail. */
+export const useMail = () => useSyncExternalStore(subscribe, () => cache?.mail ?? NO_MAIL, () => NO_MAIL);
+/** Fetch the server's copy now (after something changed it outside the op queue, like a sent mail). */
+export const reload = () => refresh();
 /** "" unless the last change didn't reach the server. */
 // Only listens. The save-error bar sits on every page (login and the creator screen too), so it must not start
 // loading staff data: signed out, that load answers 401 and sends the page to /login, over and over.
