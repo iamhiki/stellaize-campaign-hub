@@ -41,7 +41,9 @@ async function rest(method: "GET" | "POST" | "PATCH", query: string, send?: unkn
     body: send === undefined ? undefined : JSON.stringify(send),
   });
   if (!res.ok) throw new Error(`Supabase ${method} hub_state ${res.status}: ${(await res.text()).slice(0, 300)}`);
-  return res.json();
+  // The first-run insert answers 201 with an empty body (no return=representation), which res.json() rejects.
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
 }
 
 const ONE = "?id=eq.1&select=data,version";
