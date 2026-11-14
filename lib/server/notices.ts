@@ -36,17 +36,16 @@ const short = (d: string) => d.slice(5).replace("-", "/");
 
 /**
  * The mail for one notice, or null when it no longer applies (step done, creator dropped or unlinked).
- * To: the creator's account. Cc: the creator's 소속사 담당자 if staff entered one, the campaign's 담당자 who have
- * a hub account, and the team address in MAIL_CC (팀 규칙: 팀메일을 항상 참조).
+ * To: the creator's account. Cc: the creator's 소속사 담당자 if staff entered one, and the team address in
+ * MAIL_CC (팀 규칙: 팀메일을 항상 참조). The campaign's own 담당자 are not copied (11/14): they see it in 오늘 할 일.
  */
 export function noticeMail(db: Db, n: Notice) {
   const campaign = db.campaigns.find((c) => c.id === n.campaignId);
   const entry = campaign?.entries.find((e) => e.id === n.entryId);
   const creator = db.users.find((u) => u.id === n.userId);
   if (!campaign || !entry || !creator || entry.droppedAt || entry.creatorId !== n.userId || entry.done[n.step]) return null;
-  const owners = db.users.filter((u) => u.role !== "creator" && campaign.owners.includes(u.name)).map((u) => u.email);
   const team = (process.env.MAIL_CC ?? "").split(",").map((v) => v.trim());
-  const cc = [...new Set([entry.managerEmail ?? "", ...owners, ...team])].filter((v) => v && v !== creator.email && isEmailOrEmpty(v));
+  const cc = [...new Set([entry.managerEmail ?? "", ...team])].filter((v) => v && v !== creator.email && isEmailOrEmpty(v));
   const what = STEPS[n.step].label.replace(" 수급", "");
   const hub = process.env.HUB_URL?.trim().replace(/\/+$/, "");
   return {
