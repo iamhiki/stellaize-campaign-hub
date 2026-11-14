@@ -121,7 +121,7 @@ export default function AboutPage() {
               <p className="mt-5 text-[17px] leading-relaxed text-ink-800">담당자와 크리에이터는 같은 화면에서 로그인하고, 계정에 따라 서로 다른 화면이 열립니다.</p>
               {/* Keep in step with README "휴대폰에서 열기". The Wi-Fi limit goes away once the hub is on a server. */}
               <p className="mt-4 text-[15px] leading-relaxed text-ink-600">
-                휴대폰 브라우저로도 열 수 있습니다. 브라우저 메뉴에서 홈 화면에 추가하면 앱처럼 아이콘으로 엽니다. 지금은 허브를 켠 컴퓨터와 같은 와이파이에서만 열립니다.
+                휴대폰 브라우저로도 열 수 있습니다. 브라우저 메뉴에서 홈 화면에 추가하면 앱처럼 아이콘으로 엽니다. 인터넷 주소로 열리므로 와이파이가 달라도 됩니다.
               </p>
             </div>
             <div className="grid gap-10 md:grid-cols-2 md:gap-0 md:divide-x md:divide-line">
