@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { UPLOAD, type Campaign } from "@/lib/campaigns";
 import { daysBetween } from "@/lib/date";
 import { useCampaigns, useToday } from "@/lib/store";
 import { DdayText } from "./badges";
@@ -13,6 +14,11 @@ export function CampaignList() {
   const campaigns = useCampaigns();
   const [adding, setAdding] = useState(false);
   const today = useToday();
+  // 11/14: a campaign whose upload date passed with someone still not uploaded sits under its own tab, like 마감 지난 건.
+  const [view, setView] = useState<"live" | "late">("live");
+  const isLate = (c: Campaign) => !!today && !uploaded(c) && daysBetween(today, c.uploadDate) < 0;
+  const lateCount = (campaigns ?? []).filter(isLate).length;
+  const shown = (campaigns ?? []).filter((c) => (view === "late") === isLate(c));
 
   return (
     <>
@@ -43,6 +49,16 @@ export function CampaignList() {
       ) : campaigns.length === 0 ? (
         <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">등록한 캠페인이 없습니다. 오른쪽 위 캠페인 등록으로 시작하세요.</p>
       ) : (
+        <>
+        {(lateCount > 0 || view === "late") && (
+          <div role="group" aria-label="보기" className="mb-4 flex w-fit border border-line">
+            {([["live", `진행 중 ${campaigns.length - lateCount}`], ["late", `마감 지난 캠페인 ${lateCount}`]] as const).map(([v, text]) => (
+              <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className="min-h-10 px-4 text-[14px] font-semibold tabular-nums text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white">
+                {text}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className={table.wrap}>
             <thead>
@@ -55,7 +71,7 @@ export function CampaignList() {
               </tr>
             </thead>
             <tbody>
-              {campaigns.map((c, i) => {
+              {shown.map((c, i) => {
                 const live = c.entries.filter((e) => !e.droppedAt);
                 return (
                   <tr key={c.id} className="hover:bg-[#f5f7fa]">
@@ -72,7 +88,7 @@ export function CampaignList() {
                     <td className={table.td}>{c.channel}</td>
                     <td className={`${table.td} whitespace-nowrap tabular-nums`}>
                       {c.uploadDate}
-                      <DdayText days={daysBetween(today, c.uploadDate)} />
+                      {uploaded(c) ? <span className="ml-1 text-ink-600">업로드 완료</span> : <DdayText days={daysBetween(today, c.uploadDate)} />}
                     </td>
                     <td className={table.td}>{c.owners.join(", ")}</td>
                     <td className={`${table.td} w-[180px]`}>
@@ -84,7 +100,14 @@ export function CampaignList() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </>
   );
 }
+
+/** Every creator still in the campaign has uploaded, so the upload date is no longer a deadline. */
+const uploaded = (c: Campaign) => {
+  const live = c.entries.filter((e) => !e.droppedAt);
+  return live.length > 0 && live.every((e) => e.done[UPLOAD]);
+};
