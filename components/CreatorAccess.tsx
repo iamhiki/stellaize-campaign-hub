@@ -46,7 +46,7 @@ export function CreatorAccess({ campaign, entry }: { campaign: Campaign; entry: 
             <ul className="mt-3 space-y-1 text-[13px] text-ink-800">
               {notices.map((n) => (
                 <li key={n.id}>
-                  마감 알림: {STEPS[n.step].label} (마감 {short(n.due)}) · {short(n.createdAt)} 크리에이터 화면에 표시 · {n.emailedAt ? `${short(n.emailedAt)} 메일 발송` : "메일은 아직 보내지 않음"}
+                  마감 알림: {STEPS[n.step].label} (마감 {short(n.due)}) · {short(n.createdAt)} 알림 만듦 · {n.emailedAt ? `${short(n.emailedAt)} 메일 발송` : "메일은 아직 보내지 않음"}
                 </li>
               ))}
             </ul>

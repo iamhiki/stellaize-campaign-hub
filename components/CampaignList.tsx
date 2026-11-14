@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { entryStatus } from "@/lib/campaigns";
 import { daysBetween } from "@/lib/date";
 import { useCampaigns, useToday } from "@/lib/store";
 import { DdayText } from "./badges";
@@ -58,7 +57,6 @@ export function CampaignList() {
             <tbody>
               {campaigns.map((c, i) => {
                 const live = c.entries.filter((e) => !e.droppedAt);
-                const late = live.filter((e) => entryStatus(e, c, today).overdue).length;
                 return (
                   <tr key={c.id} className="hover:bg-[#f5f7fa]">
                     <td className={table.td}>
@@ -68,7 +66,6 @@ export function CampaignList() {
                       {c.confidential && <span className="ml-2 text-[13px] font-bold text-danger-700">대외비</span>}
                       <span className="mt-1 block text-[13px] font-semibold text-ink-600">
                         크리에이터 <span className="tabular-nums">{live.length}</span>명
-                        {late > 0 && <span className="text-danger-700"> · 마감 지남 {late}건</span>}
                       </span>
                     </td>
                     <td className={table.td}>{c.advertiser}</td>

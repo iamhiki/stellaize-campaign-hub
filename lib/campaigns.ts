@@ -57,7 +57,7 @@ export const SUBMIT_STEPS = ["기획안 수급", "가편안 수급", "수정본 
 /** A link the creator handed in for one step. Files stay where the creator keeps them (드라이브, 유튜브 등). */
 export type Submission = { id: string; campaignId: string; entryId: string; step: number; url: string; note: string; at: string };
 
-/** A passed deadline the creator was told about. `emailedAt` stays null until a mail account is connected. */
+/** A deadline reminder for one step (made the day before the deadline). `emailedAt` stays null until the mail has gone out. */
 export type Notice = { id: string; key: string; userId: string; campaignId: string; entryId: string; step: number; due: string; createdAt: string; emailedAt: string | null };
 
 export type Campaign = {

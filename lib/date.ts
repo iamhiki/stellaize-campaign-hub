@@ -8,3 +8,11 @@ export const addDays = (ymd: string, n: number) => new Date(Date.parse(ymd) + n 
 
 /** The report is due 14 days after upload. */
 export const reportDue = (uploadedAt: string) => addDays(uploadedAt, 14);
+
+/** A deadline reminder goes out this many days before the deadline (11/14: 마감 전에 알린다). */
+export const REMIND_DAYS = 1;
+/** Whether a step due on `due` should be reminded about today: from REMIND_DAYS before the deadline onward. */
+export const remindNow = (today: string, due: string) => daysBetween(today, due) <= REMIND_DAYS;
+/** "마감이 내일(11/19)입니다" and its variants, for a deadline `days` away (negative = passed). `md` is the date as "11/19". */
+export const dueWords = (days: number, md: string) =>
+  days < 0 ? `마감(${md})이 지났습니다` : `마감이 ${days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 뒤`}(${md})입니다`;

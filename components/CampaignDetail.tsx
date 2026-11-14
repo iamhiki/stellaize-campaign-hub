@@ -46,7 +46,6 @@ export function CampaignDetail({ id }: { id: string }) {
 
   const live = campaign.entries.filter((e) => !e.droppedAt);
   const statuses = live.map((e) => ({ e, s: entryStatus(e, campaign, today) }));
-  const late = statuses.filter((x) => x.s.overdue);
 
   return (
     <>
@@ -71,7 +70,6 @@ export function CampaignDetail({ id }: { id: string }) {
           <article className="col-span-2 pr-4 md:col-span-1 md:pr-7">
             <h2 className="mb-3 text-[16px] font-bold text-ink-900">캠페인 진행률</h2>
             <ProgressBar size="lg" label={campaign.name} entries={campaign.entries} />
-            {late.length > 0 && <p className="mt-3 text-[14px] font-semibold text-danger-700">마감 지남 {late.length}건: {late.map((x) => x.e.name).join(", ")}</p>}
           </article>
           {PARTIES.map((p) => {
             const list = statuses.filter((x) => x.s.waitingOn === p);

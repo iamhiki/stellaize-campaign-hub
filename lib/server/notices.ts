@@ -1,14 +1,15 @@
 import { STEPS, dueList, type Notice } from "../campaigns";
 import { isEmailOrEmpty } from "../ops";
-import { todayKST } from "../date";
+import { daysBetween, dueWords, remindNow, todayKST } from "../date";
 import { newId } from "./auth";
 import { mutate, readDb, type Db } from "./db";
 import { mailReady, sendMail } from "./mail";
 
 /**
- * 기획자 11/11: 일정을 등록해 두고 마감을 안 지키면 알림. For every creator who has joined, each step that is theirs,
- * unchecked, and past its deadline gets one notice (per step and deadline, so a moved deadline can notify again).
- * The creator sees it on their screen, and sendNoticeMail below mails it once a mail service is set up
+ * 기획자 11/11: 일정을 등록해 두고 알림. 11/14: the reminder goes out before the deadline, not after it.
+ * For every creator who has joined, each step that is theirs and unchecked gets one notice from the day before
+ * its deadline (per step and deadline, so a moved deadline reminds again). A deadline set late, or already
+ * passed, still gets its one notice. sendNoticeMail below mails it once a mail service is set up
  * (`emailedAt` stays null until then).
  * Returns how many were added.
  */
@@ -21,7 +22,7 @@ export function queueNotices(db: Db, today: string) {
       const dues = dueList(e, c);
       STEPS.forEach((s, step) => {
         const due = dues[step];
-        if (s.waits !== "creator" || e.done[step] || !due || due >= today) return;
+        if (s.waits !== "creator" || e.done[step] || !due || !remindNow(today, due)) return;
         const key = `${e.id}:${step}:${due}`;
         if (known.has(key)) return;
         fresh.push({ id: newId(), key, userId: e.creatorId!, campaignId: c.id, entryId: e.id, step, due, createdAt: today, emailedAt: null });
@@ -47,16 +48,17 @@ export function noticeMail(db: Db, n: Notice) {
   const team = (process.env.MAIL_CC ?? "").split(",").map((v) => v.trim());
   const cc = [...new Set([entry.managerEmail ?? "", ...team])].filter((v) => v && v !== creator.email && isEmailOrEmpty(v));
   const what = STEPS[n.step].label.replace(" 수급", "");
+  const words = dueWords(daysBetween(todayKST(), n.due), short(n.due)); // worded for the day the mail goes out
   const hub = process.env.HUB_URL?.trim().replace(/\/+$/, "");
   return {
     to: creator.email,
     cc,
-    subject: `[스텔라이즈] ${campaign.name} ${what} 마감(${short(n.due)})이 지났습니다`,
+    subject: `[스텔라이즈] ${campaign.name} ${what} ${words}`,
     text: [
       `${creator.name} 님, 안녕하세요. 스텔라이즈팀입니다.`,
       "",
-      `${campaign.name} 캠페인의 ${what} 마감일(${n.due})이 지났습니다.`,
-      "업로드 일정이 정해져 있어 빠른 진행을 부탁드립니다. 일정이 어려우시면 담당자에게 가능한 날짜를 알려 주세요.",
+      `${campaign.name} 캠페인의 ${what} ${words}.`,
+      "업로드 일정이 정해져 있어 기한 안에 부탁드립니다. 일정이 어려우시면 담당자에게 가능한 날짜를 미리 알려 주세요.",
       ...(hub ? ["", `제출과 일정 확인: ${hub}/creator`] : []),
       "",
       `담당: ${campaign.owners.join(", ")}`,
