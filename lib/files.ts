@@ -2,7 +2,8 @@
 export const DOC_KINDS = ["idDoc", "bankCopy"] as const;
 export type DocKind = (typeof DOC_KINDS)[number];
 export const DOC_LABEL: Record<DocKind, string> = { idDoc: "신분증 또는 사업자등록증", bankCopy: "통장사본" };
-export const MAX_DOC_BYTES = 5 * 1024 * 1024;
+// Vercel refuses a request over 4.5MB, so each file stays under that and the form sends one file per request.
+export const MAX_DOC_BYTES = 4 * 1024 * 1024;
 
 /**
  * The file's real type from its first bytes, or null when it isn't a PDF, JPEG or PNG. The browser's own

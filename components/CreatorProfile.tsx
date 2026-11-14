@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { DOC_KINDS, DOC_LABEL } from "@/lib/files";
+import { DOC_KINDS, DOC_LABEL, MAX_DOC_BYTES } from "@/lib/files";
 import type { Profile } from "@/lib/server/db";
 import { ui } from "./PageBand";
 
@@ -40,11 +40,30 @@ export function CreatorProfile({ onSaved, preview }: { onSaved?: () => void; pre
         setEditing(false);
         setConfirming(false);
         onSaved?.();
-      } else setError(d?.error ?? fallback);
+        setBusy(false);
+        return true;
+      }
+      setError(d?.error ?? fallback);
     } catch {
       setError("서버에 연결하지 못했습니다. 연결을 확인해 주세요.");
     }
     setBusy(false);
+    return false;
+  }
+
+  // One file per request (the server host caps a request at 4.5MB). The second request repeats the text fields;
+  // consent was recorded by the first.
+  async function save(form: FormData) {
+    const files = DOC_KINDS.map((k) => [k, form.get(k)] as const).filter((x): x is [(typeof DOC_KINDS)[number], File] => x[1] instanceof File && x[1].size > 0);
+    if (files.some(([, f]) => f.size > MAX_DOC_BYTES)) return setError("파일은 4MB 이하만 올릴 수 있습니다. 사진이면 크기를 줄여 주세요.");
+    DOC_KINDS.forEach((k) => form.delete(k));
+    const parts = files.length ? files : [null];
+    for (const part of parts) {
+      const body = new FormData();
+      form.forEach((v, k) => body.append(k, v));
+      if (part) body.append(part[0], part[1]);
+      if (!(await call({ method: "POST", body }, "저장하지 못했습니다. 잠시 뒤 다시 시도해 주세요."))) return;
+    }
   }
 
   if (profile === undefined) return null;
@@ -108,7 +127,7 @@ export function CreatorProfile({ onSaved, preview }: { onSaved?: () => void; pre
           onSubmit={(ev) => {
             ev.preventDefault();
             if (preview) return;
-            call({ method: "POST", body: new FormData(ev.currentTarget) }, "저장하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
+            save(new FormData(ev.currentTarget));
           }}
         >
           <label className={ui.label}>
@@ -129,7 +148,7 @@ export function CreatorProfile({ onSaved, preview }: { onSaved?: () => void; pre
               <input name={kind} type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" className="text-[14px] text-ink-800 file:mr-3 file:h-10 file:border file:border-line file:bg-white file:px-4 file:text-[14px] file:font-semibold file:text-ink-800" />
             </label>
           ))}
-          <p className="text-[13px] text-ink-600">PDF, JPG, PNG. 파일 하나에 5MB까지. 사업자는 사업자등록증, 개인은 신분증을 올립니다.</p>
+          <p className="text-[13px] text-ink-600">PDF, JPG, PNG. 파일 하나에 4MB까지. 사업자는 사업자등록증, 개인은 신분증을 올립니다.</p>
 
           {!profile?.consentAt && (
             <fieldset className="border border-line bg-[#f5f7fa] p-4 text-[14px] leading-relaxed text-ink-800">

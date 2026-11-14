@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   for (const kind of DOC_KINDS) {
     const file = form.get(kind);
     if (!(file instanceof File) || file.size === 0) continue;
-    if (file.size > MAX_DOC_BYTES) return fail(400, "파일은 5MB 이하만 올릴 수 있습니다.");
+    if (file.size > MAX_DOC_BYTES) return fail(400, "파일은 4MB 이하만 올릴 수 있습니다.");
     const bytes = new Uint8Array(await file.arrayBuffer());
     const type = sniff(bytes);
     if (!type) return fail(400, "PDF, JPG, PNG 파일만 올릴 수 있습니다.");
