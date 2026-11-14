@@ -65,6 +65,7 @@ export function CampaignList() {
                       <Link href={`/campaigns/${c.id}`} className="text-[16px] font-bold text-ink-900 underline-offset-4 hover:text-primary-600 hover:underline">
                         {c.name}
                       </Link>
+                      {c.confidential && <span className="ml-2 text-[13px] font-bold text-danger-700">대외비</span>}
                       <span className="mt-1 block text-[13px] font-semibold text-ink-600">
                         크리에이터 <span className="tabular-nums">{live.length}</span>명
                         {late > 0 && <span className="text-danger-700"> · 마감 지남 {late}건</span>}

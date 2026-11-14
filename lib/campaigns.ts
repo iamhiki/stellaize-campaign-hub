@@ -47,6 +47,8 @@ export type Entry = {
   paPrice?: number | null;
   /** 운송장 번호 of the product sent to this creator. */
   tracking?: string;
+  /** 소속사 담당자 메일, when the creator has one. Deadline mail goes to them too. */
+  managerEmail?: string;
 };
 
 /** Steps where the creator hands something in (기획자 11/11: 기획안, 가편안, 수정본을 플랫폼에서 받기). */
@@ -67,7 +69,16 @@ export type Campaign = {
   owners: string[];
   createdAt: string;
   entries: Entry[];
+  /** 대외비: only the staff named in `owners` get this campaign from the server. */
+  confidential?: boolean;
 };
+
+/**
+ * Whether a staff account may see (and change) a campaign: everyone for an ordinary one, only its 담당자 for 대외비.
+ * shortcut: 담당자 are matched by account name, so two accounts with the same name both get in. Store account ids
+ * in `owners` before 대외비 holds anything a teammate must really not see.
+ */
+export const canSee = (c: Campaign, userName: string) => !c.confidential || c.owners.includes(userName);
 
 export const doneList = (e: Entry) => STEPS.map((_, i) => e.done[i] ?? null);
 

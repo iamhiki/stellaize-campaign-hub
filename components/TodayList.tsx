@@ -81,7 +81,8 @@ export function TodayList() {
     .filter((r) => scope === "all" || r.mine)
     .sort((a, b) => (sort === "waiting" ? b.waitingDays - a.waitingDays : order.indexOf(a.kind) - order.indexOf(b.kind)));
   const labelOf = Object.fromEntries(buckets.map((b) => [b.key, b.label]));
-  const shown = only ? rows.filter((r) => r.kind === only) : rows;
+  // 처리할 건 leaves out passed deadlines; they are listed only when the 마감 지남 card is picked.
+  const shown = rows.filter((r) => (only ? r.kind === only : r.kind !== "overdue"));
   const pick = (key: string) => {
     const next = only === key ? null : key;
     setOnly(next);

@@ -1,6 +1,7 @@
 "use client";
 import type { Campaign, Entry } from "@/lib/campaigns";
 import { DOC_KINDS, DOC_LABEL } from "@/lib/files";
+import { isEmailOrEmpty } from "@/lib/ops";
 import { setDeal, useProfiles } from "@/lib/store";
 
 const field = "h-10 min-w-0 border border-line bg-white px-3 text-[14px] tabular-nums text-ink-900 placeholder:text-ink-600 focus:border-primary-600 focus:outline-none";
@@ -24,8 +25,10 @@ export function DealEditor({ campaign, entry }: { campaign: Campaign; entry: Ent
     const price = digits(f.get("price"));
     const paPrice = digits(f.get("paPrice"));
     const tracking = String(f.get("tracking") ?? "").trim().slice(0, 40);
-    if (price === (entry.price ?? null) && paPrice === (entry.paPrice ?? null) && tracking === (entry.tracking ?? "")) return;
-    setDeal(campaign.id, entry.id, price, paPrice, tracking);
+    const managerEmail = String(f.get("managerEmail") ?? "").trim();
+    if (!isEmailOrEmpty(managerEmail)) return; // the box shows the browser's own "not an address" state; nothing is saved
+    if (price === (entry.price ?? null) && paPrice === (entry.paPrice ?? null) && tracking === (entry.tracking ?? "") && managerEmail === (entry.managerEmail ?? "")) return;
+    setDeal(campaign.id, entry.id, price, paPrice, tracking, managerEmail);
   }
 
   return (
@@ -39,7 +42,7 @@ export function DealEditor({ campaign, entry }: { campaign: Campaign; entry: Ent
           ev.preventDefault();
           save(ev.currentTarget);
         }}
-        className="grid max-w-[720px] grid-cols-1 gap-4 sm:grid-cols-3"
+        className="grid max-w-[720px] grid-cols-1 gap-4 sm:grid-cols-2"
       >
         <label className={label}>
           최종단가 (원)
@@ -52,6 +55,10 @@ export function DealEditor({ campaign, entry }: { campaign: Campaign; entry: Ent
         <label className={label}>
           운송장 번호
           <input name="tracking" maxLength={40} defaultValue={entry.tracking ?? ""} placeholder="제품 발송 후" className={field} />
+        </label>
+        <label className={label}>
+          소속사 담당자 메일
+          <input name="managerEmail" type="email" maxLength={120} defaultValue={entry.managerEmail ?? ""} placeholder="있으면. 마감 알림 메일 참조" className={`${field} invalid:border-danger-700`} />
         </label>
       </form>
 

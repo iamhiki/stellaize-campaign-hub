@@ -22,6 +22,7 @@ export function CampaignForm({ onClose }: { onClose: () => void }) {
       channel: get("channel"),
       uploadDate: get("uploadDate"),
       owners: get("owners").split(/[,،、\s]+/).filter(Boolean),
+      confidential: form.get("confidential") === "on",
     };
     if (!input.name || !input.advertiser || !input.channel || !input.uploadDate) return setError("캠페인 이름, 광고주, 채널, 업로드 날짜를 모두 입력해 주세요.");
     if (input.owners.length === 0) return setError("담당자를 한 명 이상 입력해 주세요.");
@@ -67,6 +68,13 @@ export function CampaignForm({ onClose }: { onClose: () => void }) {
           </span>
         </label>
       </div>
+      <label className="mt-5 flex items-start gap-2 text-[15px] font-medium text-ink-800">
+        <input type="checkbox" name="confidential" className="mt-0.5 size-5 shrink-0 accent-primary-600" />
+        <span>
+          대외비 캠페인
+          <span className="block text-[13px] font-normal text-ink-600">위 담당자에 적힌 사람만 봅니다. 이름이 계정 이름과 같아야 합니다.</span>
+        </span>
+      </label>
       {error && (
         <p role="alert" className="mt-4 text-[15px] font-semibold text-danger-700">
           {error}

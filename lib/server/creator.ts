@@ -1,4 +1,4 @@
-import { STEPS, SUBMIT_STEPS, UPLOAD, doneList, dueList, type Campaign, type Entry } from "../campaigns";
+import { STEPS, SUBMIT_STEPS, UPLOAD, canSee, doneList, dueList, type Campaign, type Entry } from "../campaigns";
 import type { Db } from "./db";
 
 export function findByInvite(db: Db, token: string): { campaign: Campaign; entry: Entry } | null {
@@ -24,10 +24,10 @@ export function link(entry: Entry, userId: string) {
 export const creatorView = (db: Db, userId: string) => view(db, (e) => e.creatorId === userId);
 
 /** One row as its creator would see it, whether or not anyone has joined it yet. For developers, read-only. */
-export const previewView = (db: Db, entryId: string) => view(db, (e) => e.id === entryId);
+export const previewView = (db: Db, entryId: string, userName: string) => view({ ...db, campaigns: db.campaigns.filter((c) => canSee(c, userName)) }, (e) => e.id === entryId);
 
 /** Rows a developer can preview. */
-export const previewChoices = (db: Db) => db.campaigns.flatMap((c) => c.entries.filter((e) => !e.droppedAt).map((e) => ({ entryId: e.id, label: `${c.name} · ${e.name}` })));
+export const previewChoices = (db: Db, userName: string) => db.campaigns.filter((c) => canSee(c, userName)).flatMap((c) => c.entries.filter((e) => !e.droppedAt).map((e) => ({ entryId: e.id, label: `${c.name} · ${e.name}` })));
 
 function view(db: Db, mine: (e: Entry) => boolean) {
   return db.campaigns.flatMap((c) =>

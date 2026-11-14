@@ -129,7 +129,10 @@ export const setDue = (campaignId: string, entryId: string, step: number, date: 
 export const setDueForAll = (campaignId: string, step: number, date: string | null) => send({ op: "setDueForAll", campaignId, step, date });
 export const dropEntry = (campaignId: string, entryId: string, on: boolean) => send({ op: "drop", campaignId, entryId, on });
 /** 최종단가, PA 단가 (null = 단가 내 포함), 운송장 for one creator. The creator sees these on 내 일정. */
-export const setDeal = (campaignId: string, entryId: string, price: number | null, paPrice: number | null, tracking: string) => send({ op: "setDeal", campaignId, entryId, price, paPrice, tracking });
+export const setDeal = (campaignId: string, entryId: string, price: number | null, paPrice: number | null, tracking: string, managerEmail: string) =>
+  send({ op: "setDeal", campaignId, entryId, price, paPrice, tracking, managerEmail });
+/** 대외비 on or off. Only the campaign's 담당자 can do this; for anyone else the server refuses and the screen reloads. */
+export const setConfidential = (id: string, on: boolean) => send({ op: "setConfidential", id, on });
 /** Make (or take back) a creator's invite link. The link appears once the server has made its code. */
 export const inviteCreator = (campaignId: string, entryId: string, on: boolean) => send({ op: "invite", campaignId, entryId, token: on ? "" : null }, !on);
 export const unlinkCreator = (campaignId: string, entryId: string) => send({ op: "unlink", campaignId, entryId });

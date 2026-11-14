@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { entryStatus, type WaitingOn } from "@/lib/campaigns";
 import { daysBetween, reportDue } from "@/lib/date";
-import { addEntry, deleteCampaign, useCampaigns, useToday } from "@/lib/store";
+import { addEntry, deleteCampaign, setConfidential, useCampaigns, useToday } from "@/lib/store";
+import { useMe } from "@/lib/me";
 import { DdayText, WAITING } from "./badges";
 import { CreatorTable } from "./CreatorTable";
 import { Loading, PageBand, pageWrap, ui } from "./PageBand";
@@ -17,6 +18,7 @@ export function CampaignDetail({ id }: { id: string }) {
   const router = useRouter();
   const today = useToday();
   const campaign = campaigns?.find((c) => c.id === id);
+  const myName = useMe()?.name ?? "";
 
   if (!campaigns) {
     return (
@@ -50,6 +52,7 @@ export function CampaignDetail({ id }: { id: string }) {
     <>
       <PageBand title={campaign.name}>
         {campaign.advertiser} · {campaign.channel} · 기본 업로드 {campaign.uploadDate} · 담당 {campaign.owners.join(", ")}
+        {campaign.confidential && " · 대외비(담당자만 봄)"}
       </PageBand>
 
       <main className={pageWrap}>
@@ -113,6 +116,15 @@ export function CampaignDetail({ id }: { id: string }) {
           </article>
         </section>
 
+        {/* 대외비: only a 담당자 can set or lift it (the server checks again). */}
+        {campaign.owners.includes(myName) && (
+          <p className="border-t border-line py-5 text-[14px] text-ink-800">
+            {campaign.confidential ? "대외비 캠페인입니다. 담당자만 볼 수 있습니다." : "담당자가 아닌 팀원도 이 캠페인을 볼 수 있습니다."}{" "}
+            <button type="button" onClick={() => setConfidential(campaign.id, !campaign.confidential)} className="min-h-9 text-ink-600 underline underline-offset-4 hover:text-primary-600">
+              {campaign.confidential ? "대외비 해제" : "대외비로 바꾸기"}
+            </button>
+          </p>
+        )}
         <DeleteCampaign name={campaign.name} onDelete={() => (deleteCampaign(campaign.id), router.push("/campaigns"))} />
       </main>
     </>
