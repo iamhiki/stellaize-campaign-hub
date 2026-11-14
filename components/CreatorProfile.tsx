@@ -11,21 +11,23 @@ const line = "min-h-9 text-[14px] text-ink-600 underline underline-offset-4 hove
  * 기획자 11/14: 주소·연락처·통장사본·신분증을 크리에이터가 직접 올린다. One form per account, used by every
  * campaign the creator is in. Consent is asked here, when the data is handed over, not at sign-up.
  * shortcut: the consent wording is our draft, not a company-reviewed text. Have the company check it before real creators use this.
+ * `preview` (developer account): the empty form as a creator first sees it, consent text included. Nothing loads or saves.
  */
-export function CreatorProfile({ onSaved }: { onSaved: () => void }) {
+export function CreatorProfile({ onSaved, preview }: { onSaved?: () => void; preview?: boolean }) {
   // undefined = loading
-  const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [editing, setEditing] = useState(false);
+  const [profile, setProfile] = useState<Profile | null | undefined>(preview ? null : undefined);
+  const [editing, setEditing] = useState(!!preview);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (preview) return;
     fetch("/api/creator/profile", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .catch(() => null)
       .then((d: { profile: Profile | null } | null) => setProfile(d?.profile ?? null));
-  }, []);
+  }, [preview]);
 
   async function call(init: RequestInit, fallback: string) {
     setBusy(true);
@@ -37,7 +39,7 @@ export function CreatorProfile({ onSaved }: { onSaved: () => void }) {
         setProfile(d.profile);
         setEditing(false);
         setConfirming(false);
-        onSaved();
+        onSaved?.();
       } else setError(d?.error ?? fallback);
     } catch {
       setError("서버에 연결하지 못했습니다. 연결을 확인해 주세요.");
@@ -105,6 +107,7 @@ export function CreatorProfile({ onSaved }: { onSaved: () => void }) {
           className="mt-4 flex max-w-[560px] flex-col gap-4"
           onSubmit={(ev) => {
             ev.preventDefault();
+            if (preview) return;
             call({ method: "POST", body: new FormData(ev.currentTarget) }, "저장하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
           }}
         >
@@ -151,13 +154,16 @@ export function CreatorProfile({ onSaved }: { onSaved: () => void }) {
             </p>
           )}
           <div className="flex gap-2">
-            <button type="submit" disabled={busy} className={`${ui.primary} h-11 px-5 text-[15px]`}>
+            <button type="submit" disabled={busy || preview} className={`${ui.primary} h-11 px-5 text-[15px] disabled:opacity-50`}>
               {busy ? "저장하는 중" : "저장"}
             </button>
-            <button type="button" onClick={() => setEditing(false)} className={`${ui.secondary} h-11 px-5 text-[15px]`}>
-              취소
-            </button>
+            {!preview && (
+              <button type="button" onClick={() => setEditing(false)} className={`${ui.secondary} h-11 px-5 text-[15px]`}>
+                취소
+              </button>
+            )}
           </div>
+          {preview && <p className="text-[13px] text-ink-600">개발자 미리보기입니다. 크리에이터가 처음 보는 폼 그대로이고, 저장되지 않습니다.</p>}
         </form>
       )}
       {error && !editing && (

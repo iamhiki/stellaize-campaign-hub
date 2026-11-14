@@ -61,6 +61,7 @@ export function CreatorHome() {
           </label>
           <p className="text-[14px] text-ink-600">고른 크리에이터가 로그인했을 때 보는 화면입니다. 보기 전용이라 링크 제출은 할 수 없습니다.</p>
         </div>
+        <CreatorProfile preview />
         {(items ?? []).map((item) => (
           <Campaign key={item.entryId} item={item} today={today} onChange={setItems} preview />
         ))}
