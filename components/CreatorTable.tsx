@@ -84,7 +84,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                         {!s.finished && <WaitingLine on={s.waitingOn} days={s.waitingDays} />}
                         {s.deadline && <DeadlineLine deadline={s.deadline} />}
                         <div className="empty:hidden">
-                          <LateDrop campaignId={campaign.id} entryId={e.id} name={e.name} waitingOn={s.waitingOn} days={s.waitingDays} />
+                          <LateDrop campaignId={campaign.id} entryId={e.id} name={e.name} waitingOn={s.waitingOn} />
                         </div>
                       </div>
                     </td>

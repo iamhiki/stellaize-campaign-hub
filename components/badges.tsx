@@ -1,6 +1,5 @@
 import type { Deadline, WaitingOn } from "@/lib/campaigns";
 
-export const FOLLOW_UP_DAYS = 3; // no reply this long lands in 회신 지연 (and shows 드랍 for creators). Team decides.
 export const SOON_DAYS = 7; // deadlines within a week are bold ink; only a passed deadline is red (기획자 피드백 11/7).
 
 // Incross-style status: a small square bullet + text, no pills. Square is the party color; red only for problems.

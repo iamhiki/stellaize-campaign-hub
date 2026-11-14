@@ -2,8 +2,8 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { Loading, pageWrap, table } from "./PageBand";
-import { WaitingLine, DdayText, FOLLOW_UP_DAYS } from "./badges";
-import { LateDrop, canDrop, needsFollowUp } from "./FollowUp";
+import { WaitingLine, DdayText } from "./badges";
+import { LateDrop, canDrop } from "./FollowUp";
 import { entryStatus, type WaitingOn } from "@/lib/campaigns";
 import { useMe } from "@/lib/me";
 import { useCampaigns, useToday } from "@/lib/store";
@@ -45,11 +45,10 @@ function Toggle<T extends string>({ label, value, options, onChange }: { label: 
 
 const SOON = 3; // a report due this many days out or closer counts as today's work
 
-// Four buckets across campaigns (기획자 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저).
+// Three buckets across campaigns (기획자 피드백 11/7: 리스트업 제외, 마감이 지난 건이 먼저; 11/13: 회신 3일 기준 삭제).
 const BUCKETS: Bucket[] = [
   { key: "overdue", label: "마감 지남", hint: "단계별 마감, 업로드 날짜, 리포트 마감이 지난 건" },
   { key: "report", label: "리포트 작성", hint: `리포트 마감(기본 업로드 후 14일) ${SOON}일 안` },
-  { key: "late", label: "회신 지연", hint: `크리에이터·광고주 회신 ${FOLLOW_UP_DAYS}일 이상 없음` },
   { key: "confirm", label: "컨펌 대기", hint: "광고주 컨펌을 기다리는 건" },
 ];
 
@@ -72,8 +71,7 @@ export function TodayList() {
       const base = { entryId: e.id, creator: e.name, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays };
       if (s.overdue) all.push({ ...base, kind: "overdue", due: s.deadline });
       else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
-      if (needsFollowUp(s.waitingOn, s.waitingDays)) all.push({ ...base, kind: "late", due: s.deadline });
-      else if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
+      if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
     }
   }
 
@@ -96,7 +94,7 @@ export function TodayList() {
         <Toggle label="정렬" value={sort} onChange={setSort} options={[["kind", "구분순"], ["waiting", "대기일순"]]} />
       </div>
 
-      <section className="grid grid-cols-2 gap-y-8 border-b border-line py-8 md:grid-cols-4 md:divide-x md:divide-line md:py-9">
+      <section className="grid grid-cols-2 gap-y-8 border-b border-line py-8 md:grid-cols-3 md:divide-x md:divide-line md:py-9">
         {buckets.map((b) => (
           <button
             key={b.key}
@@ -169,9 +167,9 @@ export function TodayList() {
                       )}
                     </td>
                     <td className={table.td}>
-                      {canDrop(r.waitingOn, r.waitingDays) ? (
+                      {canDrop(r.waitingOn) ? (
                         // pulled into the text line so rows with and without the button are the same height
-                        <div className="-my-1.5"><LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} days={r.waitingDays} /></div>
+                        <div className="-my-1.5"><LateDrop campaignId={r.campaignId} entryId={r.entryId} name={r.creator} waitingOn={r.waitingOn} /></div>
                       ) : (
                         <span className="text-ink-600">—</span>
                       )}
