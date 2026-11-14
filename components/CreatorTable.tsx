@@ -2,6 +2,7 @@
 import { Fragment, useState } from "react";
 import { STEPS, REPORT, UPLOAD, doneList, dueList, entryStatus, type Campaign, type Entry } from "@/lib/campaigns";
 import { CreatorAccess } from "./CreatorAccess";
+import { DealEditor } from "./DealEditor";
 import { daysBetween } from "@/lib/date";
 import { dropEntry, setDue, setDueForAll, toggleStep, useSubmissions } from "@/lib/store";
 import { contractLink } from "@/lib/contract";
@@ -73,7 +74,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                         onClick={() => setEditing(open ? null : e.id)}
                         className="block min-h-8 text-[13px] text-ink-600 underline underline-offset-4 hover:text-primary-600"
                       >
-                        {open ? "닫기" : "마감 · 초대"}
+                        {open ? "닫기" : "마감 · 단가 · 초대"}
                       </button>
                     </th>
                     <td className={`${td} group-hover:bg-[#f5f7fa]`}>
@@ -128,6 +129,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                     <tr>
                       <td colSpan={STEPS.length + 2} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
                         <DueEditor campaign={campaign} entry={e} />
+                        <DealEditor campaign={campaign} entry={e} />
                         <CreatorAccess campaign={campaign} entry={e} />
                       </td>
                     </tr>

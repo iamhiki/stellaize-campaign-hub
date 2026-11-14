@@ -7,6 +7,13 @@ import { demoCampaigns } from "../demo";
 /** dev = the people building the hub: everything staff can do, plus a read-only look at any creator's screen. */
 export type Role = "staff" | "creator" | "dev";
 export type User = { id: string; role: Role; name: string; email: string; salt: string; hash: string; createdAt: string };
+/** A file a creator uploaded. The bytes live in lib/server/files.ts storage under `${userId}/${kind}`. */
+export type Doc = { name: string; type: string; at: string };
+/**
+ * What a creator typed in for shipping and settlement (기획자 11/14: 크리에이터가 직접 올리면 편하다).
+ * Personal data: sent only to staff and to the creator it belongs to.
+ */
+export type Profile = { legalName: string; phone: string; address: string; consentAt: string; idDoc?: Doc; bankCopy?: Doc };
 export type Db = {
   users: User[];
   /** sha256(session token) → who and until when. The token itself only lives in the browser cookie. */
@@ -14,6 +21,8 @@ export type Db = {
   campaigns: Campaign[];
   submissions: Submission[];
   notices: Notice[];
+  /** creator user id → their shipping info and documents. Missing in data saved before 11/14. */
+  profiles?: Record<string, Profile>;
 };
 
 const fresh = (): Db => ({ users: [], sessions: {}, campaigns: demoCampaigns(todayKST()), submissions: [], notices: [] });
@@ -24,6 +33,8 @@ const fresh = (): Db => ({ users: [], sessions: {}, campaigns: demoCampaigns(tod
 const BASE = process.env.SUPABASE_URL?.trim().replace(/\/+$/, "");
 const KEY = process.env.SUPABASE_SECRET_KEY?.trim();
 const remote = !!BASE && !!KEY;
+/** Where uploaded files go (lib/server/files.ts): the same Supabase project, or null for this machine's disk. */
+export const supabase = remote ? { base: BASE!, key: KEY! } : null;
 
 // ---- Supabase ----
 // shortcut: the whole Db is one jsonb row (table hub_state, supabase/schema.sql), not a table per kind of

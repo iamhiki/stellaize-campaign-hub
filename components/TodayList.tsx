@@ -71,7 +71,8 @@ export function TodayList() {
       const base = { entryId: e.id, creator: e.name, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays };
       if (s.overdue) all.push({ ...base, kind: "overdue", due: s.deadline });
       else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
-      if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
+      // One row per creator: a passed deadline shows under 마감 지남 only, not again under 컨펌 대기.
+      else if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
     }
   }
 

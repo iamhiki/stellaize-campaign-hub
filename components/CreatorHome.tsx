@@ -4,6 +4,7 @@ import { daysBetween } from "@/lib/date";
 import type { CreatorItem } from "@/lib/server/creator";
 import { useToday } from "@/lib/store";
 import { DdayText } from "./badges";
+import { CreatorProfile } from "./CreatorProfile";
 import { Loading, pageWrap, table, ui } from "./PageBand";
 
 const short = (d: string) => d.slice(5).replace("-", "/");
@@ -22,6 +23,7 @@ export function CreatorHome() {
   // Only a developer account gets choices: the rows it can look at as their creator would (read-only).
   const [choices, setChoices] = useState<Choice[] | null>(null);
   const [entry, setEntry] = useState("");
+  const [saved, setSaved] = useState(0); // bumps when the creator saves their info, to pick up the 정산 서류 check
 
   useEffect(() => {
     let live = true;
@@ -40,7 +42,7 @@ export function CreatorHome() {
       live = false;
       window.removeEventListener("focus", load);
     };
-  }, [entry]);
+  }, [entry, saved]);
 
   if (choices)
     return (
@@ -87,6 +89,7 @@ export function CreatorHome() {
 
   return (
     <main className={pageWrap}>
+      <CreatorProfile onSaved={() => setSaved((n) => n + 1)} />
       {items.map((item) => (
         <Campaign key={item.entryId} item={item} today={today} onChange={setItems} />
       ))}
@@ -104,6 +107,29 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
       <p className="mt-1 text-[15px] text-ink-600">
         {item.advertiser} · {item.channel}
       </p>
+      {/* 기획자 11/14: 본인 최종단가는 보여 준다. PA 단가가 비어 있으면 최종단가에 포함된 것. */}
+      {(item.price != null || item.tracking) && (
+        <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-2 text-[15px]">
+          {item.price != null && (
+            <>
+              <div>
+                <dt className="inline text-ink-600">최종단가 </dt>
+                <dd className="inline font-bold tabular-nums text-ink-900">{item.price.toLocaleString("ko-KR")}원</dd>
+              </div>
+              <div>
+                <dt className="inline text-ink-600">PA 광고 1개월 </dt>
+                <dd className="inline font-semibold tabular-nums text-ink-900">{item.paPrice == null ? "단가 내 포함" : item.paPrice === 0 ? "무료" : `${item.paPrice.toLocaleString("ko-KR")}원`}</dd>
+              </div>
+            </>
+          )}
+          {item.tracking && (
+            <div>
+              <dt className="inline text-ink-600">운송장 </dt>
+              <dd className="inline font-semibold tabular-nums text-ink-900">{item.tracking}</dd>
+            </div>
+          )}
+        </dl>
+      )}
       {late.length > 0 && (
         <p role="alert" className="mt-5 border-l-4 border-danger-700 py-1 pl-4 text-[16px] font-semibold text-danger-700">
           마감이 지났습니다: {late.map((s) => `${s.label.replace(" 수급", "")} (${short(s.due!)})`).join(", ")}. 제출하거나 담당자에게 일정을 알려 주세요.

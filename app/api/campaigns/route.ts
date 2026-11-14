@@ -10,7 +10,15 @@ const snapshot = (db: Db) => {
   const joined = new Map(db.users.filter((u) => u.role === "creator").map((u) => [u.id, u.name]));
   const accounts: Record<string, string> = {};
   for (const c of db.campaigns) for (const e of c.entries) if (e.creatorId && joined.has(e.creatorId)) accounts[e.id] = joined.get(e.creatorId)!;
+  // Shipping info and which documents are in, per row whose creator filled them in. The files themselves come from /api/files.
+  const profiles: Record<string, { userId: string; legalName: string; phone: string; address: string; idDoc: boolean; bankCopy: boolean }> = {};
+  for (const c of db.campaigns)
+    for (const e of c.entries) {
+      const p = e.creatorId ? db.profiles?.[e.creatorId] : undefined;
+      if (p) profiles[e.id] = { userId: e.creatorId!, legalName: p.legalName, phone: p.phone, address: p.address, idDoc: !!p.idDoc, bankCopy: !!p.bankCopy };
+    }
   return {
+    profiles,
     campaigns: db.campaigns,
     submissions: db.submissions,
     notices: db.notices.map(({ id, entryId, step, due, createdAt, emailedAt }) => ({ id, entryId, step, due, createdAt, emailedAt })),

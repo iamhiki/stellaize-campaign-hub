@@ -41,6 +41,12 @@ export type Entry = {
   invite?: string | null;
   /** The creator account linked to this row. That account sees this row and nothing else. */
   creatorId?: string | null;
+  /** 최종단가, won: the price confirmed again at 부킹 요청 (기획자 11/14). The creator sees their own; the budget stays hidden. */
+  price?: number | null;
+  /** PA 광고 1개월 단가, won. 0 = free, null = included in 최종단가. */
+  paPrice?: number | null;
+  /** 운송장 번호 of the product sent to this creator. */
+  tracking?: string;
 };
 
 /** Steps where the creator hands something in (기획자 11/11: 기획안, 가편안, 수정본을 플랫폼에서 받기). */

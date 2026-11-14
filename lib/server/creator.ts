@@ -43,6 +43,10 @@ function view(db: Db, mine: (e: Entry) => boolean) {
           campaign: c.name,
           advertiser: c.advertiser,
           channel: e.channel,
+          // 기획자 11/14: 본인 최종단가는 보여 준다(매번 확인시킨다). 예산은 광고주 대외비라 보내지 않는다.
+          price: e.price ?? null,
+          paPrice: e.paPrice ?? null,
+          tracking: e.tracking ?? "",
           steps: STEPS.slice(0, UPLOAD + 1).map((s, i) => ({ step: i, label: s.label, waits: s.waits, due: dues[i], done: done[i], next: i === next, submit: SUBMIT_STEPS.includes(i) })),
           submissions: db.submissions.filter((s) => s.entryId === e.id).map(({ id, step, url, note, at }) => ({ id, step, url, note, at })),
           notices: db.notices.filter((n) => n.entryId === e.id && n.userId === e.creatorId && !done[n.step]).map(({ id, step, due, createdAt }) => ({ id, step, due, createdAt })),

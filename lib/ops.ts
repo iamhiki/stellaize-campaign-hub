@@ -13,6 +13,8 @@ export type Op =
   | { op: "setDue"; campaignId: string; entryId: string; step: number; date: string | null }
   | { op: "setDueForAll"; campaignId: string; step: number; date: string | null }
   | { op: "drop"; campaignId: string; entryId: string; on: boolean }
+  /** 최종단가, PA 단가, 운송장 for one creator (기획자 11/14). */
+  | { op: "setDeal"; campaignId: string; entryId: string; price: number | null; paPrice: number | null; tracking: string }
   /** The server always makes the token itself; null takes the invite back. */
   | { op: "invite"; campaignId: string; entryId: string; token: string | null }
   | { op: "unlink"; campaignId: string; entryId: string };
@@ -46,6 +48,8 @@ export function applyOp(list: Campaign[], op: Op, today: string): Campaign[] {
       return inCampaign(op.campaignId, (c) => ({ ...c, entries: c.entries.map((e) => (e.droppedAt ? e : { ...e, due: withDue(e, op.step, op.date) })) }));
     case "drop":
       return inEntry(op.campaignId, op.entryId, () => ({ droppedAt: op.on ? today : null }));
+    case "setDeal":
+      return inEntry(op.campaignId, op.entryId, () => ({ price: op.price, paPrice: op.paPrice, tracking: op.tracking }));
     case "invite":
       return inEntry(op.campaignId, op.entryId, (e) => (e.creatorId ? {} : { invite: op.token }));
     case "unlink":
@@ -57,6 +61,7 @@ const isId = (v: unknown): v is string => typeof v === "string" && v.length > 0 
 const isText = (v: unknown, max = 100): v is string => typeof v === "string" && v.trim().length > 0 && v.length <= max;
 export const isDate = (v: unknown): v is string => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(v));
 const isStep = (v: unknown): v is number => Number.isInteger(v) && (v as number) >= 0 && (v as number) < STEPS.length;
+const isWonOrNull = (v: unknown): v is number | null => v === null || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 10_000_000_000);
 const isDateOrNull = (v: unknown): v is string | null => v === null || isDate(v);
 
 /** Checks what a browser sent before the server applies it. Returns null for anything malformed. */
@@ -83,6 +88,10 @@ export function parseOp(x: unknown): Op | null {
       return isId(o.campaignId) && isStep(o.step) && isDateOrNull(o.date) ? { op: "setDueForAll", campaignId: o.campaignId, step: o.step, date: o.date } : null;
     case "drop":
       return isId(o.campaignId) && isId(o.entryId) && typeof o.on === "boolean" ? { op: "drop", campaignId: o.campaignId, entryId: o.entryId, on: o.on } : null;
+    case "setDeal":
+      return isId(o.campaignId) && isId(o.entryId) && isWonOrNull(o.price) && isWonOrNull(o.paPrice) && typeof o.tracking === "string" && o.tracking.length <= 40
+        ? { op: "setDeal", campaignId: o.campaignId, entryId: o.entryId, price: o.price, paPrice: o.paPrice, tracking: o.tracking.trim() }
+        : null;
     case "invite":
       return isId(o.campaignId) && isId(o.entryId) ? { op: "invite", campaignId: o.campaignId, entryId: o.entryId, token: o.token === null ? null : "" } : null;
     case "unlink":
