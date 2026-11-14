@@ -43,7 +43,7 @@ const ACCOUNTS = [
   },
 ];
 
-// Keep in step with README "지금 단계와 다음에 만들 것".
+// Keep in step with the roadmap issue (#7).
 const NEXT = ["실제 크리에이터에게 열어 주기", "마감 알림 메일 발송", "대외비 캠페인 접근 제한", "계약서 앱 배포본에 미리 채우기 넣기"];
 
 // Sample cards in the opening band: the waiting party rotates, which is the product's whole idea in one motion.
@@ -119,7 +119,7 @@ export default function AboutPage() {
                 로그인
               </h2>
               <p className="mt-5 text-[17px] leading-relaxed text-ink-800">담당자와 크리에이터는 같은 화면에서 로그인하고, 계정에 따라 서로 다른 화면이 열립니다.</p>
-              {/* Keep in step with README "휴대폰에서 열기". The Wi-Fi limit goes away once the hub is on a server. */}
+              {/* Keep in step with docs/setup.md "휴대폰에서 열기". The Wi-Fi limit goes away once the hub is on a server. */}
               <p className="mt-4 text-[15px] leading-relaxed text-ink-600">
                 휴대폰 브라우저로도 열 수 있습니다. 브라우저 메뉴에서 홈 화면에 추가하면 앱처럼 아이콘으로 엽니다. 인터넷 주소로 열리므로 와이파이가 달라도 됩니다.
               </p>

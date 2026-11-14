@@ -54,7 +54,7 @@ export function MailForm({ campaign, entry, onClose }: { campaign: Campaign; ent
         </p>
         {!mail.ready && (
           <p className="mt-2 font-semibold text-danger-700">
-            보낼 메일 계정이 아직 연결되지 않아, 지금은 보내기를 눌러도 메일이 나가지 않습니다. 연결 방법은 README의 &ldquo;마감 알림 메일&rdquo;에 있습니다.
+            보낼 메일 계정이 아직 연결되지 않아, 지금은 보내기를 눌러도 메일이 나가지 않습니다. 연결 방법은 저장소의 docs/guide.md &ldquo;마감 알림 메일&rdquo;에 있습니다.
           </p>
         )}
       </div>
