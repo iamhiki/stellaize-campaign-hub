@@ -14,11 +14,10 @@ export function CampaignList() {
   const campaigns = useCampaigns();
   const [adding, setAdding] = useState(false);
   const today = useToday();
-  // 11/14: a campaign whose upload date passed with someone still not uploaded sits under its own tab, like 마감 지난 건.
-  const [view, setView] = useState<"live" | "late">("live");
-  const isLate = (c: Campaign) => !!today && !uploaded(c) && daysBetween(today, c.uploadDate) < 0;
-  const lateCount = (campaigns ?? []).filter(isLate).length;
-  const shown = (campaigns ?? []).filter((c) => (view === "late") === isLate(c));
+  // 기획자 11/17: a passed upload date stays in 진행 중 (red D+n); a campaign moves to 완료 once everyone has uploaded.
+  const [view, setView] = useState<"live" | "done">("live");
+  const doneCount = (campaigns ?? []).filter(uploaded).length;
+  const shown = (campaigns ?? []).filter((c) => (view === "done") === uploaded(c));
 
   return (
     <>
@@ -50,9 +49,9 @@ export function CampaignList() {
         <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">등록한 캠페인이 없습니다. 오른쪽 위 캠페인 등록으로 시작하세요.</p>
       ) : (
         <>
-        {(lateCount > 0 || view === "late") && (
+        {(doneCount > 0 || view === "done") && (
           <div role="group" aria-label="보기" className="mb-4 flex w-fit border border-line">
-            {([["live", `진행 중 ${campaigns.length - lateCount}`], ["late", `마감 지난 캠페인 ${lateCount}`]] as const).map(([v, text]) => (
+            {([["live", `진행 중 ${campaigns.length - doneCount}`], ["done", `완료 ${doneCount}`]] as const).map(([v, text]) => (
               <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className="min-h-10 px-4 text-[14px] font-semibold tabular-nums text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white">
                 {text}
               </button>

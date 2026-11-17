@@ -1,5 +1,5 @@
 "use client";
-import { CONTRACT_APP_URL, contractLink } from "@/lib/contract";
+import { contractLink } from "@/lib/contract";
 import { useCampaigns } from "@/lib/store";
 import { Loading, table } from "./PageBand";
 
@@ -54,9 +54,8 @@ export function ContractPicker() {
           })}
         </tbody>
       </table>
-      <p className="mt-3 text-[13px] text-ink-600">
-        링크는 이 PC의 계약서 앱({CONTRACT_APP_URL.replace(/^https?:\/\//, "")})을 엽니다. 새 탭으로 열립니다.
-      </p>
+      {/* shortcut: the contract app runs on each PC (개인정보), so the link only opens while it is running there. Host it to make this one click. */}
+      <p className="mt-3 text-[13px] text-ink-600">&ldquo;연결을 거부했습니다&rdquo;가 뜨면 내 PC에서 계약서 앱을 먼저 켜 주세요.</p>
     </div>
   );
 }
