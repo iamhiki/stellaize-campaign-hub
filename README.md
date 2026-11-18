@@ -20,7 +20,7 @@
 | **크리에이터 화면** | 초대받은 크리에이터가 자기 일정과 단가를 보고, 링크와 서류를 직접 제출 |
 | **마감 알림 메일** | 담당자가 양식을 확인하고 고쳐서 보내기 |
 | **대외비 캠페인** | 담당자에게만 보임 |
-| **계약서 앱 연동** | 캠페인 정보를 미리 채워서 계약서 앱 열기. [데모 앱](https://stellaize-campaign-app-rkuidnbf2oswytfnabzqqo.streamlit.app)은 견본(가짜) 서류로 체험 |
+| **계약서 앱 연동** | 캠페인 정보를 미리 채워서 계약서 앱 열기. [데모 앱](https://stellaize-campaign-app-h4v9is7wrhrcvzbw5q52y3.streamlit.app)은 견본(가짜) 서류로 체험 |
 
 ## 어떻게 만들었나
 

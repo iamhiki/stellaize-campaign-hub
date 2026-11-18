@@ -98,7 +98,7 @@ npm run dev
 
 ### 계약서 앱 연결
 
-**데모 앱 (2026-11-18):** https://stellaize-campaign-app-rkuidnbf2oswytfnabzqqo.streamlit.app
+**데모 앱 (2026-11-18):** https://stellaize-campaign-app-h4v9is7wrhrcvzbw5q52y3.streamlit.app
 - 계약서 앱 v3.1을 Streamlit Community Cloud에 올린 데모판. 저장소: `iamhiki/stellaize-contract-demo` (비공개)
 - 배포된 허브는 Vercel의 `NEXT_PUBLIC_CONTRACT_APP_URL`로 이 주소를 연다. 바꾸면 Redeploy 해야 반영된다.
 - **견본 서류만 쓴다.** 앱 왼쪽 "견본 서류 (가짜)"에서 사업자등록증·주민등록증·통장사본을 내려받아 올린다. 실제 서류는 올리지 않는다.
