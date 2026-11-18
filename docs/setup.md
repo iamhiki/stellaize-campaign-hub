@@ -98,6 +98,13 @@ npm run dev
 
 ### 계약서 앱 연결
 
+**데모 앱 (2026-11-18):** https://stellaize-campaign-app-rkuidnbf2oswytfnabzqqo.streamlit.app
+- 계약서 앱 v3.1을 Streamlit Community Cloud에 올린 데모판. 저장소: `iamhiki/stellaize-contract-demo` (비공개)
+- 배포된 허브는 Vercel의 `NEXT_PUBLIC_CONTRACT_APP_URL`로 이 주소를 연다. 바꾸면 Redeploy 해야 반영된다.
+- **견본 서류만 쓴다.** 앱 왼쪽 "견본 서류 (가짜)"에서 사업자등록증·주민등록증·통장사본을 내려받아 올린다. 실제 서류는 올리지 않는다.
+- 서버에는 MS Word가 없어 계약서 미리보기는 안 나온다. `.docx` 내려받기는 된다.
+- 아래는 원본(각자 PC) 기준 설명이다.
+
 계약서 자동작성 앱(기획자 제작, 공유 드라이브 `계약서 작성 자동화` 폴더)은 정산서류 개인정보를 다뤄서 **각자 PC에서 `실행.bat`으로 켜고 `http://localhost:8501`에서만** 열린다. 캠페인 허브는 앱을 품지 않고 링크로 연다.
 
 - 허브의 **계약서 작성** 링크 = `http://localhost:8501/?from=campaign-hub&campaign=…&advertiser=…&upload=…&creator=…`
