@@ -1,5 +1,5 @@
 "use client";
-import { contractLink } from "@/lib/contract";
+import { CONTRACT_APP_URL, contractLink } from "@/lib/contract";
 import { useCampaigns } from "@/lib/store";
 import { Loading, table } from "./PageBand";
 
@@ -54,8 +54,12 @@ export function ContractPicker() {
           })}
         </tbody>
       </table>
-      {/* shortcut: the contract app runs on each PC (개인정보), so the link only opens while it is running there. Host it to make this one click. */}
-      <p className="mt-3 text-[13px] text-ink-600">&ldquo;연결을 거부했습니다&rdquo;가 뜨면 내 PC에서 계약서 앱을 먼저 켜 주세요.</p>
+      <p className="mt-3 text-[13px] text-ink-600">
+        {/* localhost = the app on this PC; otherwise the hosted demo, which only takes sample documents */}
+        {CONTRACT_APP_URL.includes("localhost")
+          ? "“연결을 거부했습니다”가 뜨면 내 PC에서 계약서 앱을 먼저 켜 주세요."
+          : "데모용 계약서 앱입니다. 실제 신분증·통장사본 대신 앱 왼쪽의 견본 서류를 올려 보세요."}
+      </p>
     </div>
   );
 }
