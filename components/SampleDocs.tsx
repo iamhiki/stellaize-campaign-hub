@@ -24,6 +24,9 @@ export function SampleDocs() {
         견본 서류 (가짜) <span className="text-[14px] font-medium tracking-normal text-ink-600">개발자에게만 보임</span>
       </h2>
       <p className="mt-2 text-[15px] text-ink-600">예시 크리에이터 10명의 가짜 서류입니다. 계약서 앱 체험용이고, 실제 서류는 올리지 마세요.</p>
+      <a href="/api/samples?list" className="mt-4 inline-flex h-11 items-center border border-line bg-white px-4 text-[14px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-600">
+        10명 정보 한 번에 받기 (엑셀 · 구글시트)
+      </a>
       <ul className="mt-4 border-t-2 border-ink-900">
         {SAMPLES.map(([who, docs]) => (
           <li key={who} className="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-line py-3 text-[15px]">

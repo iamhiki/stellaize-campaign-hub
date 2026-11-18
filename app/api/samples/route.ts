@@ -20,6 +20,13 @@ const SAMPLES: Record<string, string[]> = {
 export async function GET(req: NextRequest) {
   const g = await guard(req, "dev");
   if (g.deny) return g.deny;
+  if (req.nextUrl.searchParams.has("list")) {
+    // The 10 creators in one sheet (UTF-8 with BOM, so Excel shows Korean; Google Sheets opens it via 가져오기).
+    const csv = await readFile(path.join(process.cwd(), "samples", "인플루언서_10명.csv"));
+    return new Response(csv, {
+      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename*=UTF-8''${encodeURIComponent("견본_인플루언서_10명.csv")}`, "Cache-Control": "no-store" },
+    });
+  }
   const who = req.nextUrl.searchParams.get("who") ?? "";
   const doc = req.nextUrl.searchParams.get("doc") ?? "";
   // Only names from the list above reach the file path.
