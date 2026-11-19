@@ -97,6 +97,7 @@ npm run dev
 - `SUPABASE_URL`은 `https://프로젝트주소.supabase.co`까지만 넣는다. 끝에 `/rest/v1/`를 붙여 넣어도 허브가 알아서 뗀다.
 - 프로젝트를 만들 때 **Enable Data API**는 켜 둔다. 허브가 이 API로 저장한다. `schema.sql`이 허브 서버(secret 키)에만 표 권한을 주므로 "Grant API access to new tables automatically"는 꺼도 된다.
 - 무료 요금제는 자동 백업이 없고, 1주일 동안 접속이 없으면 프로젝트가 일시정지된다. 정지되면 Supabase 대시보드에서 다시 켠다.
+- **할 일 (대회 종료 후 실제 배포 때):** 지금 운영 Supabase는 시드니(Oceania) 지역이다. Supabase는 지역을 바꿀 수 없어서, 서울(Northeast Asia) 지역에 새 프로젝트를 만들고 `schema.sql`, `chat.sql`을 실행한 다음 자료를 옮긴다. 옮길 자료는 hub_state, 서류 파일, 대화 표다. 그다음 Vercel과 `.env.local`의 키 세 개를 바꾼다. 허브 서버(서울)와 가까워 빨라지고, 크리에이터 개인정보도 국내에 보관된다. 대회 기간에는 옮기지 않기로 했다(2026-11-19).
 - 지금은 허브 자료 전체를 표의 한 행에 통째로 넣는다(베타용). 캠페인이 수백 개로 늘기 전에 표를 나누는 작업이 필요하다.
 
 ### 대화(채팅) 표와 실시간 신호
