@@ -62,9 +62,9 @@ export function CreatorHome() {
     return (
       <main className={pageWrap}>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-line py-5">
-          <label className="flex flex-wrap items-center gap-3 text-[15px] font-semibold text-ink-900">
+          <label className="flex w-full min-w-0 flex-wrap items-center gap-3 text-[15px] font-semibold text-ink-900 md:w-auto">
             개발자 미리보기
-            <select value={entry} onChange={(ev) => setEntry(ev.target.value)} className={`${ui.input} h-11 max-w-full text-[15px] font-normal`}>
+            <select value={entry} onChange={(ev) => setEntry(ev.target.value)} className={`${ui.input} h-11 w-full min-w-0 text-[15px] font-normal md:w-[440px]`}>
               <option value="">크리에이터를 고르세요</option>
               {choices.map((c) => (
                 <option key={c.entryId} value={c.entryId}>

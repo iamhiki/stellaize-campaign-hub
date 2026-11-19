@@ -11,7 +11,7 @@ export default function MyPage() {
   return (
     <>
       <PageBand title="마이페이지">내 계정과 내가 맡은 캠페인을 봅니다.</PageBand>
-      <main className={`${pageWrap} grid gap-14 py-10 md:grid-cols-2 md:gap-20 md:py-14`}>
+      <main className={`${pageWrap} grid gap-14 py-10 md:grid-cols-2 md:gap-20 md:py-14 [&>*]:min-w-0`}>
         <section>
           <h2 className={h2}>내 정보</h2>
           <AccountInfo />

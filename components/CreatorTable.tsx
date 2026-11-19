@@ -89,8 +89,8 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                   <Fragment key={e.id}>
                   <tr className="group">
                     <th scope="row" className={`${td} ${sticky} px-3 text-left font-normal group-hover:bg-[#f5f7fa]`}>
-                      <span className="block text-[16px] font-bold text-ink-900">{e.name}</span>
-                      <span className="block text-[13px] text-ink-600">{e.channel}</span>
+                      <span className="block max-w-[220px] text-[16px] font-bold text-ink-900 wrap-anywhere">{e.name}</span>
+                      <span className="block max-w-[220px] text-[13px] text-ink-600 wrap-anywhere">{e.channel}</span>
                       {(e.creatorId || e.invite) && <span className="block text-[12px] text-ink-600">{e.creatorId ? "계정 연결됨" : "초대 링크 만듦"}</span>}
                       <a
                         href={contractLink(campaign, e)}

@@ -93,7 +93,7 @@ export function ChatInbox() {
     <main className={`${pageWrap} py-8 md:py-10`}>
       <div className="grid border border-line md:h-[calc(100vh-260px)] md:min-h-[520px] md:grid-cols-[340px_1fr]">
         {/* list */}
-        <section aria-label="대화 목록" className={`flex min-h-0 flex-col border-line md:border-r ${current ? "hidden md:flex" : "flex"}`}>
+        <section aria-label="대화 목록" className={`flex min-h-0 min-w-0 flex-col border-line md:border-r ${current ? "hidden md:flex" : "flex"}`}>
           {!creator && (
             <div role="group" aria-label="대화 종류" className="flex border-b border-line text-[14px] font-semibold">
               {(["creator", "team"] as const).map((k) => (
@@ -161,7 +161,7 @@ export function ChatInbox() {
         </section>
 
         {/* open thread */}
-        <section aria-label="대화" className={`min-h-0 flex-col ${current ? "flex" : "hidden md:flex"}`}>
+        <section aria-label="대화" className={`min-h-0 min-w-0 flex-col ${current ? "flex" : "hidden md:flex"}`}>
           {current ? (
             <>
               <div className="flex items-center gap-3 border-b border-line px-4 py-3">

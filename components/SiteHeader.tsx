@@ -75,10 +75,10 @@ export function SiteHeader() {
                 <circle cx="12" cy="8.5" r="3.75" />
                 <path d="M4.75 19.5c1.2-3.3 4-5 7.25-5s6.05 1.7 7.25 5" />
               </svg>
-              <span className="hidden lg:inline">{me.name} 님</span>
+              <span className="hidden max-w-[11em] truncate lg:inline-block lg:align-bottom">{me.name} 님</span>
             </Link>
           )}
-          {me?.role === "creator" && <span className="hidden lg:inline">{me.name} 님</span>}
+          {me?.role === "creator" && <span className="hidden max-w-[11em] truncate lg:inline-block">{me.name} 님</span>}
           {me && (
             <button type="button" onClick={logout} className={`${util} shrink-0`}>
               로그아웃

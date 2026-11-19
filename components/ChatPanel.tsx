@@ -84,7 +84,7 @@ const URL_RE = /(https?:\/\/[^\s<>"']+[^\s<>"'.,!?)\]])/g;
 function Linked({ text, mine }: { text: string; mine: boolean }) {
   return text.split(URL_RE).map((part, i) =>
     i % 2 ? (
-      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`break-all underline underline-offset-2 ${mine ? "text-white" : "text-primary-600"}`}>
+      <a key={i} href={part} target="_blank" rel="noopener noreferrer" className={`break-all underline underline-offset-2 ${mine ? "text-white" : "text-primary-700"}`}>
         {part}
       </a>
     ) : (
@@ -247,7 +247,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
                         </p>
                         <span className={`flex shrink-0 flex-col pb-0.5 text-[11px] leading-tight tabular-nums ${m.mine ? "items-end" : "items-start"}`}>
                           {unread && (
-                            <span className="text-[12px] font-bold text-primary-600" title="상대가 아직 읽지 않았습니다">
+                            <span className="text-[12px] font-bold text-primary-700" title="상대가 아직 읽지 않았습니다">
                               1<span className="sr-only"> 안 읽음</span>
                             </span>
                           )}

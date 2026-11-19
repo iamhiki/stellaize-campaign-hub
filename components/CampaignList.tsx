@@ -84,7 +84,7 @@ export function CampaignList() {
                 return (
                   <tr key={c.id} className="hover:bg-[#f5f7fa]">
                     <td className={table.td}>
-                      <Link href={`/campaigns/${c.id}`} className="text-[16px] font-bold text-ink-900 underline-offset-4 hover:text-primary-600 hover:underline">
+                      <Link href={`/campaigns/${c.id}`} className="text-[16px] font-bold text-ink-900 underline-offset-4 wrap-anywhere hover:text-primary-600 hover:underline">
                         {c.name}
                       </Link>
                       {c.confidential && <span className="ml-2 text-[13px] font-bold text-danger-700">대외비</span>}

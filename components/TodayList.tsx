@@ -31,14 +31,14 @@ type Sort = "kind" | "waiting";
 // Linear-style controls: a segmented scope switch and a sort switch, both plain buttons with aria-pressed.
 function Toggle<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: [T, string][]; onChange: (v: T) => void }) {
   return (
-    <div role="group" aria-label={label} className="flex border border-line">
+    <div role="group" aria-label={label} className="flex max-w-full border border-line">
       {options.map(([v, text]) => (
         <button
           key={v}
           type="button"
           aria-pressed={value === v}
           onClick={() => onChange(v)}
-          className="min-h-10 px-4 text-[14px] font-semibold text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white"
+          className="min-h-10 min-w-0 truncate px-4 text-[14px] font-semibold text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white"
         >
           {text}
         </button>

@@ -15,7 +15,7 @@ export function MyCampaigns() {
     <ul className="mt-5 border-t-2 border-ink-900">
       {mine.map((c, i) => (
         <li key={c.id} className="border-b border-line py-4">
-          <Link href={`/campaigns/${c.id}`} className="font-semibold underline-offset-4 hover:text-primary-600 hover:underline">
+          <Link href={`/campaigns/${c.id}`} className="font-semibold underline-offset-4 wrap-anywhere hover:text-primary-600 hover:underline">
             {c.name}
           </Link>
           <div className="mt-2">

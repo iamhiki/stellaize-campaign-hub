@@ -122,7 +122,7 @@ export function TeamAccounts() {
             </button>
           </form>
         ) : (
-          <p className="flex flex-wrap items-baseline gap-x-2 text-[16px] font-bold text-ink-900">
+          <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 text-[16px] font-bold text-ink-900 wrap-anywhere">
             {a.name}
             {a.nickname && <span className="text-[14px] font-semibold text-ink-600">{a.nickname}</span>}
             <button type="button" onClick={() => setRenaming(a.id)} className="text-[13px] font-semibold text-ink-800 underline underline-offset-4 hover:text-primary-600">
