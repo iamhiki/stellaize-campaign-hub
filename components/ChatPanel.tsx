@@ -4,7 +4,8 @@ import { liveOn, onLive, startLive } from "@/lib/live";
 import { useUnsaved } from "@/lib/unsaved";
 
 type Msg = { id: string; from: "staff" | "creator"; name: string; text: string; at: string; mine: boolean; pending?: boolean };
-type Thread = { messages: Msg[]; readAt: string | null; joined: boolean };
+/** readAts: how far each person whose reading counts got (null = not yet). */
+type Thread = { messages: Msg[]; readAts: (string | null)[]; joined: boolean };
 
 
 // Without the live signal a thread asks every 5 seconds and the counts every 20; with it, only as a safety net.
@@ -102,8 +103,8 @@ const Initial = ({ name }: { name: string }) => (
 
 /**
  * One thread: 크리에이터 ↔ 담당자 (기획자 11/19) or 1:1 팀원 대화. `side` is who is looking; the server marks which
- * messages are theirs (right side) and how far the other side has read (readAt): until then a message of mine shows
- * "1", as in 카카오톡. Staff see who on the team wrote each message; the creator sees it as from 스텔라이즈.
+ * messages are theirs (right side) and how far each reader got (readAts). Next to a message of mine, the number of
+ * people who haven't read it yet, as in 카카오톡 (1:1 and creator rooms: 1; 팀방: one per teammate). Staff see who on the team wrote each message; the creator sees it as from 스텔라이즈.
  * `fill`: take the height of the box it is in (the 대화 tab) instead of a fixed-height card.
  */
 export function ChatPanel({ entryId, side, title, fill }: { entryId: string; side: "staff" | "creator"; title: string; fill?: boolean }) {
@@ -202,7 +203,8 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
     setData(d);
   }
 
-  const readAt = data?.readAt ? Date.parse(data.readAt) : 0;
+  const readAts = (data?.readAts ?? []).map((x) => (x ? Date.parse(x) : 0));
+  const behind = (m: Msg) => readAts.filter((t) => t < Date.parse(m.at)).length;
   const who = (m: Msg) => (m.from === "staff" && side === "creator" ? `스텔라이즈 ${m.name}` : m.name);
 
   return (
@@ -225,7 +227,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
               const sameAs = (o: Msg | undefined) => !!o && o.mine === m.mine && o.name === m.name && Math.abs(Date.parse(o.at) - Date.parse(m.at)) < GROUP_MS && dayKey(o.at) === dayKey(m.at);
               const first = !sameAs(prev);
               const last = !sameAs(next);
-              const unread = m.mine && !m.pending && Date.parse(m.at) > readAt;
+              const unread = m.mine && !m.pending ? behind(m) : 0;
               return (
                 <li key={m.id} className={first ? "mt-3 first:mt-0" : "mt-1"}>
                   {newDay && (
@@ -246,9 +248,10 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
                           <Linked text={m.text} mine={m.mine} />
                         </p>
                         <span className={`flex shrink-0 flex-col pb-0.5 text-[11px] leading-tight tabular-nums ${m.mine ? "items-end" : "items-start"}`}>
-                          {unread && (
-                            <span className="text-[12px] font-bold text-primary-700" title="상대가 아직 읽지 않았습니다">
-                              1<span className="sr-only"> 안 읽음</span>
+                          {unread > 0 && (
+                            <span className="text-[12px] font-bold text-primary-700" title={`${unread}명이 아직 읽지 않았습니다`}>
+                              {unread}
+                              <span className="sr-only">명 안 읽음</span>
                             </span>
                           )}
                           {m.pending ? <span className="text-ink-600">보내는 중…</span> : last && <time dateTime={m.at} className="text-ink-600">{clock.format(new Date(m.at))}</time>}

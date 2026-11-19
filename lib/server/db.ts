@@ -31,7 +31,11 @@ export type Db = {
   messages?: Message[];
   /** user id → entry id → the time (ISO) that user last read that thread. */
   reads?: Record<string, Record<string, string>>;
+  /** Devices that asked for app notifications (마이페이지 알림 켜기, 11/19). Missing in data saved before 11/19. */
+  pushSubs?: PushSub[];
 };
+/** One browser's web push address. The keys only let the push service deliver to it; they open nothing else. */
+export type PushSub = { endpoint: string; keys: { p256dh: string; auth: string }; userId: string; at: string };
 export type Message = { id: string; campaignId: string; entryId: string; from: "staff" | "creator"; userId: string; name: string; text: string; at: string };
 
 const fresh = (): Db => ({ users: [], sessions: {}, campaigns: demoCampaigns(todayKST()), submissions: [], notices: [] });

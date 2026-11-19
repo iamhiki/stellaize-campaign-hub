@@ -2,6 +2,7 @@ import { PageBand, pageWrap } from "@/components/PageBand";
 import { MyCampaigns } from "@/components/MyCampaigns";
 import { AccountInfo, PasswordForm } from "@/components/Account";
 import { TeamAccounts } from "@/components/TeamAccounts";
+import { PushToggle } from "@/components/PushToggle";
 
 export const metadata = { title: "마이페이지 │ Campaign Hub │ 스텔라이즈" };
 
@@ -23,6 +24,9 @@ export default function MyPage() {
         <section>
           <h2 className={h2}>비밀번호 변경</h2>
           <PasswordForm />
+          <div className="mt-14">
+            <PushToggle />
+          </div>
         </section>
 
         <TeamAccounts />

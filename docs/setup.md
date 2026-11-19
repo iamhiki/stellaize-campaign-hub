@@ -51,12 +51,25 @@ npm run dev
 크리에이터가 인터넷에서 열 수 있게 하는 설정이다. Supabase 연결이 먼저 돼 있어야 한다(Vercel은 파일을 보관하지 않는다).
 
 1. [vercel.com/new](https://vercel.com/new)에서 GitHub 계정으로 로그인하고 이 저장소(`stellaize-campaign-hub`)를 **Import** 한다.
-2. **Environment Variables**에 `.env.local`과 같은 값을 넣는다: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `STAFF_JOIN_CODE`, `DEV_JOIN_CODE`. 메일을 보낼 때는 `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_CC`도. 메일이 설정되면 로그인 화면의 "비밀번호 찾기"가 재설정 링크를 메일로 보낸다. 설정 전에는 개발자가 마이페이지 팀원 계정에서 링크를 만들어 준다.
+2. **Environment Variables**에 `.env.local`과 같은 값을 넣는다: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `STAFF_JOIN_CODE`, `DEV_JOIN_CODE`. 메일을 보낼 때는 `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_CC`도. 앱 알림에는 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`(`.env.local`에 들어 있는 값 그대로. 바꾸면 이미 알림을 켠 기기는 다시 켜야 한다). 메일이 설정되면 로그인 화면의 "비밀번호 찾기"가 재설정 링크를 메일로 보낸다. 설정 전에는 개발자가 마이페이지 팀원 계정에서 링크를 만들어 준다.
 3. **Deploy**를 누른다. 끝나면 `https://….vercel.app` 주소가 나온다. 그 뒤로는 `main`에 푸시할 때마다 자동으로 다시 올라간다.
 
 - 서버 위치는 `vercel.json`에서 서울(`icn1`)로 정해 두었다. Supabase가 서울에 있어서다.
 - 내 컴퓨터의 허브와 Vercel의 허브가 같은 Supabase를 쓰면 **같은 자료**를 본다.
 - 주소를 아는 사람은 누구나 로그인 화면까지는 온다. 가입은 가입 코드나 초대 링크가 있어야 한다.
+
+### 앱 알림 (홈 화면 앱, 웹 푸시)
+
+새 메시지가 오면 사이트를 닫아 두어도 휴대폰·PC에 알림이 뜬다. 앱 스토어 앱이 아니라 사이트를 **홈 화면에 추가**하는 웹앱이고, 비용은 없다(푸시 서비스는 구글·애플·모질라가 무료로 운영).
+
+- 켜는 곳: 담당자·개발자는 **마이페이지 → 앱 알림**, 크리에이터는 **내 일정** 맨 아래. 기기마다 따로 켠다.
+- 안드로이드·PC(크롬, 엣지): 바로 켜진다.
+- 아이폰: iOS 16.4 이상, 사파리 **공유 → 홈 화면에 추가** 한 뒤 홈 화면의 "캠페인 허브"에서 켠다. 사파리 탭에서는 켤 수 없다.
+- 크롬 시크릿 창에서는 켜지지 않는다(크롬이 막아 둠).
+- 누구에게 가나: 크리에이터 방은 크리에이터와 그 캠페인 담당자들, 팀방은 그 캠페인 담당자들, 1:1은 상대. 보낸 사람에게는 가지 않는다.
+- 로그아웃하면 그 기기의 알림이 꺼진다. 계정을 지우면 그 사람 기기도 모두 빠진다.
+- 키: `.env.local`과 Vercel에 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`. 없으면 앱 알림에 "알림 설정이 아직 서버에 들어가지 않았습니다"가 뜨고 아무것도 보내지 않는다. 새로 만들려면 `npx web-push generate-vapid-keys`.
+- 알림 받을 기기 목록은 허브 자료(`hub_state`) 안에 들어 있어서 Supabase에 따로 SQL을 실행할 필요가 없다.
 
 ### 임시 테스트 계정
 

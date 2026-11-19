@@ -1,8 +1,10 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { after, NextResponse, type NextRequest } from "next/server";
 import { canSee } from "@/lib/campaigns";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
 import { add, latest, liveConfig, markRead, ping, readsOf, thread, threadKey, unread, unreadDirect, type ChatMessage } from "@/lib/server/chat";
 import { readDb, type Db, type User } from "@/lib/server/db";
+import { notify } from "@/lib/server/push";
+import type { Campaign } from "@/lib/campaigns";
 
 /**
  * 대화. Two kinds of thread:
@@ -10,6 +12,8 @@ import { readDb, type Db, type User } from "@/lib/server/db";
  *   the rows of campaigns they may see; a creator reaches only their own rows.
  * - 1:1 팀원 대화 (11/19): two 담당자 who are both 담당 on some campaign. A developer may talk with anyone (개발자,
  *   담당자, 크리에이터) to try things; a creator only sees such a thread once a developer has written in it.
+ * - 캠페인 팀방 (11/19): one per campaign, for the 담당자 on it. Made automatically; developers may open any of them.
+ * Every new message also goes out as an app notification (lib/server/push.ts) to the room's other people.
  * Screens hear about new messages through a live signal (lib/server/chat.ts) when it's set up, and also ask
  * again now and then, so a missed signal or a missing setup only makes messages slower, never lost.
  */
@@ -31,9 +35,22 @@ type Thread = {
   dropped: boolean;
   /** Whether a message is this viewer's own (sits on the right). */
   mine: (m: ChatMessage) => boolean;
-  /** Whose reading counts as "읽음" for this viewer's messages: the creator for staff, the team for the creator. */
-  reader: (userId: string) => boolean;
+  /** 팀방: a room for several team members. */
+  group: boolean;
+  /** For creator rows: a campaign this viewer is 담당 on (the 대화 list shows those first). */
+  myCampaign: boolean;
+  /**
+   * Whose reading counts as "읽음" for this viewer's messages. Each one who hasn't read a message adds 1 to the
+   * number next to it, as in 카카오톡. `anyOf`: one count for all of them (the creator sees the team as one side).
+   */
+  readers: string[];
+  anyOf: boolean;
+  /** Everyone in the room, for app notifications (the sender is left out when sending). */
+  audience: string[];
 };
+
+/** Team accounts named in a campaign's 담당. */
+const ownersOf = (db: Db, c: Campaign) => db.users.filter((u) => staffSide(u) && c.owners.includes(u.name));
 
 // ---- 1:1 threads: id "dm.<user id>.<user id>", ids sorted, so both people land on the same one ----
 const directId = (a: string, b: string) => `dm.${[a, b].sort().join(".")}`;
@@ -58,8 +75,35 @@ const direct = (user: User, other: User): Thread => ({
   joined: true,
   dropped: false,
   mine: (m) => m.userId === user.id,
-  reader: (id) => id === other.id,
+  group: false,
+  myCampaign: false,
+  readers: [other.id],
+  anyOf: false,
+  audience: [user.id, other.id],
 });
+
+// ---- 캠페인 팀방: id "team.<campaign id>" ----
+const groupId = (campaignId: string) => `team.${campaignId}`;
+const mayOpenGroup = (user: User, c: Campaign) => staffSide(user) && canSee(c, user.name) && (user.role === "dev" || c.owners.includes(user.name));
+function group(db: Db, user: User, c: Campaign): Thread {
+  const members = ownersOf(db, c);
+  return {
+    id: groupId(c.id),
+    kind: "team",
+    campaignId: c.id,
+    title: c.name,
+    sub: `담당자방 · ${members.map((u) => u.name).join(", ") || "아직 가입한 담당자 없음"}`,
+    nick: "",
+    joined: true,
+    dropped: false,
+    mine: (m) => m.userId === user.id,
+    group: true,
+    myCampaign: c.owners.includes(user.name),
+    readers: members.filter((u) => u.id !== user.id).map((u) => u.id),
+    anyOf: false,
+    audience: members.map((u) => u.id),
+  };
+}
 
 /** Every thread this user may open. A creator's 1:1 threads with developers are added once they hold a message. */
 function threadsOf(db: Db, user: User): Thread[] {
@@ -76,15 +120,26 @@ function threadsOf(db: Db, user: User): Thread[] {
         joined: !!entry.creatorId,
         dropped: !!entry.droppedAt,
         mine: (m: ChatMessage) => m.from === (staffSide(user) ? "staff" : "creator"),
-        reader: (id: string) => (staffSide(user) ? id === entry.creatorId : id !== user.id),
+        group: false,
+        myCampaign: staffSide(user) && campaign.owners.includes(user.name),
+        // Staff: whether the creator read it (no account yet → never). Creator: whether anyone on the team did.
+        readers: staffSide(user) ? [entry.creatorId ?? ""] : ownersOf(db, campaign).map((u) => u.id),
+        anyOf: !staffSide(user),
+        audience: [entry.creatorId ?? "", ...ownersOf(db, campaign).map((u) => u.id)].filter(Boolean),
       })),
   );
   const people = user.role === "creator" ? [] : db.users.filter((u) => mayTalk(db, user, u));
-  return [...rows, ...people.map((u) => direct(user, u))];
+  // A 팀방 is listed once at least two team accounts are 담당 on the campaign (developers see every one with any).
+  const groups = db.campaigns.filter((c) => mayOpenGroup(user, c) && ownersOf(db, c).length >= (user.role === "dev" ? 1 : 2)).map((c) => group(db, user, c));
+  return [...rows, ...groups, ...people.map((u) => direct(user, u))];
 }
 
 /** One thread by id, if this user may open it: also 1:1 threads not listed yet (a creator's, before the first message). */
 function threadOf(db: Db, user: User, id: string): Thread | null {
+  if (id.startsWith("team.")) {
+    const c = db.campaigns.find((x) => groupId(x.id) === id);
+    return c && mayOpenGroup(user, c) ? group(db, user, c) : null;
+  }
   const pair = directIds(id);
   if (!pair) return threadsOf(db, user).find((t) => t.id === id) ?? null;
   if (!pair.includes(user.id)) return null;
@@ -105,11 +160,13 @@ async function countsOf(user: User, all: Thread[]) {
 
 /** The thread as the screen gets it: whose each message is, and how far the other side has read (읽음 표시). */
 async function forScreen(t: Thread, ms: ChatMessage[]) {
-  const seen = (await readsOf(t.id)).filter((r) => t.reader(r.userId)).map((r) => r.at);
-  const readAt = seen.sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
+  const reads = Object.fromEntries((await readsOf(t.id)).map((r) => [r.userId, r.at]));
+  const times = t.readers.map((id) => reads[id] ?? null);
+  // readAts: how far each reader got (null = not yet). The screen counts, per message of mine, who is behind it.
+  const readAts = t.anyOf ? [times.filter((x): x is string => !!x).sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null] : times;
   return {
     messages: ms.map((m) => ({ id: m.id, from: m.from, name: m.name, text: m.text, at: m.at, mine: t.mine(m) })),
-    readAt,
+    readAts,
     joined: t.joined,
     kind: t.kind,
   };
@@ -138,6 +195,8 @@ export async function GET(req: NextRequest) {
         .map((t) => ({
           entryId: t.id,
           kind: t.kind,
+          group: t.group,
+          myCampaign: t.myCampaign,
           campaignId: t.campaignId,
           title: t.title,
           sub: t.sub,
@@ -181,5 +240,9 @@ export async function POST(req: NextRequest) {
   const at = new Date().toISOString();
   await add({ id: newId(), campaignId: t.campaignId, entryId: id, from: staffSide(g.user) ? "staff" : "creator", userId: g.user.id, name: g.user.name, text, at });
   await ping(id);
+  // App notification to the others in the room, after the answer has gone back (it never slows sending down).
+  const to = t.audience.filter((u) => u !== g.user.id);
+  const where = t.group ? `${t.title} 담당자방` : t.kind === "creator" ? (staffSide(g.user) ? t.sub : t.title) : "";
+  after(() => notify(to, { title: where ? `${g.user.name} · ${where}` : g.user.name, body: text.slice(0, 140), url: `/chat#${encodeURIComponent(id)}`, tag: id }));
   return NextResponse.json(await forScreen(t, await thread(id)));
 }

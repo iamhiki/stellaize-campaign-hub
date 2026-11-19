@@ -60,6 +60,7 @@ export async function DELETE(req: NextRequest) {
     for (const [k, r] of Object.entries(db.resets ?? {})) if (r.userId === userId) delete db.resets![k];
     delete db.reads?.[userId];
     delete db.profiles?.[userId];
+    db.pushSubs = (db.pushSubs ?? []).filter((s) => s.userId !== userId);
     for (const c of db.campaigns) {
       for (const e of c.entries) if (e.creatorId === userId) e.creatorId = null;
       // Their name stops being a 담당 mark, unless another team account has the same name.

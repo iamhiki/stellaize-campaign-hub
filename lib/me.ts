@@ -45,6 +45,8 @@ export async function post(url: string, data: unknown): Promise<string> {
 }
 
 export async function logout() {
+  // This device stops getting the account's app notifications (the next person here won't see them).
+  await (await import("./push")).turnOff();
   await post("/api/auth/logout", {});
   // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- a full load on purpose: it drops the previous account's data from memory
   window.location.assign("/login");

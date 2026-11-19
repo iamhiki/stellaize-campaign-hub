@@ -5,6 +5,7 @@ import type { CreatorItem } from "@/lib/server/creator";
 import { useToday } from "@/lib/store";
 import { DdayText } from "./badges";
 import { ChatPanel } from "./ChatPanel";
+import { PushToggle } from "./PushToggle";
 import { CreatorProfile } from "./CreatorProfile";
 import { Loading, pageWrap, table, ui } from "./PageBand";
 
@@ -108,6 +109,10 @@ export function CreatorHome() {
       {items.map((item) => (
         <Campaign key={item.entryId} item={item} today={today} onChange={setItems} />
       ))}
+      {/* 앱 알림 (11/19): creators have no 마이페이지, so it sits under their campaigns. */}
+      <div className="border-t border-line py-10">
+        <PushToggle compact />
+      </div>
     </main>
   );
 }

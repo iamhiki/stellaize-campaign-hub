@@ -9,6 +9,10 @@ import { Loading, pageWrap, ui } from "./PageBand";
 type Thread = {
   entryId: string;
   kind: "creator" | "team";
+  /** 캠페인 팀방 (all 담당자 of one campaign). */
+  group: boolean;
+  /** A creator room of a campaign this viewer is 담당 on. */
+  myCampaign: boolean;
   campaignId: string;
   title: string;
   sub: string;
@@ -29,8 +33,10 @@ const when = (iso: string) => {
 
 /**
  * 대화 tab (기획자 11/19: 채팅 탭을 따로): every conversation this account may open, newest first, and the open one
- * beside it. Staff see one thread per creator row of the campaigns they may see, and under 팀원 a 1:1 thread with
- * each 담당자 they share a campaign with (developers: with everyone); a creator sees one per campaign.
+ * beside it. Staff see one thread per creator row of the campaigns they may see, and under 팀원 a 팀방 per campaign
+ * they are 담당 on plus a 1:1 thread with each 담당자 they share a campaign with (developers: with everyone); a creator
+ * sees one per campaign. 11/19: the rooms of my own campaigns are there from the start, grouped by campaign, even
+ * before anyone wrote in them.
  * The open thread is in the address (#entry id), so the header's 새 메시지 list and the back button land on it.
  */
 export function ChatInbox() {
@@ -84,10 +90,18 @@ export function ChatInbox() {
   const tab = picked.at === open || !current ? picked.kind : current.kind;
   const inTab = creator ? threads : threads.filter((t) => t.kind === tab);
   const unreadOf = (k: Thread["kind"]) => threads.filter((t) => t.kind === k).reduce((n, t) => n + t.n, 0);
-  const talked = inTab.filter((t) => t.last);
+  // "내 담당" (default): creator rooms of my campaigns and anything already talked in; 팀원 tab: 팀방 and 1:1 talked in.
+  const isMine = (t: Thread) => !!t.last || (t.kind === "creator" ? t.myCampaign : t.group);
+  const mineCount = inTab.filter(isMine).length;
   const needle = q.trim();
-  // Staff: conversations so far by default; searching or "전체" lists every thread, to start a new one.
-  const shown = inTab.filter((t) => (creator || !onlyTalked || needle || t.entryId === open ? true : !!t.last)).filter((t) => !needle || t.title.includes(needle) || t.nick.includes(needle) || t.sub.includes(needle));
+  const shown = inTab.filter((t) => (creator || !onlyTalked || needle || t.entryId === open ? true : isMine(t))).filter((t) => !needle || t.title.includes(needle) || t.nick.includes(needle) || t.sub.includes(needle));
+  // Creator rooms come grouped by campaign (most recent talk first); 팀방 sit above 1:1 in the 팀원 tab.
+  const grouped = !creator && tab === "creator";
+  const order = grouped
+    ? [...new Map(shown.map((t) => [t.campaignId, shown.filter((x) => x.campaignId === t.campaignId)])).values()].flatMap((g) => [...g.filter((t) => t.last), ...g.filter((t) => !t.last)])
+    : tab === "team"
+      ? [...shown.filter((t) => t.group), ...shown.filter((t) => !t.group)]
+      : shown;
 
   return (
     <main className={`${pageWrap} py-8 md:py-10`}>
@@ -108,7 +122,7 @@ export function ChatInbox() {
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={creator ? "캠페인 찾기…" : tab === "team" ? "이름 찾기…" : "크리에이터·캠페인 찾기…"} autoComplete="off" aria-label="대화 찾기" className={`${ui.input} h-11 w-full text-[15px]`} />
             {!creator && (
               <div role="group" aria-label="보기" className="mt-2 flex text-[13px] font-semibold">
-                {([[true, `대화한 ${tab === "team" ? "팀원" : "사람"} ${talked.length}`], [false, `전체 ${inTab.length}`]] as const).map(([v, label]) => (
+                {([[true, `${tab === "team" ? "내 방" : "내 담당"} ${mineCount}`], [false, `전체 ${inTab.length}`]] as const).map(([v, label]) => (
                   <button key={label} type="button" aria-pressed={onlyTalked === v} onClick={() => setOnlyTalked(v)} className="min-h-9 flex-1 border border-line text-ink-800 first:border-r-0 aria-pressed:bg-ink-900 aria-pressed:text-white">
                     {label}
                   </button>
@@ -117,16 +131,27 @@ export function ChatInbox() {
             )}
           </div>
           <ul className="min-h-0 flex-1 overflow-y-auto">
-            {shown.map((t) => (
+            {order.map((t, i) => (
               <li key={t.entryId}>
+                {grouped && t.campaignId !== order[i - 1]?.campaignId && (
+                  <p className="sticky top-0 z-[1] border-b border-line bg-[#f5f7fa] px-4 py-2 text-[13px] font-bold text-ink-800 wrap-anywhere">{t.sub}</p>
+                )}
                 <button
                   type="button"
                   onClick={() => pick(t.entryId)}
                   aria-current={t.entryId === open ? "true" : undefined}
                   className="flex w-full items-center gap-3 border-b border-line px-4 py-3 text-left hover:bg-[#f5f7fa] aria-[current=true]:bg-primary-100"
                 >
-                  <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink-900/[0.07] text-[15px] font-bold text-ink-800">
-                    {t.title.trim().slice(0, 1) || "?"}
+                  <span aria-hidden className={`flex size-10 shrink-0 items-center justify-center rounded-full text-[15px] font-bold ${t.group ? "bg-primary-100 text-primary-700" : "bg-ink-900/[0.07] text-ink-800"}`}>
+                    {t.group ? (
+                      <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                        <circle cx="9" cy="9" r="3.2" />
+                        <circle cx="16.5" cy="10" r="2.6" />
+                        <path d="M3.5 18.5c.9-2.7 3-4.1 5.5-4.1s4.6 1.4 5.5 4.1M14.6 14.6c2.4-.4 4.6.8 5.6 3.4" />
+                      </svg>
+                    ) : (
+                      t.title.trim().slice(0, 1) || "?"
+                    )}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
@@ -137,7 +162,7 @@ export function ChatInbox() {
                       </span>
                       {t.last && <span className="shrink-0 text-[12px] text-ink-600 tabular-nums">{when(t.last.at)}</span>}
                     </span>
-                    {t.sub && <span className="block truncate text-[12px] text-ink-600">{t.sub}</span>}
+                    {t.sub && !grouped && <span className="block truncate text-[12px] text-ink-600">{t.sub}</span>}
                     <span className={`mt-0.5 block truncate text-[14px] ${t.n ? "font-semibold text-ink-900" : "text-ink-600"}`}>
                       {t.last ? `${t.last.mine ? "나: " : ""}${t.last.text}` : t.joined || creator ? "아직 대화가 없습니다" : "아직 가입 전"}
                     </span>
@@ -154,7 +179,9 @@ export function ChatInbox() {
                     ? "참여 중인 캠페인이 없습니다."
                     : tab === "team" && inTab.length === 0
                       ? "같은 캠페인을 맡은 담당자가 없습니다. 캠페인 담당자에 함께 들어가면 여기서 대화할 수 있습니다."
-                      : `아직 대화가 없습니다. ‘전체’에서 ${tab === "team" ? "팀원" : "크리에이터"}을 골라 대화를 시작하세요.`}
+                      : tab === "team"
+                        ? "아직 대화한 팀원이 없습니다. ‘전체’에서 팀원을 골라 대화를 시작하세요."
+                        : "내가 담당인 캠페인에 크리에이터가 없습니다. ‘전체’에서 다른 캠페인의 크리에이터를 볼 수 있습니다."}
               </li>
             )}
           </ul>
