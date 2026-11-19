@@ -25,6 +25,8 @@ const AFTER = [
   { title: "늦어진 건이 먼저 보입니다", body: "마감 기한이 지난 건은 빨간색으로 표시하고, 캠페인 요약에 건수를 모읍니다." },
   { title: "날짜는 자동으로 계산합니다", body: "캠페인 진행 타임라인을 한국 시간 기준으로 셉니다." },
   { title: "크리에이터별 진행 체크", body: "부킹 요청부터 정산 서류, 기획안·가편안·수정본 컨펌, 업로드까지 단계가 끝날 때마다 체크합니다." },
+  { title: "캠페인마다 대화방이 생깁니다", body: "크리에이터와 담당자의 방, 그 캠페인 담당자끼리의 방이 자동으로 만들어지고, 상대가 읽었는지 숫자로 보입니다." },
+  { title: "대화 기록은 남습니다", body: "캠페인이 끝나면 대화방은 ‘끝난 캠페인’ 폴더로 옮겨지고, 주고받은 내용은 지우지 않고 보관합니다." },
 ];
 
 // 기획자 11/11: 담당자와 크리에이터는 같은 로그인 화면으로 들어와 서로 다른 화면을 본다.
@@ -43,8 +45,24 @@ const ACCOUNTS = [
   },
 ];
 
-// Keep in step with the roadmap issue (#7).
-const NEXT = ["실제 크리에이터에게 열어 주기", "마감 알림 메일 발송", "대외비 캠페인 접근 제한", "계약서 앱 배포본에 미리 채우기 넣기"];
+// 11/19: 휴대폰 홈 화면에 앱처럼 추가하는 법과 알림 켜는 법 (예전 "다음에 만들 것" 자리). Same steps as README "휴대폰 앱과 알림".
+const MOBILE = [
+  {
+    who: "아이폰",
+    steps: ["사파리로 허브 주소를 엽니다", "아래쪽 공유 버튼(네모에 화살표)을 누릅니다", "‘홈 화면에 추가’를 누릅니다", "홈 화면의 ‘캠페인 허브’로 엽니다"],
+    note: "iOS 16.4 이상. 알림은 홈 화면에 추가한 앱에서만 켤 수 있습니다.",
+  },
+  {
+    who: "안드로이드",
+    steps: ["크롬으로 허브 주소를 엽니다", "오른쪽 위 ⋮ 메뉴를 누릅니다", "‘홈 화면에 추가’ 또는 ‘앱 설치’를 누릅니다", "홈 화면의 ‘캠페인 허브’로 엽니다"],
+    note: "추가하지 않고 크롬에서 바로 써도 알림이 옵니다.",
+  },
+  {
+    who: "알림 켜기",
+    steps: ["로그인합니다", "담당자는 마이페이지 → 앱 알림, 크리에이터는 내 일정 맨 아래로 갑니다", "‘알림 켜기’를 누르고 허용합니다", "‘시험 알림 보내기’로 확인합니다"],
+    note: "기기마다 한 번씩 켭니다. 로그아웃하면 그 기기의 알림이 꺼집니다.",
+  },
+];
 
 // Sample cards in the opening band: the waiting party rotates, which is the product's whole idea in one motion.
 const HERO_CARDS: { name: string; stage: string; states: [WaitingOn, number][]; indent: string }[] = [
@@ -206,27 +224,31 @@ export default function AboutPage() {
           </figure>
         </section>
 
-        <section className="border-t border-line">
-          <div className={`${wrap} grid gap-10 py-20 md:grid-cols-[1fr_1.4fr] md:gap-20 md:py-28`}>
-            <div data-reveal>
-              <h2 className={h2}>지금 단계</h2>
+        <section aria-labelledby="mobile" className="border-t border-line bg-[#f5f7fa]">
+          <div className={`${wrap} py-20 md:py-28`}>
+            <div data-reveal className="max-w-2xl">
+              <h2 id="mobile" className={h2}>
+                휴대폰에서 앱처럼
+              </h2>
               <p className="mt-5 text-[17px] leading-relaxed text-ink-800">
-                캠페인 등록과 크리에이터별 진행 체크, 오늘 할 일, 로그인, 크리에이터의 링크·서류 제출이 동작합니다. 인터넷 주소로 열립니다. 마감 알림 메일은 담당자가 양식을 확인하고 보내며, 보낼 메일 계정을 연결하면 나갑니다.
+                설치할 앱은 따로 없습니다. 허브를 휴대폰 홈 화면에 추가하면 앱처럼 열리고, 새 메시지가 오면 사이트를 닫아 두어도 알림이 옵니다. 비용은 들지 않습니다.
               </p>
             </div>
-            <div>
-              <h3 data-reveal className="text-[16px] font-bold text-ink-900">
-                다음에 만들 것
-              </h3>
-              <div data-reveal="line" className="mt-4 h-0.5 bg-ink-900" />
-              <ul>
-                {NEXT.map((n, i) => (
-                  <li key={n} data-reveal style={delay(i * 90)} className="flex items-center gap-2.5 border-b border-line py-4 text-[17px] text-ink-800">
-                    <span aria-hidden className="size-2 shrink-0 bg-primary-500" />
-                    {n}
-                  </li>
-                ))}
-              </ul>
+            <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-0 md:divide-x md:divide-line">
+              {MOBILE.map((m, i) => (
+                <article key={m.who} data-reveal style={delay(i * 140)} className="md:px-8 md:first:pl-0 md:last:pr-0">
+                  <h3 className="border-b-2 border-ink-900 pb-3 text-[19px] font-bold text-ink-900 md:text-[21px]">{m.who}</h3>
+                  <ol className="mt-1">
+                    {m.steps.map((s, j) => (
+                      <li key={s} className="flex gap-3 border-b border-line py-3 text-[16px] leading-relaxed text-ink-800">
+                        <span className="w-5 shrink-0 pt-px text-[14px] font-bold tabular-nums text-primary-700">{j + 1}</span>
+                        {s}
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="mt-3 text-[14px] leading-relaxed text-ink-600">{m.note}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
