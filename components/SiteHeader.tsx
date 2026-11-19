@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout, useMe } from "@/lib/me";
+import { ChatBell } from "./ChatBell";
 
 // 기획자 피드백 11/7: 캠페인 · 오늘 할 일 · 계약서만. 크리에이터 DB(시트가 흩어져 있음)와 메일 템플릿(사내 AI로 작성)은 뺐다.
 const STAFF_MENU = [
@@ -56,6 +57,7 @@ export function SiteHeader() {
           </nav>
         )}
         <div className="flex min-h-14 items-center gap-5 text-[15px] font-medium md:min-h-0">
+          {me && <ChatBell creator={me.role === "creator"} />}
           {role !== "creator" && (
             <Link href="/about" aria-current={path === "/about" ? "page" : undefined} className={util}>
               소개

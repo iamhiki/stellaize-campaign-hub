@@ -1,5 +1,5 @@
 "use client";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { STEPS, REPORT, UPLOAD, doneList, dueList, entryStatus, type Campaign, type Entry } from "@/lib/campaigns";
 import { CreatorAccess } from "./CreatorAccess";
 import { ChatPanel, useUnread } from "./ChatPanel";
@@ -27,6 +27,20 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
   const [editing, setEditing] = useState<string | null>(null);
   const [chatting, setChatting] = useState<string | null>(null); // the row whose 대화 is open (기획자 11/19)
   const unread = useUnread();
+  // The header's 새 메시지 list links to …#chat-<entry id>: open that conversation and bring it into view.
+  useEffect(() => {
+    const go = () => {
+      const m = window.location.hash.match(/^#chat-(.+)$/);
+      if (!m) return;
+      const id = decodeURIComponent(m[1]);
+      if (!campaign.entries.some((e) => e.id === id)) return;
+      setChatting(id);
+      requestAnimationFrame(() => document.getElementById(`chat-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }));
+    };
+    go();
+    window.addEventListener("hashchange", go);
+    return () => window.removeEventListener("hashchange", go);
+  }, [campaign.entries]);
   const submissions = useSubmissions();
 
   return (
@@ -166,7 +180,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                   {chatting === e.id && (
                     <tr>
                       <td colSpan={STEPS.length + 2} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
-                        <div className="max-w-2xl">
+                        <div id={`chat-${e.id}`} className="max-w-2xl scroll-mt-24">
                           <ChatPanel entryId={e.id} side="staff" title={`${e.name} 님과 대화`} />
                         </div>
                       </td>

@@ -99,6 +99,18 @@ npm run dev
 - 무료 요금제는 자동 백업이 없고, 1주일 동안 접속이 없으면 프로젝트가 일시정지된다. 정지되면 Supabase 대시보드에서 다시 켠다.
 - 지금은 허브 자료 전체를 표의 한 행에 통째로 넣는다(베타용). 캠페인이 수백 개로 늘기 전에 표를 나누는 작업이 필요하다.
 
+### 대화(채팅) 표와 실시간 신호
+
+크리에이터 ↔ 담당자 대화는 허브 자료와 따로 Supabase 표에 저장하고, 새 메시지가 오면 열린 화면에 바로 알린다.
+
+1. Supabase **SQL Editor**에 `supabase/chat.sql` 내용을 붙여 넣고 **Run**을 누른다. 표 두 개(`hub_messages`, `hub_chat_reads`)와 안 읽은 수를 세는 함수가 생긴다.
+2. 전에 허브 자료 안에 쌓인 대화가 있으면 `node scripts/move-chat-to-table.mjs`로 한 번 옮긴다.
+3. 실시간 신호: **Project Settings → API Keys**의 **publishable 키**(`sb_publishable_…`)를 `.env.local`과 Vercel에 `SUPABASE_PUBLISHABLE_KEY`로 넣는다. 브라우저에 공개되는 키라 괜찮다. 표에는 정책이 없어 이 키로는 아무것도 읽을 수 없고, 신호에는 메시지 내용이 없다.
+4. **Realtime → Settings**에서 공개 채널(public channels)이 막혀 있지 않은지 확인한다. 막혀 있으면 신호만 안 갈 뿐 대화는 30초마다 확인해서 계속 된다.
+
+- 1번을 하지 않고 Supabase를 쓰면 대화가 열리지 않는다(표가 없음). Supabase 없이 PC 파일로 쓸 때는 1~4번 모두 필요 없다.
+- publishable 키가 없으면 실시간 신호 없이 대화창은 5초, 알림 숫자는 20초마다 확인한다.
+
 ### 계약서 앱 연결
 
 **데모 앱 (2026-11-18):** https://stellaize-campaign-app-h4v9is7wrhrcvzbw5q52y3.streamlit.app

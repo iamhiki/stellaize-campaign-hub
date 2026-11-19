@@ -45,6 +45,19 @@ export function CreatorHome() {
     };
   }, [entry, saved]);
 
+  // The header's 새 메시지 list links to /creator#chat-<entry id>: scroll to that conversation once it's on screen.
+  const loaded = !!items;
+  useEffect(() => {
+    if (!loaded) return;
+    const go = () => {
+      const m = window.location.hash.match(/^#chat-(.+)$/);
+      if (m) document.getElementById(`chat-${decodeURIComponent(m[1])}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    };
+    go();
+    window.addEventListener("hashchange", go);
+    return () => window.removeEventListener("hashchange", go);
+  }, [loaded]);
+
   if (choices)
     return (
       <main className={pageWrap}>
@@ -206,7 +219,7 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
       </div>
       {/* 기획자 11/19: 사이트 안에서 담당자와 대화. Not in the developer preview, which is read-only. */}
       {!preview && (
-        <div className="mt-8 max-w-2xl">
+        <div id={`chat-${item.entryId}`} className="mt-8 max-w-2xl scroll-mt-24">
           <ChatPanel entryId={item.entryId} side="creator" title="스텔라이즈 담당자와 대화" />
         </div>
       )}

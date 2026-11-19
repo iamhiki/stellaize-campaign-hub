@@ -1,41 +1,68 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { liveOn, onLive, startLive } from "@/lib/live";
 import { ui } from "./PageBand";
 
 type Msg = { id: string; from: "staff" | "creator"; name: string; text: string; at: string };
 
-const POLL = 5_000; // an open thread asks for new messages this often
-const UNREAD_POLL = 20_000;
 
-// ---- unread counts (entry id → messages from the other side not read yet), shared by every badge on a page ----
-let unread: Record<string, number> = {};
+// Without the live signal a thread asks every 5 seconds and the counts every 20; with it, only as a safety net.
+const POLL = 5_000;
+const POLL_LIVE = 30_000;
+const UNREAD_POLL = 20_000;
+const UNREAD_POLL_LIVE = 60_000;
+
+// ---- unread counts, shared by the header bell and every row badge on a page ----
+export type UnreadThread = { entryId: string; campaignId: string; campaign: string; creator: string; n: number };
+type Summary = { unread: Record<string, number>; threads: UnreadThread[]; keys: Record<string, string> };
+let summary: Summary = { unread: {}, threads: [], keys: {} };
 const listeners = new Set<() => void>();
-let timer: ReturnType<typeof setInterval> | undefined;
+let timer: ReturnType<typeof setTimeout> | undefined;
+let stopLive: (() => void) | undefined;
+/** Thread key → entry id, so a live signal can be matched to an open thread. */
+export const entryOfKey = (k: string) => summary.keys[k];
+
 function loadUnread() {
-  if (document.hidden) return;
+  if (typeof document !== "undefined" && document.hidden) return;
   fetch("/api/chat", { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
-    .then((d: { unread: Record<string, number> } | null) => {
+    .then((d: (Summary & { live: { url: string; key: string; topic: string } | null }) | null) => {
       if (!d) return;
-      unread = d.unread;
+      summary = { unread: d.unread, threads: d.threads, keys: d.keys };
+      startLive(d.live);
       listeners.forEach((l) => l());
     })
     .catch(() => {});
+}
+function schedule() {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    loadUnread();
+    schedule();
+  }, liveOn() ? UNREAD_POLL_LIVE : UNREAD_POLL);
 }
 function subscribe(l: () => void) {
   listeners.add(l);
   if (listeners.size === 1) {
     loadUnread();
-    timer = setInterval(loadUnread, UNREAD_POLL);
+    schedule();
+    // A message somewhere this person may read: refresh the counts. Unknown keys are other people's threads.
+    stopLive = onLive((k) => summary.keys[k] && loadUnread());
   }
   return () => {
     listeners.delete(l);
-    if (listeners.size === 0) clearInterval(timer);
+    if (listeners.size === 0) {
+      clearTimeout(timer);
+      stopLive?.();
+    }
   };
 }
-const EMPTY: Record<string, number> = {};
-/** Unread messages per creator row, refreshed every 20 seconds. */
-export const useUnread = () => useSyncExternalStore(subscribe, () => unread, () => EMPTY);
+const EMPTY: Summary = { unread: {}, threads: [], keys: {} };
+/** Unread messages per creator row, and the threads they are in. */
+export const useUnreadSummary = () => useSyncExternalStore(subscribe, () => summary, () => EMPTY);
+export const useUnread = () => useUnreadSummary().unread;
+/** Ask for the counts again now (after reading a thread). */
+export const refreshUnread = () => loadUnread();
 
 const time = (iso: string) => {
   const d = new Date(iso);
@@ -70,10 +97,20 @@ export function ChatPanel({ entryId, side, title }: { entryId: string; side: "st
         })
         .catch(() => live && setError("대화를 불러오지 못했습니다."));
     load();
-    const t = setInterval(() => !document.hidden && load(), POLL);
+    let t: ReturnType<typeof setTimeout>;
+    const tick = () => {
+      t = setTimeout(() => {
+        if (!document.hidden) load();
+        tick();
+      }, liveOn() ? POLL_LIVE : POLL);
+    };
+    tick();
+    // The live signal for this thread: fetch right away.
+    const off = onLive((k) => entryOfKey(k) === entryId && load());
     return () => {
       live = false;
-      clearInterval(t);
+      clearTimeout(t);
+      off();
     };
   }, [entryId]);
 

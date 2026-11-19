@@ -4,6 +4,7 @@ import { todayKST } from "@/lib/date";
 import { applyOp, parseOp } from "@/lib/ops";
 import { body, fail, guard, newToken } from "@/lib/server/auth";
 import { mutate, readDb, type Db } from "@/lib/server/db";
+import { dropCampaign } from "@/lib/server/chat";
 import { mailReady } from "@/lib/server/mail";
 
 /**
@@ -72,5 +73,6 @@ export async function POST(req: NextRequest) {
       }
       return db;
   });
+  if (out && op.op === "deleteCampaign") await dropCampaign(op.id).catch((e) => console.error("대화 삭제 실패", e));
   return out ? send(out, name) : fail(403, "이 캠페인을 바꿀 권한이 없습니다.");
 }
