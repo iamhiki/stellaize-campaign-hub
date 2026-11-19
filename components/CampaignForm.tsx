@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { addCampaign, editCampaign } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
 import { useMe } from "@/lib/me";
+import { DateInput } from "./DateInput";
+import { OwnersField } from "./OwnersField";
 import { ui } from "./PageBand";
 
 const CHANNELS = ["인스타그램 릴스", "인스타그램 피드", "유튜브", "유튜브 쇼츠", "틱톡", "블로그"];
@@ -22,7 +24,7 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
       advertiser: get("advertiser"),
       channel: get("channel"),
       uploadDate: get("uploadDate"),
-      owners: get("owners").split(/[,،、\s]+/).filter(Boolean),
+      owners: [...new Set([...form.getAll("owners").map((v) => String(v).trim()), get("ownerDraft")].filter(Boolean))],
       confidential: form.get("confidential") === "on",
     };
     if (!input.name || !input.advertiser || !input.channel || !input.uploadDate) return setError("캠페인 이름, 광고주, 채널, 업로드 날짜를 모두 입력해 주세요.");
@@ -41,7 +43,7 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
       <h2 id="campaign-form-title" className="text-[20px] font-bold tracking-[-0.03em] text-ink-900">
         {campaign ? "캠페인 정보 수정" : "캠페인 등록"}
       </h2>
-      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+      <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <label className={ui.label}>
           캠페인 이름
           <input name="name" required defaultValue={campaign?.name} placeholder="예: 글로우핏 수분 선크림" className={ui.input} />
@@ -61,19 +63,13 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
         </label>
         <label className={ui.label}>
           업로드 날짜
-          <input name="uploadDate" type="date" required defaultValue={campaign?.uploadDate} aria-describedby="upload-hint" className={`${ui.input} tabular-nums`} />
+          <DateInput name="uploadDate" defaultValue={campaign?.uploadDate} clearable={false} aria-describedby="upload-hint" />
           <span id="upload-hint" className="text-[13px] font-normal text-ink-600">
             크리에이터마다 다르면 상세 화면의 마감 설정에서 바꿉니다
           </span>
         </label>
-        <label className={ui.label}>
-          담당자
-          <input key={myName} name="owners" required defaultValue={campaign ? campaign.owners.join(", ") : myName} aria-describedby="owners-hint" className={ui.input} />
-          <span id="owners-hint" className="text-[13px] font-normal text-ink-600">
-            여러 명이면 쉼표로 구분
-          </span>
-        </label>
       </div>
+      <OwnersField key={myName} initial={campaign ? campaign.owners : myName ? [myName] : []} />
       {!campaign && (
       <label className="mt-5 flex items-start gap-2 text-[15px] font-medium text-ink-800">
         <input type="checkbox" name="confidential" className="mt-0.5 size-5 shrink-0 accent-primary-600" />

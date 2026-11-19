@@ -2,6 +2,7 @@
 import { Fragment, useState } from "react";
 import { STEPS, REPORT, UPLOAD, doneList, dueList, entryStatus, type Campaign, type Entry } from "@/lib/campaigns";
 import { CreatorAccess } from "./CreatorAccess";
+import { DateInput } from "./DateInput";
 import { DealEditor } from "./DealEditor";
 import { daysBetween } from "@/lib/date";
 import { dropEntry, setDue, setDueForAll, toggleStep, useSubmissions } from "@/lib/store";
@@ -225,13 +226,7 @@ function DueEditor({ campaign, entry }: { campaign: Campaign; entry: Entry }) {
                 {s.label}
                 {i === UPLOAD && " 날짜"}
               </label>
-              <input
-                id={`due-${entry.id}-${i}`}
-                type="date"
-                value={value}
-                onChange={(ev) => setDue(campaign.id, entry.id, i, ev.target.value || null)}
-                className="h-10 min-w-0 border border-line bg-white px-2 text-[14px] tabular-nums text-ink-900 focus:border-primary-600 focus:outline-none"
-              />
+              <DateInput id={`due-${entry.id}-${i}`} size="sm" value={value || null} placeholder="마감 없음" onChange={(v) => setDue(campaign.id, entry.id, i, v)} />
               <span className="flex flex-wrap gap-x-3 text-[12px] text-ink-600">
                 {hint && <span>{hint}</span>}
                 {value && others > 0 && (

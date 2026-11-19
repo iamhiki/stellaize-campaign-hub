@@ -9,7 +9,7 @@ import { applyOp, type CampaignInput, type Op } from "./ops";
 // seconds and when the tab comes back, so a teammate's check or a creator's link shows up without reloading.
 export type NoticeInfo = { id: string; entryId: string; step: number; due: string; createdAt: string; emailedAt: string | null };
 export type ProfileInfo = { userId: string; legalName: string; phone: string; address: string; idDoc: boolean; bankCopy: boolean };
-type Snapshot = { campaigns: Campaign[]; submissions: Submission[]; notices: NoticeInfo[]; accounts: Record<string, string>; profiles?: Record<string, ProfileInfo>; emails?: Record<string, string>; mail?: MailInfo };
+type Snapshot = { campaigns: Campaign[]; submissions: Submission[]; notices: NoticeInfo[]; accounts: Record<string, string>; profiles?: Record<string, ProfileInfo>; emails?: Record<string, string>; mail?: MailInfo; staffNames?: string[] };
 export type MailInfo = { ready: boolean; teamCc: string };
 
 const listeners = new Set<() => void>();
@@ -87,6 +87,7 @@ const EMPTY_NOTICES: NoticeInfo[] = [];
 const EMPTY_ACCOUNTS: Record<string, string> = {};
 const EMPTY_PROFILES: Record<string, ProfileInfo> = {};
 const NO_MAIL: MailInfo = { ready: false, teamCc: "" };
+const NO_NAMES: string[] = [];
 
 /** All campaigns, or null until the server has answered. */
 export const useCampaigns = () => useSyncExternalStore(subscribe, () => cache?.campaigns ?? null, () => null);
@@ -100,6 +101,8 @@ export const useAccounts = () => useSyncExternalStore(subscribe, () => cache?.ac
 export const useProfiles = () => useSyncExternalStore(subscribe, () => cache?.profiles ?? EMPTY_PROFILES, () => EMPTY_PROFILES);
 /** entry id → the linked creator's login mail. */
 export const useEmails = () => useSyncExternalStore(subscribe, () => cache?.emails ?? EMPTY_ACCOUNTS, () => EMPTY_ACCOUNTS);
+/** Names on the 담당자·개발자 accounts that signed up. */
+export const useStaffNames = () => useSyncExternalStore(subscribe, () => cache?.staffNames ?? NO_NAMES, () => NO_NAMES);
 /** Whether mail can go out yet, and the team address copied on every mail. */
 export const useMail = () => useSyncExternalStore(subscribe, () => cache?.mail ?? NO_MAIL, () => NO_MAIL);
 /** Fetch the server's copy now (after something changed it outside the op queue, like a sent mail). */

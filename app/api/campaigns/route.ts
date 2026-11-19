@@ -39,6 +39,8 @@ const snapshot = (db: Db, userName: string) => {
     notices: db.notices.filter((n) => shown.has(n.campaignId) && n.emailedAt).map(({ id, entryId, step, due, createdAt, emailedAt }) => ({ id, entryId, step, due, createdAt, emailedAt })),
     /** entry id → the name on the linked creator account */
     accounts,
+    /** Names on 담당자·개발자 accounts, offered when picking a campaign's 담당자 (기획자 11/19). Names only, no mails. */
+    staffNames: [...new Set(db.users.filter((u) => u.role !== "creator").map((u) => u.name))].sort((a, b) => a.localeCompare(b, "ko")),
   };
 };
 
