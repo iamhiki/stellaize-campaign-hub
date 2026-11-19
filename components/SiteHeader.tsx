@@ -61,7 +61,7 @@ export function SiteHeader() {
           </nav>
         )}
         <div className="flex min-h-14 items-center gap-5 text-[15px] font-medium md:min-h-0">
-          {me && <ChatBell creator={me.role === "creator"} />}
+          {me && <ChatBell />}
           {role !== "creator" && (
             <Link href="/about" aria-current={path === "/about" ? "page" : undefined} className={util}>
               소개

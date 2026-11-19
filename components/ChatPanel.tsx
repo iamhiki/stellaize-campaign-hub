@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { liveOn, onLive, startLive } from "@/lib/live";
 import { ui } from "./PageBand";
 
-type Msg = { id: string; from: "staff" | "creator"; name: string; text: string; at: string };
+type Msg = { id: string; from: "staff" | "creator"; name: string; text: string; at: string; mine: boolean };
 
 
 // Without the live signal a thread asks every 5 seconds and the counts every 20; with it, only as a safety net.
@@ -13,7 +13,8 @@ const UNREAD_POLL = 20_000;
 const UNREAD_POLL_LIVE = 60_000;
 
 // ---- unread counts, shared by the header bell and every row badge on a page ----
-export type UnreadThread = { entryId: string; campaignId: string; campaign: string; creator: string; n: number };
+/** title/sub: as this viewer sees the thread (staff: creator · campaign, creator: campaign, 1:1: the other person · role). */
+export type UnreadThread = { entryId: string; campaignId: string; title: string; sub: string; n: number };
 type Summary = { unread: Record<string, number>; threads: UnreadThread[]; keys: Record<string, string> };
 let summary: Summary = { unread: {}, threads: [], keys: {} };
 const listeners = new Set<() => void>();
@@ -75,8 +76,8 @@ const time = (iso: string) => {
 };
 
 /**
- * One 크리에이터 ↔ 담당자 thread (기획자 11/19). `side` is who is looking: their own messages sit on the right.
- * Staff see who on the team wrote each message; the creator sees it as from 스텔라이즈.
+ * One thread: 크리에이터 ↔ 담당자 (기획자 11/19) or 1:1 팀원 대화. `side` is who is looking; the server marks which
+ * messages are theirs (right side). Staff see who on the team wrote each message; the creator sees it as from 스텔라이즈.
  */
 /** `fill`: take the height of the box it is in (the 대화 tab) instead of a fixed-height card. */
 export function ChatPanel({ entryId, side, title, fill }: { entryId: string; side: "staff" | "creator"; title: string; fill?: boolean }) {
@@ -151,8 +152,8 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
           </p>
         ) : (
           messages.map((m) => {
-            const mine = m.from === side;
-            const who = m.from === "staff" ? (side === "staff" ? m.name : `스텔라이즈 ${m.name}`) : m.name;
+            const mine = m.mine;
+            const who = m.from === "staff" && side === "creator" ? `스텔라이즈 ${m.name}` : m.name;
             return (
               <div key={m.id} className={`flex max-w-[85%] flex-col ${mine ? "items-end self-end" : "items-start self-start"}`}>
                 <span className="mb-1 text-[12px] text-ink-600">

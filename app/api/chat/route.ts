@@ -1,28 +1,101 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { canSee, type Campaign, type Entry } from "@/lib/campaigns";
+import { canSee } from "@/lib/campaigns";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
-import { add, latest, liveConfig, markRead, ping, thread, threadKey, unread } from "@/lib/server/chat";
+import { add, latest, liveConfig, markRead, ping, thread, threadKey, unread, unreadDirect, type ChatMessage } from "@/lib/server/chat";
 import { readDb, type Db, type User } from "@/lib/server/db";
 
 /**
- * 크리에이터 ↔ 담당자 대화 (기획자 11/19: 사이트 안에서 크리에이터와 채팅). One thread per creator row.
- * Staff and developers reach the rows of campaigns they may see; a creator reaches only their own rows.
+ * 대화. Two kinds of thread:
+ * - 크리에이터 ↔ 담당자 (기획자 11/19: 사이트 안에서 크리에이터와 채팅), one per creator row. Staff and developers reach
+ *   the rows of campaigns they may see; a creator reaches only their own rows.
+ * - 1:1 팀원 대화 (11/19): two 담당자 who are both 담당 on some campaign. A developer may talk with anyone (개발자,
+ *   담당자, 크리에이터) to try things; a creator only sees such a thread once a developer has written in it.
  * Screens hear about new messages through a live signal (lib/server/chat.ts) when it's set up, and also ask
  * again now and then, so a missed signal or a missing setup only makes messages slower, never lost.
  */
 const MAX_TEXT = 2000;
 const staffSide = (u: User) => u.role !== "creator";
 const headers = { "Cache-Control": "no-store" };
+const ROLE = { staff: "담당자", dev: "개발자", creator: "크리에이터" } as const;
 
-/** Every row this user may talk about. */
-function threadsOf(db: Db, user: User): { campaign: Campaign; entry: Entry }[] {
-  return db.campaigns.flatMap((campaign) =>
+type Thread = {
+  id: string;
+  kind: "creator" | "team";
+  campaignId: string;
+  /** What this viewer sees as the thread's name, and the line under it. */
+  title: string;
+  sub: string;
+  joined: boolean;
+  dropped: boolean;
+  /** Whether a message is this viewer's own (sits on the right). */
+  mine: (m: ChatMessage) => boolean;
+};
+
+// ---- 1:1 threads: id "dm.<user id>.<user id>", ids sorted, so both people land on the same one ----
+const directId = (a: string, b: string) => `dm.${[a, b].sort().join(".")}`;
+const directIds = (id: string) => {
+  const p = id.split(".");
+  return p.length === 3 && p[0] === "dm" ? [p[1], p[2]] : null;
+};
+const shareCampaign = (db: Db, a: User, b: User) => db.campaigns.some((c) => c.owners.includes(a.name) && c.owners.includes(b.name));
+/** Whether these two may talk 1:1. */
+function mayTalk(db: Db, a: User, b: User) {
+  if (a.id === b.id) return false;
+  if (a.role === "dev" || b.role === "dev") return true;
+  return a.role === "staff" && b.role === "staff" && shareCampaign(db, a, b);
+}
+const direct = (user: User, other: User): Thread => ({
+  id: directId(user.id, other.id),
+  kind: "team",
+  campaignId: "",
+  title: other.nickname ? `${other.name} (${other.nickname})` : other.name,
+  sub: ROLE[other.role],
+  joined: true,
+  dropped: false,
+  mine: (m) => m.userId === user.id,
+});
+
+/** Every thread this user may open. A creator's 1:1 threads with developers are added once they hold a message. */
+function threadsOf(db: Db, user: User): Thread[] {
+  const rows: Thread[] = db.campaigns.flatMap((campaign) =>
     campaign.entries
       .filter((entry) => (staffSide(user) ? canSee(campaign, user.name) : entry.creatorId === user.id && !entry.droppedAt))
-      .map((entry) => ({ campaign, entry })),
+      .map((entry) => ({
+        id: entry.id,
+        kind: "creator" as const,
+        campaignId: campaign.id,
+        title: staffSide(user) ? entry.name : campaign.name,
+        sub: staffSide(user) ? campaign.name : "",
+        joined: !!entry.creatorId,
+        dropped: !!entry.droppedAt,
+        mine: (m: ChatMessage) => m.from === (staffSide(user) ? "staff" : "creator"),
+      })),
   );
+  const people = user.role === "creator" ? [] : db.users.filter((u) => mayTalk(db, user, u));
+  return [...rows, ...people.map((u) => direct(user, u))];
 }
-const threadOf = (db: Db, user: User, entryId: string) => threadsOf(db, user).find((t) => t.entry.id === entryId) ?? null;
+
+/** One thread by id, if this user may open it: also 1:1 threads not listed yet (a creator's, before the first message). */
+function threadOf(db: Db, user: User, id: string): Thread | null {
+  const pair = directIds(id);
+  if (!pair) return threadsOf(db, user).find((t) => t.id === id) ?? null;
+  if (!pair.includes(user.id)) return null;
+  const other = db.users.find((u) => u.id === (pair[0] === user.id ? pair[1] : pair[0]));
+  return other && mayTalk(db, user, other) ? direct(user, other) : null;
+}
+
+/** A creator's 1:1 threads with developers. Listed only when there is something in them. */
+const creatorDirect = (db: Db, user: User) => (user.role === "creator" ? db.users.filter((u) => u.role === "dev").map((u) => direct(user, u)) : []);
+
+/** Unread counts for these threads, each kind counted its own way. */
+async function countsOf(user: User, all: Thread[]) {
+  const rows = all.filter((t) => t.kind === "creator").map((t) => t.id);
+  const team = all.filter((t) => t.kind === "team").map((t) => t.id);
+  const [a, b] = await Promise.all([unread(user.id, rows, staffSide(user) ? "creator" : "staff"), unreadDirect(user.id, team)]);
+  return { ...a, ...b };
+}
+
+const forScreen = (t: Thread, ms: ChatMessage[]) => ms.map((m) => ({ id: m.id, from: m.from, name: m.name, text: m.text, at: m.at, mine: t.mine(m) }));
 
 /**
  * ?entry=ID → that thread, marked read for this user. Without it → what the header bell and the row badges need:
@@ -31,61 +104,60 @@ const threadOf = (db: Db, user: User, entryId: string) => threadsOf(db, user).fi
 export async function GET(req: NextRequest) {
   const g = await guard(req, "any");
   if (g.deny) return g.deny;
-  const entryId = req.nextUrl.searchParams.get("entry") ?? "";
+  const id = req.nextUrl.searchParams.get("entry") ?? "";
   const db = await readDb();
-  const other = staffSide(g.user) ? "creator" : "staff";
 
-  // ?list=1 → every thread this user may open, newest conversation first, for the 대화 tab.
-  if (req.nextUrl.searchParams.get("list")) {
-    const all = threadsOf(db, g.user);
-    const ids = all.map((t) => t.entry.id);
-    const [counts, last] = await Promise.all([unread(g.user.id, ids, other), latest(ids)]);
-    const threads = all
-      .map((t) => ({
-        entryId: t.entry.id,
-        campaignId: t.campaign.id,
-        campaign: t.campaign.name,
-        creator: t.entry.name,
-        joined: !!t.entry.creatorId,
-        dropped: !!t.entry.droppedAt,
-        n: counts[t.entry.id] ?? 0,
-        last: last[t.entry.id] ? { text: last[t.entry.id].text, at: last[t.entry.id].at, from: last[t.entry.id].from } : null,
-      }))
-      .sort((a, b) => (b.last?.at ?? "").localeCompare(a.last?.at ?? "") || a.campaign.localeCompare(b.campaign, "ko") || a.creator.localeCompare(b.creator, "ko"));
-    return NextResponse.json({ threads }, { headers });
-  }
+  if (!id) {
+    const extra = creatorDirect(db, g.user);
+    const all = [...threadsOf(db, g.user), ...extra];
+    const counts = await countsOf(g.user, all);
 
-  if (!entryId) {
-    const all = threadsOf(db, g.user);
-    const counts = await unread(g.user.id, all.map((t) => t.entry.id), other);
-    const threads = all
-      .filter((t) => counts[t.entry.id])
-      .map((t) => ({ entryId: t.entry.id, campaignId: t.campaign.id, campaign: t.campaign.name, creator: t.entry.name, n: counts[t.entry.id] }));
-    const keys = Object.fromEntries(all.map((t) => [threadKey(t.entry.id), t.entry.id]));
+    // ?list=1 → every thread this user may open, newest conversation first, for the 대화 tab.
+    if (req.nextUrl.searchParams.get("list")) {
+      const last = await latest(all.map((t) => t.id));
+      const threads = all
+        .filter((t) => !extra.includes(t) || last[t.id])
+        .map((t) => ({
+          entryId: t.id,
+          kind: t.kind,
+          campaignId: t.campaignId,
+          title: t.title,
+          sub: t.sub,
+          joined: t.joined,
+          dropped: t.dropped,
+          n: counts[t.id] ?? 0,
+          last: last[t.id] ? { text: last[t.id].text, at: last[t.id].at, mine: t.mine(last[t.id]) } : null,
+        }))
+        .sort((a, b) => (b.last?.at ?? "").localeCompare(a.last?.at ?? "") || a.sub.localeCompare(b.sub, "ko") || a.title.localeCompare(b.title, "ko"));
+      return NextResponse.json({ threads }, { headers });
+    }
+
+    const threads = all.filter((t) => counts[t.id]).map((t) => ({ entryId: t.id, campaignId: t.campaignId, title: t.title, sub: t.sub, n: counts[t.id] }));
+    const keys = Object.fromEntries(all.map((t) => [threadKey(t.id), t.id]));
     return NextResponse.json({ unread: counts, threads, keys, live: liveConfig }, { headers });
   }
 
-  const t = threadOf(db, g.user, entryId);
+  const t = threadOf(db, g.user, id);
   if (!t) return fail(404, "이 대화를 볼 수 없습니다.");
-  const messages = await thread(entryId);
-  const newest = messages.filter((m) => m.from === other).at(-1);
-  if (newest && (await unread(g.user.id, [entryId], other))[entryId]) await markRead(g.user.id, entryId, newest.at);
-  return NextResponse.json({ messages, joined: !!t.entry.creatorId }, { headers });
+  const messages = await thread(id);
+  const newest = messages.filter((m) => !t.mine(m)).at(-1);
+  if (newest && (await countsOf(g.user, [t]))[id]) await markRead(g.user.id, id, newest.at);
+  return NextResponse.json({ messages: forScreen(t, messages), joined: t.joined, kind: t.kind }, { headers });
 }
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, "any");
   if (g.deny) return g.deny;
   const b = await body(req);
-  const entryId = str(b.entryId, 120);
+  const id = str(b.entryId, 120);
   const text = typeof b.text === "string" ? b.text.trim() : "";
   if (!text) return fail(400, "보낼 내용을 입력해 주세요.");
   if (text.length > MAX_TEXT) return fail(400, `한 번에 ${MAX_TEXT}자까지 보낼 수 있습니다.`);
 
-  const t = threadOf(await readDb(), g.user, entryId);
+  const t = threadOf(await readDb(), g.user, id);
   if (!t) return fail(404, "이 대화에 보낼 수 없습니다.");
   const at = new Date().toISOString();
-  await add({ id: newId(), campaignId: t.campaign.id, entryId, from: staffSide(g.user) ? "staff" : "creator", userId: g.user.id, name: g.user.name, text, at });
-  await ping(entryId);
-  return NextResponse.json({ messages: await thread(entryId), joined: !!t.entry.creatorId });
+  await add({ id: newId(), campaignId: t.campaignId, entryId: id, from: staffSide(g.user) ? "staff" : "creator", userId: g.user.id, name: g.user.name, text, at });
+  await ping(id);
+  return NextResponse.json({ messages: forScreen(t, await thread(id)), joined: t.joined, kind: t.kind });
 }

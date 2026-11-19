@@ -6,7 +6,7 @@ import { mutate, readDb, supabase, type Message } from "./db";
  * so sending one doesn't rewrite the whole hub row. Without: the hub's file, as before (db.messages, db.reads).
  * Who may read or write a thread is decided in app/api/chat, not here.
  */
-export type ChatMessage = { id: string; from: "staff" | "creator"; name: string; text: string; at: string };
+export type ChatMessage = { id: string; from: "staff" | "creator"; userId: string; name: string; text: string; at: string };
 
 const KEEP_FILE = 500; // newest messages kept per thread in the file
 
@@ -22,12 +22,12 @@ async function rest(path: string, init: RequestInit = {}) {
 }
 const q = encodeURIComponent;
 
-type Row = { id: string; sender: "staff" | "creator"; name: string; body: string; created_at: string };
-const fromRow = (r: Row): ChatMessage => ({ id: r.id, from: r.sender, name: r.name, text: r.body, at: r.created_at });
+type Row = { id: string; sender: "staff" | "creator"; user_id: string; name: string; body: string; created_at: string };
+const fromRow = (r: Row): ChatMessage => ({ id: r.id, from: r.sender, userId: r.user_id, name: r.name, text: r.body, at: r.created_at });
 
 export async function thread(entryId: string): Promise<ChatMessage[]> {
-  if (supabase) return ((await rest(`hub_messages?entry_id=eq.${q(entryId)}&select=id,sender,name,body,created_at&order=created_at.asc&limit=2000`)) as Row[]).map(fromRow);
-  return ((await readDb()).messages ?? []).filter((m) => m.entryId === entryId).map(({ id, from, name, text, at }) => ({ id, from, name, text, at }));
+  if (supabase) return ((await rest(`hub_messages?entry_id=eq.${q(entryId)}&select=id,sender,user_id,name,body,created_at&order=created_at.asc&limit=2000`)) as Row[]).map(fromRow);
+  return ((await readDb()).messages ?? []).filter((m) => m.entryId === entryId).map(({ id, from, userId, name, text, at }) => ({ id, from, userId, name, text, at }));
 }
 
 export async function add(m: Message) {
@@ -73,6 +73,34 @@ export async function unread(userId: string, entryIds: string[], sender: "staff"
 }
 
 /**
+ * Per 1:1 thread (팀원 대화), the messages from anyone but this user that they haven't read. Both people are on the
+ * team side there, so "the other side" is the other person, not a sender kind. Few threads per person, so plain reads.
+ */
+export async function unreadDirect(userId: string, ids: string[]): Promise<Record<string, number>> {
+  if (!ids.length) return {};
+  let reads: Record<string, string>;
+  let rows: { entryId: string; at: string }[];
+  if (supabase) {
+    const list = `(${ids.map((i) => `"${i}"`).join(",")})`;
+    const [r, m] = (await Promise.all([
+      rest(`hub_chat_reads?user_id=eq.${q(userId)}&entry_id=in.${q(list)}&select=entry_id,read_at`),
+      rest(`hub_messages?entry_id=in.${q(list)}&user_id=neq.${q(userId)}&select=entry_id,created_at&limit=5000`),
+    ])) as [{ entry_id: string; read_at: string }[], { entry_id: string; created_at: string }[]];
+    reads = Object.fromEntries(r.map((x) => [x.entry_id, x.read_at]));
+    rows = m.map((x) => ({ entryId: x.entry_id, at: x.created_at }));
+  } else {
+    const db = await readDb();
+    const want = new Set(ids);
+    reads = db.reads?.[userId] ?? {};
+    rows = (db.messages ?? []).filter((m) => want.has(m.entryId) && m.userId !== userId).map((m) => ({ entryId: m.entryId, at: m.at }));
+  }
+  const out: Record<string, number> = {};
+  // Supabase returns timestamps as "+00:00", the file keeps "Z"; compare as times, not text.
+  for (const m of rows) if (!reads[m.entryId] || Date.parse(m.at) > Date.parse(reads[m.entryId])) out[m.entryId] = (out[m.entryId] ?? 0) + 1;
+  return out;
+}
+
+/**
  * The newest message of each thread among `entryIds`, for the 대화 tab's list.
  * shortcut: reads the newest 2000 messages overall and keeps the first of each thread. A thread whose last message
  * is older than that shows without a preview; give hub_messages a "last message per thread" view if that starts to happen.
@@ -81,8 +109,8 @@ export async function latest(entryIds: string[]): Promise<Record<string, ChatMes
   const want = new Set(entryIds);
   const out: Record<string, ChatMessage> = {};
   const rows: (ChatMessage & { entryId: string })[] = supabase
-    ? ((await rest("hub_messages?select=id,entry_id,sender,name,body,created_at&order=created_at.desc&limit=2000")) as (Row & { entry_id: string })[]).map((r) => ({ ...fromRow(r), entryId: r.entry_id }))
-    : [...((await readDb()).messages ?? [])].reverse().map(({ id, entryId, from, name, text, at }) => ({ id, entryId, from, name, text, at }));
+    ? ((await rest("hub_messages?select=id,entry_id,sender,user_id,name,body,created_at&order=created_at.desc&limit=2000")) as (Row & { entry_id: string })[]).map((r) => ({ ...fromRow(r), entryId: r.entry_id }))
+    : [...((await readDb()).messages ?? [])].reverse().map(({ id, entryId, from, userId, name, text, at }) => ({ id, entryId, from, userId, name, text, at }));
   for (const { entryId, ...m } of rows) if (want.has(entryId) && !out[entryId]) out[entryId] = m;
   return out;
 }

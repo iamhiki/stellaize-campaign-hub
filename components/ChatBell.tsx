@@ -7,7 +7,7 @@ import { useUnreadSummary } from "./ChatPanel";
  * 허브 안 알림 (기획자 11/19): unread messages in the header, on every screen, and as "(3)" in the tab title.
  * Opens a list of the threads with new messages; each goes straight to that conversation.
  */
-export function ChatBell({ creator }: { creator: boolean }) {
+export function ChatBell() {
   const { threads } = useUnreadSummary();
   const total = threads.reduce((n, t) => n + t.n, 0);
   const [open, setOpen] = useState(false);
@@ -79,8 +79,8 @@ export function ChatBell({ creator }: { creator: boolean }) {
                     className="flex min-h-12 items-center justify-between gap-3 px-4 py-2 hover:bg-primary-100"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate text-[15px] font-semibold">{creator ? t.campaign : t.creator}</span>
-                      {!creator && <span className="block truncate text-[12px] text-ink-600">{t.campaign}</span>}
+                      <span className="block truncate text-[15px] font-semibold">{t.title}</span>
+                      {t.sub && <span className="block truncate text-[12px] text-ink-600">{t.sub}</span>}
                     </span>
                     <span className="flex h-5 min-w-5 shrink-0 items-center justify-center bg-danger-700 px-1.5 text-[11px] font-bold text-white tabular-nums">{t.n}</span>
                   </Link>
