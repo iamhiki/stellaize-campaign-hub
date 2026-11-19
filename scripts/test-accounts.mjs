@@ -1,5 +1,5 @@
 // 임시 테스트 계정을 만들고 지운다. 허브가 쓰는 저장소(.env.local 에 Supabase 가 있으면 Supabase, 없으면 data/hub.json)를 직접 고친다.
-//   node scripts/test-accounts.mjs create   담당자 1명 + 크리에이터 2명을 만들고 비밀번호를 한 번 보여 준다
+//   node scripts/test-accounts.mjs create   담당자 1명 + 개발자 1명 + 크리에이터 2명을 만들고 비밀번호를 한 번 보여 준다
 //   node scripts/test-accounts.mjs list     지금 있는 테스트 계정
 //   node scripts/test-accounts.mjs delete   테스트 계정, 그 로그인 세션, 크리에이터 연결을 지운다
 // 테스트 계정은 이메일이 @test.local 로 끝나는 계정이다. 실제 계정은 건드리지 않는다.
@@ -64,16 +64,17 @@ if (cmd === "create") {
       const user = { id: randomBytes(9).toString("base64url"), role, name, email, salt, hash: scryptSync(password, salt, 64).toString("hex"), createdAt: today };
       db.users.push(user);
       if (entry) Object.assign(entry, { creatorId: user.id, invite: null });
-      out.push(`${role === "staff" ? "담당자    " : "크리에이터"}  ${email}  (${name})`);
+      out.push(`${{ staff: "담당자    ", dev: "개발자    ", creator: "크리에이터" }[role]}  ${email}  (${name})`);
     };
     add("staff", "테스트 담당자", `staff${MARK}`);
+    add("dev", "테스트 개발자", `dev${MARK}`);
     // Each test creator takes the first row nobody has joined yet, in two different campaigns when there are two.
     const free = db.campaigns.map((c) => c.entries.find((e) => !e.creatorId && !e.droppedAt)).filter(Boolean).slice(0, 2);
     free.forEach((e, i) => add("creator", e.name, `creator${i + 1}${MARK}`, e));
     return out;
   });
   if (made.length === 0) console.log(`테스트 계정이 이미 있습니다 (${where}). 비밀번호를 잊었으면 delete 후 다시 create 하세요.`);
-  else console.log(`${where} 에 테스트 계정을 만들었습니다.\n\n${made.join("\n")}\n\n비밀번호(모두 같음): ${password}\n지금만 보여 줍니다. 지울 때: node scripts/test-accounts.mjs delete`);
+  else console.log(`${where} 에 테스트 계정을 만들었습니다.\n\n${made.join("\n")}\n\n비밀번호(위에 새로 만든 계정 모두 같음): ${password}\n지금만 보여 줍니다. 지울 때: node scripts/test-accounts.mjs delete`);
 } else if (cmd === "delete") {
   const n = await mutate((db) => {
     const gone = new Set(db.users.filter(isTest).map((u) => u.id));

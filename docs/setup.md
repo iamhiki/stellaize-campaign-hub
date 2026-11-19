@@ -64,7 +64,7 @@ npm run dev
 
 | 명령 | 하는 일 |
 |---|---|
-| `node scripts/test-accounts.mjs create` | 담당자 1명(`staff@test.local`)과 크리에이터 2명(`creator1@test.local`, `creator2@test.local`)을 만들고 비밀번호를 보여 준다 |
+| `node scripts/test-accounts.mjs create` | 담당자 1명(`staff@test.local`), 개발자 1명(`dev@test.local`), 크리에이터 2명(`creator1@test.local`, `creator2@test.local`)을 만들고 비밀번호를 보여 준다 |
 | `node scripts/test-accounts.mjs list` | 지금 있는 테스트 계정을 보여 준다 |
 | `node scripts/test-accounts.mjs delete` | 테스트 계정, 그 로그인, 크리에이터 연결을 지운다 |
 
