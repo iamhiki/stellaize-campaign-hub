@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest) {
       if (teamNameTaken(db, name, user.id))
         return {
           error:
-            "같은 이름의 팀원이 이미 있습니다. 성을 붙이는 등 구분되게 적어 주세요.",
+            "같은 이름의 팀원이 이미 있습니다. 이름 뒤에 괄호로 팀이나 별명을 붙여 주세요(예: 김민수(마케팅)).",
         };
       // Another team account with the old name would still own these, so only move them when none is left.
       if (!teamNameTaken(db, user.name, user.id))
