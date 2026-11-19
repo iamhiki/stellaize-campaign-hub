@@ -10,3 +10,8 @@ create table if not exists public.hub_state (
 -- 정책을 하나도 두지 않는다: 브라우저에 공개되는 키(anon, publishable)로는 읽지도 쓰지도 못하고,
 -- 허브 서버만 secret 키로 드나든다.
 alter table public.hub_state enable row level security;
+
+-- 프로젝트를 만들 때 "Grant API access to new tables automatically"를 껐어도 허브가 쓸 수 있게 권한을 직접 준다.
+-- 허브 서버(secret 키 = service_role)만 읽고 쓰고, 브라우저용 키(anon, authenticated)는 아예 못 쓰게 한다.
+grant select, insert, update on public.hub_state to service_role;
+revoke all on public.hub_state from anon, authenticated;

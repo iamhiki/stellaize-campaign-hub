@@ -30,7 +30,7 @@ const fresh = (): Db => ({ users: [], sessions: {}, campaigns: demoCampaigns(tod
 // Two places the hub can keep its data. With SUPABASE_URL and SUPABASE_SECRET_KEY set (.env.local), Supabase;
 // without them, a file on this machine, so the hub still runs on a PC with no account anywhere.
 // Every read and write goes through readDb/mutate, so nothing else knows which one is in use.
-const BASE = process.env.SUPABASE_URL?.trim().replace(/\/+$/, "");
+const BASE = process.env.SUPABASE_URL?.trim().replace(/(\/rest\/v1)?\/*$/, ""); // a pasted ".../rest/v1/" still works
 const KEY = process.env.SUPABASE_SECRET_KEY?.trim();
 const remote = !!BASE && !!KEY;
 /** Where uploaded files go (lib/server/files.ts): the same Supabase project, or null for this machine's disk. */

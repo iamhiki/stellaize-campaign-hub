@@ -88,11 +88,14 @@ npm run dev
    SUPABASE_SECRET_KEY=복사한_secret_키
    ```
 
-5. 허브를 열면 Supabase에 예시 캠페인 3개가 들어간 새 저장소로 시작한다. `/signup`에서 계정을 다시 만든다.
+5. 지금 `data/hub.json`의 자료를 그대로 쓰려면 허브를 켜기 전에 `node scripts/push-to-supabase.mjs`를 한 번 실행한다. 계정, 캠페인, 체크, 제출 링크가 Supabase로 옮겨진다. Supabase에 이미 자료가 있으면 덮어쓰지 않고 멈춘다.
+   옮기지 않고 허브를 열면 Supabase는 예시 캠페인 3개가 들어간 새 저장소로 시작하고, `/signup`에서 계정을 다시 만들어야 한다.
 
 알아둘 점
 - secret 키는 자료 전체를 읽고 쓸 수 있는 키다. `.env.local`에만 두고 git, 이슈, 카톡에 적지 않는다. 새어 나갔으면 Supabase에서 키를 새로 만든다.
-- `data/hub.json`에 있던 계정과 캠페인은 자동으로 옮겨지지 않는다. 두 줄을 지우면 다시 파일을 쓴다.
+- `data/hub.json`은 옮긴 뒤에도 그대로 남지만 더는 바뀌지 않는다. `.env.local`의 두 줄을 지우면 허브가 다시 이 파일을 쓴다.
+- `SUPABASE_URL`은 `https://프로젝트주소.supabase.co`까지만 넣는다. 끝에 `/rest/v1/`를 붙여 넣어도 허브가 알아서 뗀다.
+- 프로젝트를 만들 때 **Enable Data API**는 켜 둔다. 허브가 이 API로 저장한다. `schema.sql`이 허브 서버(secret 키)에만 표 권한을 주므로 "Grant API access to new tables automatically"는 꺼도 된다.
 - 무료 요금제는 자동 백업이 없고, 1주일 동안 접속이 없으면 프로젝트가 일시정지된다. 정지되면 Supabase 대시보드에서 다시 켠다.
 - 지금은 허브 자료 전체를 표의 한 행에 통째로 넣는다(베타용). 캠페인이 수백 개로 늘기 전에 표를 나누는 작업이 필요하다.
 

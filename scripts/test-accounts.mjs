@@ -13,7 +13,7 @@ const env = Object.fromEntries(
     .filter((l) => /^[A-Z_]+=/.test(l))
     .map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1).trim()]),
 );
-const BASE = env.SUPABASE_URL?.replace(/\/+$/, "");
+const BASE = env.SUPABASE_URL?.replace(/(\/rest\/v1)?\/*$/, "");
 const KEY = env.SUPABASE_SECRET_KEY;
 const remote = !!BASE && !!KEY;
 const FILE = "data/hub.json";
