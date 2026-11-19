@@ -34,5 +34,5 @@ export const ui = {
 
 /** Shown until the server answers, so the layout doesn't jump. */
 export function Loading() {
-  return <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">불러오는 중입니다.</p>;
+  return <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">불러오는 중…</p>;
 }

@@ -261,8 +261,8 @@ function SubmitLink({ entryId, step, label, again, onChange }: { entryId: string
 
   return (
     <form action={submit} aria-label={`${label} 제출`} className="flex max-w-[520px] flex-col gap-2">
-      <input name="url" type="url" required maxLength={1000} aria-label={`${label} 링크`} placeholder="https://  (드라이브, 유튜브 일부 공개 등 링크)" className={`${ui.input} h-10 text-[14px]`} />
-      <input name="note" maxLength={500} aria-label="메모" placeholder="메모 (선택)" className={`${ui.input} h-10 text-[14px]`} />
+      <input autoComplete="off" name="url" type="url" required maxLength={1000} aria-label={`${label} 링크`} placeholder="https://  (드라이브, 유튜브 일부 공개 등 링크)" className={`${ui.input} h-10 text-[14px]`} />
+      <input autoComplete="off" name="note" maxLength={500} aria-label="메모" placeholder="메모 (선택)" className={`${ui.input} h-10 text-[14px]`} />
       {error && (
         <p role="alert" className="text-[14px] font-semibold text-danger-700">
           {error}

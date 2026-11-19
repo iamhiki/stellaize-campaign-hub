@@ -245,7 +245,7 @@ export function ForgotForm() {
           <Field label="이메일" name="email" type="email" autoComplete="username" />
           <Problem>{error}</Problem>
           <button type="submit" disabled={busy} className={`${ui.primary} h-14 text-[17px]`}>
-            {busy ? "보내는 중" : "재설정 링크 받기"}
+            {busy ? "보내는 중…" : "재설정 링크 받기"}
           </button>
         </>
       )}

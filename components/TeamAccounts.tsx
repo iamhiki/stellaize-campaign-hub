@@ -113,7 +113,7 @@ export function TeamAccounts() {
       <div className="min-w-48 flex-1">
         {renaming === a.id ? (
           <form onSubmit={(ev) => rename(ev, a)} className="flex flex-wrap items-center gap-2">
-            <input name="name" defaultValue={a.name} required maxLength={30} autoFocus aria-label={`${a.name} 님의 새 이름`} className={`${ui.input} h-10 min-w-0 flex-1`} />
+            <input autoComplete="off" name="name" defaultValue={a.name} required maxLength={30} autoFocus aria-label={`${a.name} 님의 새 이름`} className={`${ui.input} h-10 min-w-0 flex-1`} />
             <button type="submit" className={`${ui.primary} h-10 px-4 text-[14px]`}>
               저장
             </button>
@@ -171,15 +171,15 @@ export function TeamAccounts() {
         만든 링크는 못 씁니다.
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름, 별명, 이메일로 찾기" aria-label="계정 찾기" className={`${ui.input} w-full max-w-sm`} />
-        <div role="group" aria-label="역할" className="flex w-fit flex-wrap border border-line">
+        <input autoComplete="off" value={q} onChange={(e) => setQ(e.target.value)} placeholder="이름, 별명, 이메일로 찾기…" aria-label="계정 찾기" className={`${ui.input} w-full max-w-sm`} />
+        <div role="group" aria-label="역할" className="grid w-full grid-cols-4 border border-line sm:flex sm:w-fit">
           {(["all", ...ORDER] as const).map((r) => (
             <button
               key={r}
               type="button"
               aria-pressed={role === r}
               onClick={() => setRole(r)}
-              className="min-h-10 px-4 text-[14px] font-semibold tabular-nums text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white"
+              className="min-h-10 whitespace-nowrap px-2 text-[13px] font-semibold tabular-nums text-ink-800 hover:text-primary-600 aria-pressed:bg-ink-900 aria-pressed:text-white sm:px-4 sm:text-[14px]"
             >
               {r === "all" ? "전체" : ROLE[r]} {accounts ? count(r) : ""}
             </button>

@@ -78,15 +78,15 @@ export function CampaignDetail({ id }: { id: string }) {
           <CreatorTable campaign={campaign} today={today} />
         </section>
 
-        <section aria-label="캠페인 요약" className="grid grid-cols-2 gap-y-8 border-t border-line py-8 md:grid-cols-[1.3fr_1fr_1fr_1fr_1.3fr] md:divide-x md:divide-line md:py-9">
-          <article className="col-span-2 pr-4 md:col-span-1 md:pr-7">
+        <section aria-label="캠페인 요약" className="grid grid-cols-2 gap-y-8 border-t border-line py-8 lg:grid-cols-[1.3fr_1fr_1fr_1fr_1.3fr] lg:divide-x lg:divide-line lg:py-9">
+          <article className="col-span-2 pr-4 lg:col-span-1 lg:pr-7">
             <h2 className="mb-3 text-[16px] font-bold text-ink-900">캠페인 진행률</h2>
             <ProgressBar size="lg" label={campaign.name} entries={campaign.entries} />
           </article>
           {PARTIES.map((p) => {
             const list = statuses.filter((x) => x.s.waitingOn === p);
             return (
-              <article key={p} className="pr-4 md:px-7">
+              <article key={p} className="min-w-0 pr-4 lg:px-7">
                 <h2 className="flex items-center gap-2 text-[16px] font-bold text-ink-900">
                   <span aria-hidden className={`size-2 ${WAITING[p].square}`} />
                   {WAITING[p].label}
@@ -101,7 +101,7 @@ export function CampaignDetail({ id }: { id: string }) {
               </article>
             );
           })}
-          <article className="col-span-2 md:col-span-1 md:pl-7">
+          <article className="col-span-2 lg:col-span-1 lg:pl-7">
             <h2 className="text-[16px] font-bold text-ink-900">일정</h2>
             <dl className="mt-4 space-y-2 text-[15px]">
               <div className="flex justify-between gap-2">
@@ -153,8 +153,8 @@ function AddCreator({ campaignId }: { campaignId: string }) {
   return (
     <form action={submit} aria-label="크리에이터 추가" className="flex flex-col gap-2">
       <div className="flex flex-wrap gap-2">
-        <input name="name" aria-label="크리에이터 이름" placeholder="크리에이터 이름" className={`${ui.input} w-44`} />
-        <input name="channel" aria-label="채널" placeholder="채널 (예: 인스타그램)" className={`${ui.input} w-48`} />
+        <input autoComplete="off" name="name" aria-label="크리에이터 이름" placeholder="크리에이터 이름" className={`${ui.input} w-44`} />
+        <input autoComplete="off" name="channel" aria-label="채널" placeholder="채널 (예: 인스타그램)" className={`${ui.input} w-48`} />
         <button type="submit" className={ui.primary}>
           추가
         </button>

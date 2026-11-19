@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { reminderDraft, type Campaign, type Entry } from "@/lib/campaigns";
 import { post } from "@/lib/me";
+import { useUnsaved } from "@/lib/unsaved";
 import { reload, useAccounts, useEmails, useMail, useToday } from "@/lib/store";
 import { ui } from "./PageBand";
 
@@ -20,6 +21,7 @@ export function MailForm({ campaign, entry, onClose }: { campaign: Campaign; ent
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
+  const unsaved = useUnsaved();
   const draft = reminderDraft(campaign, entry, account ?? entry.name, today);
 
   async function submit(form: FormData) {
@@ -29,6 +31,7 @@ export function MailForm({ campaign, entry, onClose }: { campaign: Campaign; ent
     const failed = await post("/api/mail", { campaignId: campaign.id, entryId: entry.id, step: draft.step, to: get("to").trim(), cc: get("cc"), subject: get("subject"), text: get("text") });
     setBusy(false);
     if (failed) return setError(failed);
+    unsaved.saved();
     setSent(true);
     reload();
   }
@@ -44,7 +47,7 @@ export function MailForm({ campaign, entry, onClose }: { campaign: Campaign; ent
     );
 
   return (
-    <form action={submit} aria-label={`${entry.name} 마감 알림 메일`} className="flex max-w-[720px] flex-col gap-4">
+    <form action={submit} onInput={unsaved.onInput} aria-label={`${entry.name} 마감 알림 메일`} className="flex max-w-[720px] flex-col gap-4">
       <div className="border border-line bg-white p-4 text-[13px] leading-relaxed text-ink-800">
         <p>
           <b className="font-bold text-ink-900">{entry.name}</b> 님에게 보낼 마감 알림 메일입니다. 아래 내용이 그대로 나가고, 보내기 전에 받는 사람·제목·내용을 고칠 수 있습니다. 메일은 자동으로 나가지 않고 이 버튼을 눌렀을 때만 나갑니다.
@@ -61,20 +64,20 @@ export function MailForm({ campaign, entry, onClose }: { campaign: Campaign; ent
       <div className="grid gap-4 sm:grid-cols-2">
         <label className={label}>
           받는 사람
-          <input key={email} name="to" type="email" required maxLength={120} defaultValue={email} placeholder={email ? "" : "크리에이터가 아직 가입하지 않았습니다. 주소를 직접 넣으세요"} className={`${field} h-10`} />
+          <input autoComplete="off" key={email} name="to" type="email" required maxLength={120} defaultValue={email} placeholder={email ? "" : "크리에이터가 아직 가입하지 않았습니다. 주소를 직접 넣으세요"} className={`${field} h-10`} />
         </label>
         <label className={label}>
           참조
-          <input name="cc" maxLength={400} defaultValue={entry.managerEmail ?? ""} placeholder="여러 개면 쉼표로" className={`${field} h-10`} />
+          <input autoComplete="off" name="cc" maxLength={400} defaultValue={entry.managerEmail ?? ""} placeholder="여러 개면 쉼표로" className={`${field} h-10`} />
         </label>
       </div>
       <label className={label}>
         제목
-        <input name="subject" required maxLength={200} defaultValue={draft.subject} className={`${field} h-10`} />
+        <input autoComplete="off" name="subject" required maxLength={200} defaultValue={draft.subject} className={`${field} h-10`} />
       </label>
       <label className={label}>
         내용
-        <textarea name="text" required maxLength={5000} rows={9} defaultValue={draft.text} className={`${field} py-2 leading-relaxed`} />
+        <textarea autoComplete="off" name="text" required maxLength={5000} rows={9} defaultValue={draft.text} className={`${field} py-2 leading-relaxed`} />
       </label>
       {error && (
         <p role="alert" className="text-[14px] font-semibold text-danger-700">
@@ -83,7 +86,7 @@ export function MailForm({ campaign, entry, onClose }: { campaign: Campaign; ent
       )}
       <div className="flex gap-2">
         <button type="submit" disabled={busy} className={`${ui.primary} h-10 px-5 text-[14px]`}>
-          {busy ? "보내는 중" : "보내기"}
+          {busy ? "보내는 중…" : "보내기"}
         </button>
         <button type="button" onClick={onClose} className={`${ui.secondary} h-10 px-5 text-[14px]`}>
           취소

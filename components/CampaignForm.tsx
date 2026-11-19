@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { addCampaign, editCampaign, useCampaigns } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
 import { useMe } from "@/lib/me";
+import { useUnsaved } from "@/lib/unsaved";
 import { ComboInput } from "./ComboInput";
 import { DateInput } from "./DateInput";
 import { OwnersField } from "./OwnersField";
@@ -17,6 +18,7 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
   const router = useRouter();
   const [error, setError] = useState("");
   const myName = useMe()?.name ?? "";
+  const unsaved = useUnsaved();
   // The usual channels, then any other channel already used on a campaign (예: "유튜브 · 인스타그램").
   const used = (useCampaigns() ?? []).map((c) => c.channel);
   const channels = [...CHANNELS, ...[...new Set(used)].filter((c) => !CHANNELS.includes(c)).sort((a, b) => a.localeCompare(b, "ko"))];
@@ -36,25 +38,27 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
     if (campaign) {
       if (campaign.confidential && !input.owners.includes(myName) && !confirm("담당자에서 내 이름을 빼면 대외비 캠페인이라 저장한 뒤로 이 캠페인을 볼 수 없습니다. 저장할까요?")) return;
       editCampaign(campaign.id, { name: input.name, advertiser: input.advertiser, channel: input.channel, uploadDate: input.uploadDate, owners: input.owners });
+      unsaved.saved();
       return onClose();
     }
     const id = addCampaign(input);
+    unsaved.saved();
     router.push(`/campaigns/${id}`);
   }
 
   return (
-    <form action={submit} aria-labelledby="campaign-form-title" className="border-t-2 border-ink-900 bg-[#f5f7fa] px-5 py-7 md:px-8">
+    <form action={submit} onInput={unsaved.onInput} aria-labelledby="campaign-form-title" className="border-t-2 border-ink-900 bg-[#f5f7fa] px-5 py-7 md:px-8">
       <h2 id="campaign-form-title" className="text-[20px] font-bold tracking-[-0.03em] text-ink-900">
         {campaign ? "캠페인 정보 수정" : "캠페인 등록"}
       </h2>
       <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <label className={ui.label}>
           캠페인 이름
-          <input name="name" required defaultValue={campaign?.name} placeholder="예: 글로우핏 수분 선크림" className={ui.input} />
+          <input autoComplete="off" name="name" required defaultValue={campaign?.name} placeholder="예: 글로우핏 수분 선크림" className={ui.input} />
         </label>
         <label className={ui.label}>
           광고주
-          <input name="advertiser" required defaultValue={campaign?.advertiser} className={ui.input} />
+          <input autoComplete="off" name="advertiser" required defaultValue={campaign?.advertiser} className={ui.input} />
         </label>
         <label className={ui.label}>
           채널

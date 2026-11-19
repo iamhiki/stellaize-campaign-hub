@@ -51,7 +51,7 @@ export function SiteHeader() {
                 key={m.href}
                 href={m.href}
                 aria-current={active(m.href) ? "page" : undefined}
-                className={`relative flex h-full shrink-0 items-center text-[16px] font-medium after:absolute after:bottom-2 lg:text-[17px] lg:after:bottom-4 after:left-0 after:h-0.5 after:bg-white after:transition-all after:duration-300 after:content-[''] ${
+                className={`relative flex h-full shrink-0 items-center text-[16px] font-medium after:absolute after:bottom-2 lg:text-[17px] lg:after:bottom-4 after:left-0 after:h-0.5 after:bg-white after:transition-[width] after:duration-300 motion-reduce:after:transition-none after:content-[''] ${
                   active(m.href) ? "after:w-full" : "after:w-0 hover:after:w-full"
                 }`}
               >

@@ -59,6 +59,14 @@
   :disabled {
     cursor: not-allowed;
   }
+  /* No double-tap zoom delay on taps (phones). */
+  a,
+  button,
+  summary,
+  [role="button"],
+  label {
+    touch-action: manipulation;
+  }
   :focus-visible {
     outline: 2px solid var(--color-primary-500);
     outline-offset: 2px;

@@ -67,9 +67,9 @@ function NicknameField({ me }: { me: Me }) {
   return (
     <form onSubmit={save}>
       <div className="flex flex-wrap items-center gap-2">
-        <input name="nickname" defaultValue={me.nickname} maxLength={20} autoFocus aria-label="별명" className={`${ui.input} h-10 min-w-0 flex-1`} />
+        <input autoComplete="off" name="nickname" defaultValue={me.nickname} maxLength={20} autoFocus aria-label="별명" className={`${ui.input} h-10 min-w-0 flex-1`} />
         <button type="submit" disabled={busy} className={`${ui.primary} h-10 px-4 text-[14px]`}>
-          {busy ? "저장 중" : "저장"}
+          {busy ? "저장 중…" : "저장"}
         </button>
         <button type="button" onClick={() => (setEditing(false), setError(""))} className={`${ui.secondary} h-10 px-4 text-[14px]`}>
           취소
@@ -134,7 +134,7 @@ export function PasswordForm() {
         </p>
       )}
       <button type="submit" disabled={busy} className={ui.primary}>
-        {busy ? "바꾸는 중" : "변경하기"}
+        {busy ? "바꾸는 중…" : "변경하기"}
       </button>
       <p className="text-[14px] text-ink-600">8자 이상으로 정합니다.</p>
     </form>

@@ -46,19 +46,19 @@ export function DealEditor({ campaign, entry }: { campaign: Campaign; entry: Ent
       >
         <label className={label}>
           최종단가 (원)
-          <input name="price" inputMode="numeric" defaultValue={won(entry.price)} placeholder="예: 950,000" className={field} />
+          <input autoComplete="off" name="price" inputMode="numeric" defaultValue={won(entry.price)} placeholder="예: 950,000" className={field} />
         </label>
         <label className={label}>
           PA 광고 1개월 단가 (원)
-          <input name="paPrice" inputMode="numeric" defaultValue={won(entry.paPrice)} placeholder="비우면 단가 내 포함" className={field} />
+          <input autoComplete="off" name="paPrice" inputMode="numeric" defaultValue={won(entry.paPrice)} placeholder="비우면 단가 내 포함" className={field} />
         </label>
         <label className={label}>
           운송장 번호
-          <input name="tracking" maxLength={40} defaultValue={entry.tracking ?? ""} placeholder="제품 발송 후" className={field} />
+          <input autoComplete="off" name="tracking" maxLength={40} defaultValue={entry.tracking ?? ""} placeholder="제품 발송 후" className={field} />
         </label>
         <label className={label}>
           소속사 담당자 메일
-          <input name="managerEmail" type="email" maxLength={120} defaultValue={entry.managerEmail ?? ""} placeholder="있으면. 마감 알림 메일 참조" className={`${field} invalid:border-danger-700`} />
+          <input autoComplete="off" name="managerEmail" type="email" maxLength={120} defaultValue={entry.managerEmail ?? ""} placeholder="있으면. 마감 알림 메일 참조" className={`${field} invalid:border-danger-700`} />
         </label>
       </form>
 

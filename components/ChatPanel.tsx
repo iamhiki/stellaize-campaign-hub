@@ -1,6 +1,7 @@
 "use client";
 import { Fragment, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { liveOn, onLive, startLive } from "@/lib/live";
+import { useUnsaved } from "@/lib/unsaved";
 
 type Msg = { id: string; from: "staff" | "creator"; name: string; text: string; at: string; mine: boolean; pending?: boolean };
 type Thread = { messages: Msg[]; readAt: string | null; joined: boolean };
@@ -114,6 +115,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
   const box = useRef<HTMLTextAreaElement>(null);
   const count = useRef(0);
   const near = useRef(true);
+  const unsaved = useUnsaved();
 
   useEffect(() => {
     let live = true;
@@ -185,6 +187,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
     const temp: Msg = { id: `tmp-${Date.now()}`, from: side, name: "나", text: v, at: new Date().toISOString(), mine: true, pending: true };
     setPending((p) => [...p, temp]);
     el.value = "";
+    unsaved.saved();
     fit();
     const res = await fetch("/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entryId, text: v }) }).catch(() => null);
     const d = res && (await res.json().catch(() => null));
@@ -192,6 +195,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
     if (!res?.ok) {
       setError(d?.error ?? "보내지 못했습니다. 연결을 확인해 주세요.");
       if (!el.value) el.value = v; // give the text back to try again
+      unsaved.onInput();
       fit();
       return;
     }
@@ -236,7 +240,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
                       <div className={`flex items-end gap-1.5 ${m.mine ? "flex-row-reverse" : ""}`}>
                         <p
                           className={`min-w-0 whitespace-pre-wrap break-words px-3.5 py-2 text-[15px] leading-relaxed motion-safe:animate-[msg-in_160ms_ease-out] ${
-                            m.mine ? `rounded-[18px] bg-primary-600 text-white ${last ? "rounded-br-md" : ""}` : `rounded-[18px] bg-white text-ink-900 ring-1 ring-line ${last ? "rounded-bl-md" : ""}`
+                            m.mine ? `rounded-[18px] bg-primary-600 text-white ${last ? "rounded-br-[6px]" : ""}` : `rounded-[18px] bg-white text-ink-900 ring-1 ring-line ${last ? "rounded-bl-[6px]" : ""}`
                           } ${m.pending ? "opacity-60" : ""}`}
                         >
                           <Linked text={m.text} mine={m.mine} />
@@ -278,7 +282,7 @@ export function ChatPanel({ entryId, side, title, fill }: { entryId: string; sid
           id={`chat-${entryId}`}
           name="message"
           autoComplete="off"
-          onInput={fit}
+          onInput={() => (fit(), box.current?.value.trim() ? unsaved.onInput() : unsaved.saved())}
           onKeyDown={(e) => {
             // Enter sends, Shift+Enter starts a new line. Not while composing Korean.
             if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
