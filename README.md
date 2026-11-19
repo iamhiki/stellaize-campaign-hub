@@ -134,4 +134,3 @@ npm run dev   # http://localhost:3000
 | [로드맵](https://github.com/iamhiki/stellaize-campaign-hub/issues/7) | 다음에 만들 것 |
 | [정해야 할 것](https://github.com/iamhiki/stellaize-campaign-hub/issues/8) | 회사 · 기획자 확인이 필요한 것 |
 
-만든 사람: 홍가영, 이세연
