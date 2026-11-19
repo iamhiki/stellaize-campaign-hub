@@ -36,6 +36,25 @@ export function startSession(db: Db, userId: string) {
  */
 export const teamNameTaken = (db: Db, name: string, exceptId?: string) => db.users.some((u) => u.role !== "creator" && u.id !== exceptId && u.name === name);
 
+export const NAME_TAKEN = "같은 이름의 팀원이 이미 있습니다. 이름 끝에 숫자를 붙여 가입한 뒤(예: 김민수2) 개발자에게 알려 주세요.";
+
+/**
+ * A developer changes someone's name (마이페이지 팀원 계정). A team member's name is also their 담당 mark on
+ * campaigns, so that moves with it. Returns the error to show, or "". Call inside mutate().
+ */
+export function renameUser(db: Db, userId: string, name: string) {
+  const user = db.users.find((u) => u.id === userId);
+  if (!user) return "계정을 찾을 수 없습니다.";
+  if (user.name === name) return "";
+  if (user.role !== "creator") {
+    if (teamNameTaken(db, name, user.id)) return "같은 이름의 팀원이 이미 있습니다. 다른 이름으로 정해 주세요.";
+    // Another team account with the old name would still own these, so only move them when none is left.
+    if (!teamNameTaken(db, user.name, user.id)) for (const c of db.campaigns) c.owners = c.owners.map((o) => (o === user.name ? name : o));
+  }
+  user.name = name;
+  return "";
+}
+
 /**
  * One-time link to set a new password (비밀번호 찾기, 11/19). Only the digest is stored, like sessions. A new link
  * replaces any older one for the same account. Call inside mutate().
@@ -77,7 +96,7 @@ export function userOf(db: Db, token: string | undefined): User | null {
 }
 
 /** What the browser may know about an account. */
-export const publicUser = (u: User) => ({ id: u.id, role: u.role, name: u.name, email: u.email });
+export const publicUser = (u: User) => ({ id: u.id, role: u.role, name: u.name, nickname: u.nickname ?? "", email: u.email });
 
 export const fail = (status: number, error: string) => NextResponse.json({ error }, { status });
 

@@ -1,7 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 
-export type Me = { id: string; role: "staff" | "creator" | "dev"; name: string; email: string };
+export type Me = { id: string; role: "staff" | "creator" | "dev"; name: string; nickname: string; email: string };
 
 // undefined = still asking the server, null = signed out.
 let me: Me | null | undefined;

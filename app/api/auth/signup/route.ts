@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
-import { body, fail, hashPassword, newId, publicUser, sameOrigin, startSession, str, teamNameTaken, withSession } from "@/lib/server/auth";
+import { body, fail, hashPassword, newId, publicUser, sameOrigin, startSession, str, teamNameTaken, NAME_TAKEN, withSession } from "@/lib/server/auth";
 import { findByInvite, link } from "@/lib/server/creator";
 import { mutate, type Role, type User } from "@/lib/server/db";
 import { todayKST } from "@/lib/date";
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   const out = await mutate((db) => {
     if (db.users.some((u) => u.email === email)) return { error: "이미 가입한 이메일입니다. 로그인해 주세요." };
-    if (role !== "creator" && teamNameTaken(db, name)) return { error: "같은 이름의 팀원이 이미 있습니다. 이름 뒤에 괄호로 팀이나 별명을 붙여 주세요(예: 김민수(마케팅))." };
+    if (role !== "creator" && teamNameTaken(db, name)) return { error: NAME_TAKEN };
     const found = invite ? findByInvite(db, invite) : null;
     if (invite && !found) return { error: "초대 링크가 만료됐거나 이미 사용됐습니다. 담당자에게 새 링크를 요청해 주세요." };
     const user: User = { id: newId(), role, name, email, ...hashPassword(password), createdAt: todayKST() };

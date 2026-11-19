@@ -25,7 +25,7 @@ lib/files.ts          올릴 수 있는 서류 종류와 파일 형식 확인. �
 lib/me.ts             로그인한 계정
 lib/server/           서버 전용: db(Supabase 또는 data/hub.json 읽기·쓰기), auth(비밀번호 해시·세션·권한), creator(크리에이터에게 보낼 범위), mail(메일 발송), files(서류 파일 보관: Supabase Storage 또는 data/files)
 lib/contract.ts       계약서 앱 링크 만들기
-lib/demo.ts           처음 켤 때 들어가는 예시 캠페인 3개 (담당자 홍가영·이세연)
+lib/demo.ts           처음 켤 때 들어가는 예시 캠페인 3개 (담당자 김지은·박민준)
 lib/date.ts           D-day·대기 일수 계산 (한국 시간 기준). 자동 검사: node lib/date.check.ts
 app/globals.css       색·폰트·애니메이션 (스텔라이즈 색 값)
 docs/                 화면과 기능(guide), 설치와 운영(setup), 구조(architecture), 화면 캡처(screens)
