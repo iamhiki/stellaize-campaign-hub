@@ -64,7 +64,7 @@ export default function AboutPage() {
       {/* Incross-style opening band, Stellaize blues; white text stays >= 4.5:1 on both stops */}
       <section className="relative flex min-h-[min(88svh,820px)] flex-col overflow-hidden bg-[linear-gradient(103deg,#125cad_0%,#1876d6_100%)] text-white">
         <SiteHeader />
-        <div className={`${wrap} grid w-full flex-1 items-center gap-12 pb-20 pt-[140px] md:grid-cols-[1.25fr_1fr] md:pt-[120px]`}>
+        <div className={`${wrap} grid w-full flex-1 items-center gap-12 pb-20 pt-[140px] md:grid-cols-[1.25fr_1fr] lg:pt-[120px]`}>
           <div>
             <h1 className="text-[40px] font-bold leading-[1.15] tracking-[-0.04em] md:text-[72px]">
               <span className="rise-in block">누가 어디서</span>

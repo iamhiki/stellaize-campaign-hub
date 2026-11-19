@@ -7,7 +7,7 @@ export function PageBand({ title, children, center }: { title: React.ReactNode; 
   return (
     <section className="relative bg-[linear-gradient(103deg,#125cad_0%,#1876d6_100%)] text-white">
       <SiteHeader />
-      <div className={`mx-auto px-5 pb-8 pt-[120px] md:px-[30px] md:pt-[96px] ${center ? "max-w-[620px] text-center" : "max-w-[1260px]"}`}>
+      <div className={`mx-auto px-5 pb-8 pt-[120px] md:px-[30px] lg:pt-[96px] ${center ? "max-w-[620px] text-center" : "max-w-[1260px]"}`}>
         <h1 className={`flex flex-wrap items-center gap-x-3 gap-y-2 ${center ? "justify-center" : ""} text-[30px] font-bold leading-tight tracking-[-0.04em] md:text-[40px]`}>{title}</h1>
         {children && <div className="mt-2 text-balance text-[15px] font-medium leading-relaxed md:text-[17px]">{children}</div>}
       </div>
