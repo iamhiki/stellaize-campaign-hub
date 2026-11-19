@@ -141,6 +141,7 @@ export const setDeal = (campaignId: string, entryId: string, price: number | nul
   send({ op: "setDeal", campaignId, entryId, price, paPrice, tracking, managerEmail });
 /** 대외비 on or off. Only the campaign's 담당자 can do this; for anyone else the server refuses and the screen reloads. */
 export const setConfidential = (id: string, on: boolean) => send({ op: "setConfidential", id, on });
+export const editCampaign = (id: string, input: Omit<CampaignInput, "confidential">) => send({ op: "editCampaign", id, input });
 /** Make (or take back) a creator's invite link. The link appears once the server has made its code. */
 export const inviteCreator = (campaignId: string, entryId: string, on: boolean) => send({ op: "invite", campaignId, entryId, token: on ? "" : null }, !on);
 export const unlinkCreator = (campaignId: string, entryId: string) => send({ op: "unlink", campaignId, entryId });

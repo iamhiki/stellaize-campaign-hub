@@ -7,6 +7,7 @@ import { daysBetween, reportDue } from "@/lib/date";
 import { addEntry, deleteCampaign, setConfidential, useCampaigns, useToday } from "@/lib/store";
 import { useMe } from "@/lib/me";
 import { DdayText, WAITING } from "./badges";
+import { CampaignForm } from "./CampaignForm";
 import { CreatorTable } from "./CreatorTable";
 import { Loading, PageBand, pageWrap, ui } from "./PageBand";
 import { ProgressBar } from "./ProgressBar";
@@ -19,6 +20,7 @@ export function CampaignDetail({ id }: { id: string }) {
   const today = useToday();
   const campaign = campaigns?.find((c) => c.id === id);
   const myName = useMe()?.name ?? "";
+  const [editing, setEditing] = useState(false);
 
   if (!campaigns) {
     return (
@@ -51,10 +53,20 @@ export function CampaignDetail({ id }: { id: string }) {
     <>
       <PageBand title={campaign.name}>
         {campaign.advertiser} · {campaign.channel} · 기본 업로드 {campaign.uploadDate} · 담당 {campaign.owners.join(", ")}
-        {campaign.confidential && " · 대외비(담당자만 봄)"}
+        {campaign.confidential && " · 대외비(담당자만 봄)"}{" "}
+        {!editing && (
+          <button type="button" onClick={() => setEditing(true)} className="ml-1 min-h-9 underline underline-offset-4 hover:opacity-80">
+            정보 수정
+          </button>
+        )}
       </PageBand>
 
       <main className={pageWrap}>
+        {editing && (
+          <div className="pt-8">
+            <CampaignForm key={campaign.id} campaign={campaign} onClose={() => setEditing(false)} />
+          </div>
+        )}
         {/* 기획자 피드백 11/7: 크리에이터 리스트가 제일 위 */}
         <section className="py-10 md:py-12">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">

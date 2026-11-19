@@ -10,6 +10,8 @@ export type Op =
   | { op: "deleteCampaign"; id: string }
   /** Mark or unmark 대외비. The server only takes this from one of the campaign's 담당자. */
   | { op: "setConfidential"; id: string; on: boolean }
+  /** 기획자 11/19: 담당자가 중간에 바뀌거나 늘 때. 대외비는 setConfidential 로만 바꾼다. */
+  | { op: "editCampaign"; id: string; input: Omit<CampaignInput, "confidential"> }
   | { op: "addEntry"; campaignId: string; id: string; name: string; channel: string }
   | { op: "toggleStep"; campaignId: string; entryId: string; step: number; on: boolean }
   | { op: "setDue"; campaignId: string; entryId: string; step: number; date: string | null }
@@ -36,6 +38,8 @@ export function applyOp(list: Campaign[], op: Op, today: string): Campaign[] {
       return list.filter((c) => c.id !== op.id);
     case "setConfidential":
       return inCampaign(op.id, (c) => ({ ...c, confidential: op.on }));
+    case "editCampaign":
+      return inCampaign(op.id, (c) => ({ ...c, ...op.input }));
     case "addEntry":
       return inCampaign(op.campaignId, (c) =>
         c.entries.some((e) => e.id === op.id)
@@ -70,17 +74,28 @@ export const isEmailOrEmpty = (v: unknown): v is string => typeof v === "string"
 const isWonOrNull = (v: unknown): v is number | null => v === null || (Number.isInteger(v) && (v as number) >= 0 && (v as number) <= 10_000_000_000);
 const isDateOrNull = (v: unknown): v is string | null => v === null || isDate(v);
 
+/** The campaign fields shared by 등록 and 수정. */
+function parseInput(x: unknown): Omit<CampaignInput, "confidential"> | null {
+  const i = x as Record<string, unknown> | undefined;
+  if (!i || !isText(i.name) || !isText(i.advertiser) || !isText(i.channel) || !isDate(i.uploadDate)) return null;
+  const owners = i.owners;
+  if (!Array.isArray(owners) || owners.length === 0 || owners.length > 10 || !owners.every((n) => isText(n, 30))) return null;
+  return { name: i.name.trim(), advertiser: i.advertiser.trim(), channel: i.channel.trim(), uploadDate: i.uploadDate, owners: owners.map((n: string) => n.trim()) };
+}
+
 /** Checks what a browser sent before the server applies it. Returns null for anything malformed. */
 export function parseOp(x: unknown): Op | null {
   if (!x || typeof x !== "object") return null;
   const o = x as Record<string, unknown>;
   switch (o.op) {
     case "addCampaign": {
-      const i = o.input as Record<string, unknown> | undefined;
-      if (!isId(o.id) || !i || !isText(i.name) || !isText(i.advertiser) || !isText(i.channel) || !isDate(i.uploadDate)) return null;
-      const owners = i.owners;
-      if (!Array.isArray(owners) || owners.length === 0 || owners.length > 10 || !owners.every((n) => isText(n, 30))) return null;
-      return { op: "addCampaign", id: o.id, input: { name: i.name.trim(), advertiser: i.advertiser.trim(), channel: i.channel.trim(), uploadDate: i.uploadDate, owners: owners.map((n: string) => n.trim()), confidential: i.confidential === true } };
+      const input = isId(o.id) ? parseInput(o.input) : null;
+      const i = o.input as Record<string, unknown>;
+      return input ? { op: "addCampaign", id: o.id as string, input: { ...input, confidential: i.confidential === true } } : null;
+    }
+    case "editCampaign": {
+      const input = isId(o.id) ? parseInput(o.input) : null;
+      return input ? { op: "editCampaign", id: o.id as string, input } : null;
     }
     case "deleteCampaign":
       return isId(o.id) ? { op: "deleteCampaign", id: o.id } : null;

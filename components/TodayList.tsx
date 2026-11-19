@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Loading, pageWrap, table } from "./PageBand";
 import { WaitingLine, DdayText } from "./badges";
 import { LateDrop } from "./FollowUp";
-import { entryStatus, type Campaign, type Entry, type WaitingOn } from "@/lib/campaigns";
+import { STEPS, doneList, dueList, entryStatus, type Campaign, type Entry, type WaitingOn } from "@/lib/campaigns";
+import { daysBetween } from "@/lib/date";
 import { MailForm } from "./MailForm";
 import { useMe } from "@/lib/me";
 import { useCampaigns, useToday } from "@/lib/store";
@@ -52,7 +53,7 @@ const SOON = 3; // a report due this many days out or closer counts as today's w
 // 11/14: 마감 임박, where staff send the reminder mail before the deadline).
 const BUCKETS: Bucket[] = [
   { key: "overdue", label: "마감 지남", hint: "단계별 마감, 업로드 날짜, 리포트 마감이 지난 건" },
-  { key: "soon", label: "마감 임박", hint: `크리에이터 차례이고 마감이 ${SOON}일 안인 건. 메일 보내기로 미리 알립니다` },
+  { key: "soon", label: "마감 임박", hint: `크리에이터 차례이고 마감이 ${SOON}일 안인 건(오늘 마감 포함). 메일 보내기로 미리 알립니다` },
   { key: "report", label: "리포트 작성", hint: `리포트 마감(기본 업로드 후 14일) ${SOON}일 안` },
   { key: "confirm", label: "컨펌 대기", hint: "광고주 컨펌을 기다리는 건" },
 ];
@@ -75,8 +76,17 @@ export function TodayList() {
       if (e.droppedAt) continue;
       const s = entryStatus(e, c, today);
       const base = { entryId: e.id, creator: e.name, campaignId: c.id, campaign: c.name, mine, waitingOn: s.waitingOn, waitingDays: s.waitingDays, c, e };
-      if (s.overdue) all.push({ ...base, kind: "overdue", due: s.deadline });
-      else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
+      if (s.overdue) {
+        all.push({ ...base, kind: "overdue", due: s.deadline });
+        // 기획자 11/19: a step due soon (오늘 포함) still shows when an earlier step is already late, since
+        // 마감 지남 is off the default list. The nearest creator step, same as the 마감 임박 rule below.
+        const done = doneList(e);
+        const next = dueList(e, c)
+          .map((date, i) => ({ i, days: date && !done[i] && STEPS[i].waits === "creator" ? daysBetween(today, date) : -1 }))
+          .filter((d) => d.days >= 0 && d.days <= SOON)
+          .sort((x, y) => x.days - y.days)[0];
+        if (next) all.push({ ...base, kind: "soon", due: { label: STEPS[next.i].label, days: next.days } });
+      } else if (s.deadline?.label === "리포트 작성" && s.deadline.days <= SOON) all.push({ ...base, kind: "report", due: s.deadline });
       else if (s.waitingOn === "creator" && s.deadline && s.deadline.days <= SOON) all.push({ ...base, kind: "soon", due: s.deadline });
       // One row per creator: a passed deadline shows under 마감 지남 only, not again under 컨펌 대기.
       else if (s.waitingOn === "advertiser") all.push({ ...base, kind: "confirm", due: s.deadline });
