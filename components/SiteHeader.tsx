@@ -9,9 +9,13 @@ const STAFF_MENU = [
   { href: "/campaigns", label: "캠페인" },
   { href: "/today", label: "오늘 할 일" },
   { href: "/contracts", label: "계약서" },
+  { href: "/chat", label: "대화" }, // 기획자 11/19: 크리에이터와 채팅
 ];
 // 기획자 11/11: 크리에이터는 우리가 관리하는 페이지는 못 보고 자기 할 일만.
-const CREATOR_MENU = [{ href: "/creator", label: "내 일정" }];
+const CREATOR_MENU = [
+  { href: "/creator", label: "내 일정" },
+  { href: "/chat", label: "대화" },
+];
 // 개발자 계정: 담당자 화면 전부 + 크리에이터 화면 미리보기.
 const DEV_MENU = [...STAFF_MENU, { href: "/creator", label: "크리에이터 화면" }];
 const PUBLIC = ["/about", "/login", "/signup", "/join"];

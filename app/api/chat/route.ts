@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canSee, type Campaign, type Entry } from "@/lib/campaigns";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
-import { add, liveConfig, markRead, ping, thread, threadKey, unread } from "@/lib/server/chat";
+import { add, latest, liveConfig, markRead, ping, thread, threadKey, unread } from "@/lib/server/chat";
 import { readDb, type Db, type User } from "@/lib/server/db";
 
 /**
@@ -34,6 +34,26 @@ export async function GET(req: NextRequest) {
   const entryId = req.nextUrl.searchParams.get("entry") ?? "";
   const db = await readDb();
   const other = staffSide(g.user) ? "creator" : "staff";
+
+  // ?list=1 → every thread this user may open, newest conversation first, for the 대화 tab.
+  if (req.nextUrl.searchParams.get("list")) {
+    const all = threadsOf(db, g.user);
+    const ids = all.map((t) => t.entry.id);
+    const [counts, last] = await Promise.all([unread(g.user.id, ids, other), latest(ids)]);
+    const threads = all
+      .map((t) => ({
+        entryId: t.entry.id,
+        campaignId: t.campaign.id,
+        campaign: t.campaign.name,
+        creator: t.entry.name,
+        joined: !!t.entry.creatorId,
+        dropped: !!t.entry.droppedAt,
+        n: counts[t.entry.id] ?? 0,
+        last: last[t.entry.id] ? { text: last[t.entry.id].text, at: last[t.entry.id].at, from: last[t.entry.id].from } : null,
+      }))
+      .sort((a, b) => (b.last?.at ?? "").localeCompare(a.last?.at ?? "") || a.campaign.localeCompare(b.campaign, "ko") || a.creator.localeCompare(b.creator, "ko"));
+    return NextResponse.json({ threads }, { headers });
+  }
 
   if (!entryId) {
     const all = threadsOf(db, g.user);

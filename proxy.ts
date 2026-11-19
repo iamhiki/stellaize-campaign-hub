@@ -15,10 +15,11 @@ export async function proxy(req: NextRequest) {
 
   if (path === "/login" || path === "/signup") return user ? to(home) : NextResponse.next();
   if (!user) return to("/login");
+  if (path === "/chat") return NextResponse.next(); // 대화: every role, each sees only their own threads (app/api/chat)
   if (user.role !== "dev" && path.startsWith("/creator") !== (user.role === "creator")) return to(home);
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/campaigns/:path*", "/today", "/contracts", "/mypage", "/creator", "/login", "/signup"],
+  matcher: ["/campaigns/:path*", "/today", "/contracts", "/mypage", "/creator", "/chat", "/login", "/signup"],
 };

@@ -74,7 +74,7 @@ export function ChatBell({ creator }: { creator: boolean }) {
               {threads.map((t) => (
                 <li key={t.entryId}>
                   <Link
-                    href={`${creator ? "/creator" : `/campaigns/${t.campaignId}`}#chat-${encodeURIComponent(t.entryId)}`}
+                    href={`/chat#${encodeURIComponent(t.entryId)}`}
                     onClick={() => setOpen(false)}
                     className="flex min-h-12 items-center justify-between gap-3 px-4 py-2 hover:bg-primary-100"
                   >

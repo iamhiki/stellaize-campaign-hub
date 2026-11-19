@@ -28,8 +28,11 @@ function loadUnread() {
     .then((r) => (r.ok ? r.json() : null))
     .then((d: (Summary & { live: { url: string; key: string; topic: string } | null }) | null) => {
       if (!d) return;
-      summary = { unread: d.unread, threads: d.threads, keys: d.keys };
       startLive(d.live);
+      // Only a real change re-renders: screens that reload on a change (the 대화 tab) would otherwise loop.
+      const next = { unread: d.unread, threads: d.threads, keys: d.keys };
+      if (JSON.stringify(next) === JSON.stringify(summary)) return;
+      summary = next;
       listeners.forEach((l) => l());
     })
     .catch(() => {});
@@ -75,7 +78,8 @@ const time = (iso: string) => {
  * One 크리에이터 ↔ 담당자 thread (기획자 11/19). `side` is who is looking: their own messages sit on the right.
  * Staff see who on the team wrote each message; the creator sees it as from 스텔라이즈.
  */
-export function ChatPanel({ entryId, side, title }: { entryId: string; side: "staff" | "creator"; title: string }) {
+/** `fill`: take the height of the box it is in (the 대화 tab) instead of a fixed-height card. */
+export function ChatPanel({ entryId, side, title, fill }: { entryId: string; side: "staff" | "creator"; title: string; fill?: boolean }) {
   const [messages, setMessages] = useState<Msg[] | null>(null);
   const [joined, setJoined] = useState(true);
   const [text, setText] = useState("");
@@ -135,9 +139,9 @@ export function ChatPanel({ entryId, side, title }: { entryId: string; side: "st
   }
 
   return (
-    <section aria-label={title} className="flex flex-col border border-line bg-white">
-      <h4 className="border-b border-line px-4 py-3 text-[15px] font-bold text-ink-900">{title}</h4>
-      <div ref={list} role="log" aria-live="polite" className="flex max-h-80 min-h-40 flex-col gap-3 overflow-y-auto px-4 py-4">
+    <section aria-label={title || "대화"} className={`flex flex-col bg-white ${fill ? "h-full" : "border border-line"}`}>
+      {title && <h4 className="border-b border-line px-4 py-3 text-[15px] font-bold text-ink-900">{title}</h4>}
+      <div ref={list} role="log" aria-live="polite" className={`flex flex-col gap-3 overflow-y-auto px-4 py-4 ${fill ? "min-h-[50vh] flex-1 md:min-h-0" : "max-h-80 min-h-40"}`}>
         {messages === null ? (
           <p className="m-auto text-[14px] text-ink-600">불러오는 중입니다.</p>
         ) : messages.length === 0 ? (

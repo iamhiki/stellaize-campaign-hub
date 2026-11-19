@@ -72,6 +72,21 @@ export async function unread(userId: string, entryIds: string[], sender: "staff"
   return out;
 }
 
+/**
+ * The newest message of each thread among `entryIds`, for the 대화 tab's list.
+ * shortcut: reads the newest 2000 messages overall and keeps the first of each thread. A thread whose last message
+ * is older than that shows without a preview; give hub_messages a "last message per thread" view if that starts to happen.
+ */
+export async function latest(entryIds: string[]): Promise<Record<string, ChatMessage>> {
+  const want = new Set(entryIds);
+  const out: Record<string, ChatMessage> = {};
+  const rows: (ChatMessage & { entryId: string })[] = supabase
+    ? ((await rest("hub_messages?select=id,entry_id,sender,name,body,created_at&order=created_at.desc&limit=2000")) as (Row & { entry_id: string })[]).map((r) => ({ ...fromRow(r), entryId: r.entry_id }))
+    : [...((await readDb()).messages ?? [])].reverse().map(({ id, entryId, from, name, text, at }) => ({ id, entryId, from, name, text, at }));
+  for (const { entryId, ...m } of rows) if (want.has(entryId) && !out[entryId]) out[entryId] = m;
+  return out;
+}
+
 /** A deleted campaign takes its threads with it. The file copy is cleared in the campaigns route's own save. */
 export async function dropCampaign(campaignId: string) {
   if (!supabase) return;
