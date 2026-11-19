@@ -124,7 +124,7 @@ export function TeamAccounts() {
         ) : (
           <p className="flex flex-wrap items-baseline gap-x-2 text-[16px] font-bold text-ink-900">
             {a.name}
-            {a.nickname && <span className="text-[14px] font-semibold text-ink-600">별명 {a.nickname}</span>}
+            {a.nickname && <span className="text-[14px] font-semibold text-ink-600">{a.nickname}</span>}
             <button type="button" onClick={() => setRenaming(a.id)} className="text-[13px] font-semibold text-ink-800 underline underline-offset-4 hover:text-primary-600">
               이름 바꾸기
             </button>
