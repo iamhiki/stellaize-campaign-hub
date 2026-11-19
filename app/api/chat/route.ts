@@ -1,5 +1,5 @@
 import { after, NextResponse, type NextRequest } from "next/server";
-import { canSee } from "@/lib/campaigns";
+import { campaignEnded, canSee } from "@/lib/campaigns";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
 import { add, latest, liveConfig, markRead, ping, readsOf, thread, threadKey, unread, unreadDirect, type ChatMessage } from "@/lib/server/chat";
 import { readDb, type Db, type User } from "@/lib/server/db";
@@ -37,6 +37,8 @@ type Thread = {
   mine: (m: ChatMessage) => boolean;
   /** 팀방: a room for several team members. */
   group: boolean;
+  /** Its campaign has ended: the room moves to the 끝난 캠페인 folder (nothing is deleted). */
+  ended: boolean;
   /** For creator rows: a campaign this viewer is 담당 on (the 대화 list shows those first). */
   myCampaign: boolean;
   /**
@@ -76,6 +78,7 @@ const direct = (user: User, other: User): Thread => ({
   dropped: false,
   mine: (m) => m.userId === user.id,
   group: false,
+  ended: false,
   myCampaign: false,
   readers: [other.id],
   anyOf: false,
@@ -98,6 +101,7 @@ function group(db: Db, user: User, c: Campaign): Thread {
     dropped: false,
     mine: (m) => m.userId === user.id,
     group: true,
+    ended: campaignEnded(c),
     myCampaign: c.owners.includes(user.name),
     readers: members.filter((u) => u.id !== user.id).map((u) => u.id),
     anyOf: false,
@@ -121,6 +125,7 @@ function threadsOf(db: Db, user: User): Thread[] {
         dropped: !!entry.droppedAt,
         mine: (m: ChatMessage) => m.from === (staffSide(user) ? "staff" : "creator"),
         group: false,
+        ended: campaignEnded(campaign),
         myCampaign: staffSide(user) && campaign.owners.includes(user.name),
         // Staff: whether the creator read it (no account yet → never). Creator: whether anyone on the team did.
         readers: staffSide(user) ? [entry.creatorId ?? ""] : ownersOf(db, campaign).map((u) => u.id),
@@ -196,6 +201,7 @@ export async function GET(req: NextRequest) {
           entryId: t.id,
           kind: t.kind,
           group: t.group,
+          ended: t.ended,
           myCampaign: t.myCampaign,
           campaignId: t.campaignId,
           title: t.title,

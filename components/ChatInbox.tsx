@@ -13,6 +13,8 @@ type Thread = {
   group: boolean;
   /** A creator room of a campaign this viewer is 담당 on. */
   myCampaign: boolean;
+  /** Its campaign has ended: listed in the 끝난 캠페인 folder, with the whole conversation kept. */
+  ended: boolean;
   campaignId: string;
   title: string;
   sub: string;
@@ -46,6 +48,7 @@ export function ChatInbox() {
   const [open, setOpen] = useState("");
   const [q, setQ] = useState("");
   const [onlyTalked, setOnlyTalked] = useState(true);
+  const [showEnded, setShowEnded] = useState(false);
   // The tab picked while `at` was the open thread. Opening another thread shows the tab that thread is in.
   const [picked, setPicked] = useState<{ kind: Thread["kind"]; at: string }>({ kind: "creator", at: "" });
   const { unread } = useUnreadSummary();
@@ -96,12 +99,16 @@ export function ChatInbox() {
   const needle = q.trim();
   const shown = inTab.filter((t) => (creator || !onlyTalked || needle || t.entryId === open ? true : isMine(t))).filter((t) => !needle || t.title.includes(needle) || t.nick.includes(needle) || t.sub.includes(needle));
   // Creator rooms come grouped by campaign (most recent talk first); 팀방 sit above 1:1 in the 팀원 tab.
+  // Rooms of ended campaigns go to the 끝난 캠페인 folder at the bottom, closed until opened (or searched).
   const grouped = !creator && tab === "creator";
-  const order = grouped
-    ? [...new Map(shown.map((t) => [t.campaignId, shown.filter((x) => x.campaignId === t.campaignId)])).values()].flatMap((g) => [...g.filter((t) => t.last), ...g.filter((t) => !t.last)])
-    : tab === "team"
-      ? [...shown.filter((t) => t.group), ...shown.filter((t) => !t.group)]
-      : shown;
+  const byCampaign = (list: Thread[]) => [...new Map(list.map((t) => [t.campaignId, list.filter((x) => x.campaignId === t.campaignId)])).values()].flatMap((g) => [...g.filter((t) => t.group), ...g.filter((t) => !t.group && t.last), ...g.filter((t) => !t.group && !t.last)]);
+  const activeList = shown.filter((t) => !t.ended);
+  const endedList = shown.filter((t) => t.ended);
+  const order = grouped ? byCampaign(activeList) : tab === "team" ? [...activeList.filter((t) => t.group), ...activeList.filter((t) => !t.group)] : activeList;
+  const endedOrder = byCampaign(endedList);
+  const endedOpen = showEnded || !!needle || !!current?.ended;
+  /** The campaign a room belongs to, for the group headings. */
+  const campaignOf = (t: Thread) => (t.group || creator ? t.title : t.sub);
 
   return (
     <main className={`${pageWrap} py-8 md:py-10`}>
@@ -131,10 +138,11 @@ export function ChatInbox() {
             )}
           </div>
           <ul className="min-h-0 flex-1 overflow-y-auto">
-            {order.map((t, i) => (
+            {[...order.map((t, i) => [t, grouped && t.campaignId !== order[i - 1]?.campaignId] as const), ...(endedOpen ? endedOrder.map((t, i) => [t, t.campaignId !== endedOrder[i - 1]?.campaignId] as const) : [])].map(([t, heading], i) => (
               <li key={t.entryId}>
-                {grouped && t.campaignId !== order[i - 1]?.campaignId && (
-                  <p className="sticky top-0 z-[1] border-b border-line bg-[#f5f7fa] px-4 py-2 text-[13px] font-bold text-ink-800 wrap-anywhere">{t.sub}</p>
+                {i === order.length && <EndedFolder count={new Set(endedList.map((x) => x.campaignId)).size} open={endedOpen} toggle={() => setShowEnded(!endedOpen)} />}
+                {heading && (
+                  <p className={`sticky top-0 z-[1] border-b border-line px-4 py-2 text-[13px] font-bold wrap-anywhere ${t.ended ? "bg-[#eef0f3] text-ink-600" : "bg-[#f5f7fa] text-ink-800"}`}>{campaignOf(t)}</p>
                 )}
                 <button
                   type="button"
@@ -162,7 +170,8 @@ export function ChatInbox() {
                       </span>
                       {t.last && <span className="shrink-0 text-[12px] text-ink-600 tabular-nums">{when(t.last.at)}</span>}
                     </span>
-                    {t.sub && !grouped && <span className="block truncate text-[12px] text-ink-600">{t.sub}</span>}
+                    {t.sub && !(grouped || t.ended) && <span className="block truncate text-[12px] text-ink-600">{t.sub}</span>}
+                    {t.ended && t.group && <span className="block truncate text-[12px] text-ink-600">담당자방</span>}
                     <span className={`mt-0.5 block truncate text-[14px] ${t.n ? "font-semibold text-ink-900" : "text-ink-600"}`}>
                       {t.last ? `${t.last.mine ? "나: " : ""}${t.last.text}` : t.joined || creator ? "아직 대화가 없습니다" : "아직 가입 전"}
                     </span>
@@ -171,7 +180,12 @@ export function ChatInbox() {
                 </button>
               </li>
             ))}
-            {shown.length === 0 && (
+            {endedList.length > 0 && !endedOpen && (
+              <li>
+                <EndedFolder count={new Set(endedList.map((x) => x.campaignId)).size} open={false} toggle={() => setShowEnded(true)} />
+              </li>
+            )}
+            {activeList.length === 0 && endedList.length === 0 && (
               <li className="px-4 py-10 text-center text-[14px] leading-relaxed text-ink-600">
                 {needle
                   ? "찾는 대화가 없습니다."
@@ -201,6 +215,7 @@ export function ChatInbox() {
                     {current.nick && <span className="ml-1.5 text-[14px] font-semibold text-ink-600">{current.nick}</span>}
                   </p>
                   {current.kind === "team" && <p className="truncate text-[13px] text-ink-600">{current.sub}</p>}
+                  {current.ended && <p className="mt-0.5 text-[12px] font-semibold text-ink-600">끝난 캠페인 · 대화 기록은 지우지 않고 보관합니다</p>}
                   {!creator && current.kind === "creator" && (
                     <a href={`/campaigns/${current.campaignId}`} className="block truncate text-[13px] text-ink-600 underline-offset-4 hover:text-primary-600 hover:underline">
                       {current.sub} 진행 현황 보기
@@ -218,5 +233,21 @@ export function ChatInbox() {
         </section>
       </div>
     </main>
+  );
+}
+
+/** 끝난 캠페인 folder heading in the 대화 list: closed by default, the rooms stay complete inside it. */
+function EndedFolder({ count, open, toggle }: { count: number; open: boolean; toggle: () => void }) {
+  return (
+    <button type="button" aria-expanded={open} onClick={toggle} className="flex min-h-11 w-full items-center gap-2 border-b border-t-2 border-line border-t-line-strong bg-[#f5f7fa] px-4 text-left text-[14px] font-bold text-ink-800 hover:text-primary-700">
+      <svg aria-hidden viewBox="0 0 24 24" className="size-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round">
+        <path d="M3.5 7.5V18a1 1 0 0 0 1 1h15a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-8l-2-2.5h-5a1 1 0 0 0-1 1Z" />
+      </svg>
+      끝난 캠페인
+      <span className="font-semibold tabular-nums text-ink-600">{count}</span>
+      <span aria-hidden className={`ml-auto text-ink-600 transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}>
+        ▾
+      </span>
+    </button>
   );
 }

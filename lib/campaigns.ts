@@ -124,6 +124,15 @@ export function entryStatus(e: Entry, c: Campaign, today: string) {
   };
 }
 
+/**
+ * 끝난 캠페인 (11/19 대화 보관): every creator still in it has checked the last step (리포트 작성). Its conversations
+ * move to the 끝난 캠페인 folder of the 대화 tab and stay there in full, as a record.
+ */
+export function campaignEnded(c: Campaign) {
+  const live = c.entries.filter((e) => !e.droppedAt);
+  return live.length > 0 && live.every((e) => doneList(e).every(Boolean));
+}
+
 /** Campaign progress: checked steps over all steps of the creators still in it (dropped ones don't count). */
 export function progress(entries: Entry[]) {
   const live = entries.filter((e) => !e.droppedAt);
