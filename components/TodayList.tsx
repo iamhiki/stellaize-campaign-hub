@@ -152,7 +152,13 @@ export function TodayList() {
           <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">{only ? `${labelOf[only]} 건이 없습니다.` : "오늘 처리할 건이 없습니다."}</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className={table.wrap}>
+            {/* Fixed column widths: "내 담당" and "전체" put the columns in the same place whatever the names are. */}
+            <table className={`${table.wrap.replace("min-w-[720px]", "min-w-[960px]")} table-fixed`}>
+              <colgroup>
+                {["9%", "14%", "22%", "17%", "18%", "20%"].map((w, i) => (
+                  <col key={i} style={{ width: w }} />
+                ))}
+              </colgroup>
               <thead>
                 <tr>
                   {["구분", "크리에이터", "캠페인", "상태", "기한", "처리"].map((h) => (
@@ -169,8 +175,8 @@ export function TodayList() {
                   <Fragment key={key}>
                   <tr>
                     <td className={`${table.td} font-semibold text-ink-900`}>{labelOf[r.kind]}</td>
-                    <td className={table.td}>{r.creator}</td>
-                    <td className={table.td}>
+                    <td className={`${table.td} wrap-anywhere`}>{r.creator}</td>
+                    <td className={`${table.td} wrap-anywhere`}>
                       <Link href={`/campaigns/${r.campaignId}`} className="font-medium text-ink-900 underline-offset-4 hover:text-primary-600 hover:underline">
                         {r.campaign}
                       </Link>
