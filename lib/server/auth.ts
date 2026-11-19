@@ -25,8 +25,16 @@ export function startSession(db: Db, userId: string) {
   for (const [k, s] of Object.entries(db.sessions)) if (s.exp < now) delete db.sessions[k];
   const token = newToken();
   db.sessions[digest(token)] = { userId, exp: now + WEEK * 1000 };
+  const user = db.users.find((u) => u.id === userId);
+  if (user) user.lastLoginAt = new Date(now).toISOString();
   return token;
 }
+
+/**
+ * Staff and developers are told apart by name: a campaign's 담당 (owners) and 대외비 access are names. So two team
+ * accounts may not share one. Creators may: their rows link by account id.
+ */
+export const teamNameTaken = (db: Db, name: string, exceptId?: string) => db.users.some((u) => u.role !== "creator" && u.id !== exceptId && u.name === name);
 
 /**
  * One-time link to set a new password (비밀번호 찾기, 11/19). Only the digest is stored, like sessions. A new link

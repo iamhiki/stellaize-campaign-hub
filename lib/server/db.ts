@@ -6,7 +6,8 @@ import { demoCampaigns } from "../demo";
 
 /** dev = the people building the hub: everything staff can do, plus a read-only look at any creator's screen. */
 export type Role = "staff" | "creator" | "dev";
-export type User = { id: string; role: Role; name: string; email: string; salt: string; hash: string; createdAt: string };
+/** lastLoginAt: ISO time of the last sign-in (any new session). Missing for accounts that haven't signed in since 11/19. */
+export type User = { id: string; role: Role; name: string; email: string; salt: string; hash: string; createdAt: string; lastLoginAt?: string };
 /** A file a creator uploaded. The bytes live in lib/server/files.ts storage under `${userId}/${kind}`. */
 export type Doc = { name: string; type: string; at: string };
 /**

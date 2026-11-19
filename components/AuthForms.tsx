@@ -87,7 +87,7 @@ export function StaffSignupForm() {
         run("/api/auth/signup", values(new FormData(ev.currentTarget)), () => go("/campaigns"));
       }}
     >
-      <Field label="이름" name="name" autoComplete="name" maxLength={30} hint="캠페인 담당자 칸에 적는 이름과 같게 넣으면 내 담당 캠페인이 모입니다." />
+      <Field label="이름 (본명)" name="name" autoComplete="name" maxLength={30} hint="팀원끼리 알아보도록 본명으로 적어 주세요. 별명은 괄호로 붙입니다(예: 홍가영(까엉이)). 캠페인 담당자 칸에 적는 이름과 같아야 내 담당 캠페인이 모입니다." />
       <Field label="이메일" name="email" type="email" autoComplete="username" />
       <Field label="비밀번호" name="password" type="password" autoComplete="new-password" minLength={8} hint="8자 이상" />
       <Field label="가입 코드" name="code" autoComplete="off" hint="담당자는 팀 가입 코드, 개발자는 개발자 코드를 넣습니다." />

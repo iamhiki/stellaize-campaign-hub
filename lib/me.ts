@@ -17,6 +17,12 @@ function ask() {
     .finally(() => listeners.forEach((l) => l()));
 }
 
+/** Put a fresh copy of my account in place (after a name change), so the header and every screen show it. */
+export function setMe(next: Me) {
+  me = next;
+  listeners.forEach((l) => l());
+}
+
 function subscribe(l: () => void) {
   listeners.add(l);
   if (!asked) ask();
