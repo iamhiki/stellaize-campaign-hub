@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       if (op.op === "deleteCampaign") {
         db.submissions = db.submissions.filter((s) => s.campaignId !== op.id);
         db.notices = db.notices.filter((n) => n.campaignId !== op.id);
+        db.messages = db.messages?.filter((m) => m.campaignId !== op.id);
       }
       return db;
   });

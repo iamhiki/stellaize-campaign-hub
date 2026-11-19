@@ -25,7 +25,12 @@ export type Db = {
   profiles?: Record<string, Profile>;
   /** sha256(password reset token) → whose password and until when. One use each. Missing in data saved before 11/19. */
   resets?: Record<string, { userId: string; exp: number }>;
+  /** 크리에이터 ↔ 담당자 대화, one thread per creator row (기획자 11/19). Missing in data saved before 11/19. */
+  messages?: Message[];
+  /** user id → entry id → the time (ISO) that user last read that thread. */
+  reads?: Record<string, Record<string, string>>;
 };
+export type Message = { id: string; campaignId: string; entryId: string; from: "staff" | "creator"; userId: string; name: string; text: string; at: string };
 
 const fresh = (): Db => ({ users: [], sessions: {}, campaigns: demoCampaigns(todayKST()), submissions: [], notices: [] });
 

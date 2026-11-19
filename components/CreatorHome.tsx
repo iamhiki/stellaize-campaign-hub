@@ -4,6 +4,7 @@ import { daysBetween } from "@/lib/date";
 import type { CreatorItem } from "@/lib/server/creator";
 import { useToday } from "@/lib/store";
 import { DdayText } from "./badges";
+import { ChatPanel } from "./ChatPanel";
 import { CreatorProfile } from "./CreatorProfile";
 import { Loading, pageWrap, table, ui } from "./PageBand";
 
@@ -203,6 +204,12 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
           </tbody>
         </table>
       </div>
+      {/* 기획자 11/19: 사이트 안에서 담당자와 대화. Not in the developer preview, which is read-only. */}
+      {!preview && (
+        <div className="mt-8 max-w-2xl">
+          <ChatPanel entryId={item.entryId} side="creator" title="스텔라이즈 담당자와 대화" />
+        </div>
+      )}
     </section>
   );
 }

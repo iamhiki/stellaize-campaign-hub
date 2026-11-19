@@ -2,6 +2,7 @@
 import { Fragment, useState } from "react";
 import { STEPS, REPORT, UPLOAD, doneList, dueList, entryStatus, type Campaign, type Entry } from "@/lib/campaigns";
 import { CreatorAccess } from "./CreatorAccess";
+import { ChatPanel, useUnread } from "./ChatPanel";
 import { DateInput } from "./DateInput";
 import { DealEditor } from "./DealEditor";
 import { daysBetween } from "@/lib/date";
@@ -24,6 +25,8 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
   const doneIds = new Set(active.filter((e) => e.done[UPLOAD]).map((e) => e.id));
   const live = active.filter((e) => (view === "done") === doneIds.has(e.id));
   const [editing, setEditing] = useState<string | null>(null);
+  const [chatting, setChatting] = useState<string | null>(null); // the row whose 대화 is open (기획자 11/19)
+  const unread = useUnread();
   const submissions = useSubmissions();
 
   return (
@@ -92,6 +95,20 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                       >
                         {open ? "닫기" : "마감 · 단가 · 초대"}
                       </button>
+                      <button
+                        type="button"
+                        aria-expanded={chatting === e.id}
+                        onClick={() => setChatting(chatting === e.id ? null : e.id)}
+                        className="mt-1 inline-flex min-h-8 items-center gap-1.5 text-[13px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700"
+                      >
+                        {chatting === e.id ? "대화 닫기" : "대화"}
+                        {!!unread[e.id] && chatting !== e.id && (
+                          <span className="inline-flex h-5 min-w-5 items-center justify-center bg-danger-700 px-1.5 text-[11px] font-bold text-white no-underline tabular-nums">
+                            {unread[e.id]}
+                            <span className="sr-only">개 안 읽음</span>
+                          </span>
+                        )}
+                      </button>
                     </th>
                     <td className={`${td} group-hover:bg-[#f5f7fa]`}>
                       <p className="text-[14px] font-bold text-ink-900">
@@ -146,6 +163,15 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                       );
                     })}
                   </tr>
+                  {chatting === e.id && (
+                    <tr>
+                      <td colSpan={STEPS.length + 2} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
+                        <div className="max-w-2xl">
+                          <ChatPanel entryId={e.id} side="staff" title={`${e.name} 님과 대화`} />
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                   {open && (
                     <tr>
                       <td colSpan={STEPS.length + 2} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
