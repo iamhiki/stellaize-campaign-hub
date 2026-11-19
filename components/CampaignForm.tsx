@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addCampaign, editCampaign } from "@/lib/store";
+import { addCampaign, editCampaign, useCampaigns } from "@/lib/store";
 import type { Campaign } from "@/lib/campaigns";
 import { useMe } from "@/lib/me";
+import { ComboInput } from "./ComboInput";
 import { DateInput } from "./DateInput";
 import { OwnersField } from "./OwnersField";
 import { ui } from "./PageBand";
@@ -16,6 +17,9 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
   const router = useRouter();
   const [error, setError] = useState("");
   const myName = useMe()?.name ?? "";
+  // The usual channels, then any other channel already used on a campaign (예: "유튜브 · 인스타그램").
+  const used = (useCampaigns() ?? []).map((c) => c.channel);
+  const channels = [...CHANNELS, ...[...new Set(used)].filter((c) => !CHANNELS.includes(c)).sort((a, b) => a.localeCompare(b, "ko"))];
 
   function submit(form: FormData) {
     const get = (k: string) => String(form.get(k) ?? "").trim();
@@ -54,12 +58,7 @@ export function CampaignForm({ onClose, campaign }: { onClose: () => void; campa
         </label>
         <label className={ui.label}>
           채널
-          <input name="channel" required defaultValue={campaign?.channel} list="channel-options" placeholder="골라서 입력" className={ui.input} />
-          <datalist id="channel-options">
-            {CHANNELS.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
+          <ComboInput name="channel" label="채널" defaultValue={campaign?.channel} options={channels} placeholder="골라서 입력" />
         </label>
         <label className={ui.label}>
           업로드 날짜
