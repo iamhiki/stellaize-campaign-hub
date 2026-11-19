@@ -26,7 +26,7 @@ export function AccountInfo() {
         <dt className="w-28 shrink-0 pt-px text-ink-600">별명</dt>
         <dd className="min-h-6 min-w-0 flex-1">{me && <NicknameField me={me} />}</dd>
       </div>
-      {me && <p className="mt-3 text-[14px] text-ink-600">이름은 개발자가 바꿉니다. 고칠 게 있으면 개발자에게 알려 주세요.</p>}
+      {me && <p className="mt-3 text-[14px] text-ink-600">이름을 바꾸려면 개발자에게 요청해 주세요.</p>}
     </dl>
   );
 }
