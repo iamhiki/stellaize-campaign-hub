@@ -32,7 +32,20 @@ export const ui = {
   secondary: "inline-flex h-12 shrink-0 items-center justify-center border border-line bg-white px-6 text-[16px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-600",
 };
 
-/** Shown until the server answers, so the layout doesn't jump. */
-export function Loading() {
-  return <p className="border-t-2 border-ink-900 py-10 text-center text-[16px] text-ink-600">불러오는 중…</p>;
+/**
+ * Shown until the server answers: gray bars where the rows will be (skeleton), so the page doesn't jump or flash a
+ * line of text. Screen readers hear "불러오는 중…". The bars pulse only when motion is allowed.
+ */
+export function Loading({ rows = 4 }: { rows?: number }) {
+  return (
+    <div role="status" className="border-t-2 border-ink-900">
+      <span className="sr-only">불러오는 중…</span>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} aria-hidden className="flex items-center gap-4 border-b border-line py-5">
+          <span className="h-4 w-1/4 min-w-20 bg-[#eceef1] motion-safe:animate-pulse" />
+          <span className="h-4 flex-1 bg-[#f2f3f5] motion-safe:animate-pulse" style={{ maxWidth: `${70 - i * 12}%` }} />
+        </div>
+      ))}
+    </div>
+  );
 }

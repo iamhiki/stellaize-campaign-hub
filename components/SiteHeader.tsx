@@ -1,4 +1,5 @@
 "use client";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout, useMe } from "@/lib/me";
@@ -32,6 +33,24 @@ export function SiteHeader() {
   // their own role (proxy.ts), so the menu doesn't flash in late. Public pages wait for the answer.
   const role = me ? me.role : me === undefined && !PUBLIC.includes(path) ? (path.startsWith("/creator") ? "creator" : "staff") : null;
   const menu = role === "staff" ? STAFF_MENU : role === "dev" ? DEV_MENU : role === "creator" ? CREATOR_MENU : [];
+  // Phone: the menu row scrolls sideways. Fade whichever edge has more menu behind it, and keep the open page in view.
+  const nav = useRef<HTMLElement>(null);
+  const [more, setMore] = useState({ left: false, right: false });
+  const measure = () => {
+    const el = nav.current;
+    if (!el) return;
+    const next = { left: el.scrollLeft > 2, right: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 };
+    setMore((m) => (m.left === next.left && m.right === next.right ? m : next));
+  };
+  useEffect(() => {
+    const el = nav.current;
+    if (!el) return;
+    el.querySelector<HTMLElement>("[aria-current=page]")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [path, menu.length]);
+  const fade = more.left && more.right ? "[mask-image:linear-gradient(to_right,transparent,black_28px,black_calc(100%-40px),transparent)]" : more.right ? "[mask-image:linear-gradient(to_right,black_calc(100%-40px),transparent)]" : more.left ? "[mask-image:linear-gradient(to_right,transparent,black_28px)]" : "";
   return (
     <header className="absolute inset-x-0 top-0 z-20">
       <div className="mx-auto flex max-w-[1720px] flex-wrap items-center justify-between px-5 text-white md:px-[30px] lg:h-[72px] lg:flex-nowrap">
@@ -45,7 +64,7 @@ export function SiteHeader() {
           </span>
         </Link>
         {menu.length > 0 && (
-          <nav className="order-last -mx-5 flex h-12 w-[calc(100%+2.5rem)] gap-7 overflow-x-auto px-5 [scrollbar-width:none] md:-mx-[30px] md:w-[calc(100%+60px)] md:px-[30px] lg:order-none lg:mx-0 lg:h-full lg:w-auto lg:gap-9 lg:overflow-visible lg:px-0 xl:gap-14">
+          <nav ref={nav} onScroll={measure} className={`order-last -mx-5 flex h-12 w-[calc(100%+2.5rem)] gap-7 overflow-x-auto px-5 [scrollbar-width:none] md:-mx-[30px] md:w-[calc(100%+60px)] md:px-[30px] lg:order-none lg:mx-0 lg:h-full lg:w-auto lg:gap-9 lg:overflow-visible lg:px-0 lg:[mask-image:none] xl:gap-14 ${fade}`}>
             {menu.map((m) => (
               <Link
                 key={m.href}

@@ -144,19 +144,18 @@ export function TeamAccounts() {
         </div>
       ) : (
         <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => makeLink(a)}
-            disabled={a.id === me.id}
-            className={`${ui.secondary} h-10 px-4 text-[14px] disabled:opacity-40`}
-            title={a.id === me.id ? "내 비밀번호는 오른쪽 비밀번호 변경에서 바꿉니다" : undefined}
-          >
-            비밀번호 재설정 링크 만들기
-          </button>
-          {a.id !== me.id && (
-            <button type="button" onClick={() => remove(a)} className="h-10 px-3 text-[14px] font-semibold text-danger-700 underline underline-offset-4 hover:text-danger-700/80">
-              계정 지우기
-            </button>
+          {a.id === me.id ? (
+            // My own row: say where instead of a grayed-out button (a hover hint never shows on a phone).
+            <p className="text-[14px] text-ink-600">내 계정입니다. 비밀번호는 위 비밀번호 변경에서 바꿉니다.</p>
+          ) : (
+            <>
+              <button type="button" onClick={() => makeLink(a)} className={`${ui.secondary} h-10 px-4 text-[14px]`}>
+                비밀번호 재설정 링크 만들기
+              </button>
+              <button type="button" onClick={() => remove(a)} className="h-10 px-3 text-[14px] font-semibold text-danger-700 underline underline-offset-4 hover:text-danger-700/80">
+                계정 지우기
+              </button>
+            </>
           )}
         </div>
       )}
