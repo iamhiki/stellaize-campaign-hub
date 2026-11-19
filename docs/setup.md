@@ -51,7 +51,7 @@ npm run dev
 크리에이터가 인터넷에서 열 수 있게 하는 설정이다. Supabase 연결이 먼저 돼 있어야 한다(Vercel은 파일을 보관하지 않는다).
 
 1. [vercel.com/new](https://vercel.com/new)에서 GitHub 계정으로 로그인하고 이 저장소(`stellaize-campaign-hub`)를 **Import** 한다.
-2. **Environment Variables**에 `.env.local`과 같은 값을 넣는다: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `STAFF_JOIN_CODE`, `DEV_JOIN_CODE`. 메일을 보낼 때는 `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_CC`도.
+2. **Environment Variables**에 `.env.local`과 같은 값을 넣는다: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `STAFF_JOIN_CODE`, `DEV_JOIN_CODE`. 메일을 보낼 때는 `RESEND_API_KEY`, `MAIL_FROM`, `MAIL_CC`도. 메일이 설정되면 로그인 화면의 "비밀번호 찾기"가 재설정 링크를 메일로 보낸다. 설정 전에는 개발자가 마이페이지 팀원 계정에서 링크를 만들어 준다.
 3. **Deploy**를 누른다. 끝나면 `https://….vercel.app` 주소가 나온다. 그 뒤로는 `main`에 푸시할 때마다 자동으로 다시 올라간다.
 
 - 서버 위치는 `vercel.json`에서 서울(`icn1`)로 정해 두었다. Supabase가 서울에 있어서다.

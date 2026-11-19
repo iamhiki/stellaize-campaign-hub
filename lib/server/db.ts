@@ -23,6 +23,8 @@ export type Db = {
   notices: Notice[];
   /** creator user id → their shipping info and documents. Missing in data saved before 11/14. */
   profiles?: Record<string, Profile>;
+  /** sha256(password reset token) → whose password and until when. One use each. Missing in data saved before 11/19. */
+  resets?: Record<string, { userId: string; exp: number }>;
 };
 
 const fresh = (): Db => ({ users: [], sessions: {}, campaigns: demoCampaigns(todayKST()), submissions: [], notices: [] });

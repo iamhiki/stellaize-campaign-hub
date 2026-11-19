@@ -28,6 +28,35 @@ export function startSession(db: Db, userId: string) {
   return token;
 }
 
+/**
+ * One-time link to set a new password (비밀번호 찾기, 11/19). Only the digest is stored, like sessions. A new link
+ * replaces any older one for the same account. Call inside mutate().
+ */
+export function issueReset(db: Db, userId: string, ms: number) {
+  const now = Date.now();
+  db.resets ??= {};
+  for (const [k, r] of Object.entries(db.resets)) if (r.exp < now || r.userId === userId) delete db.resets[k];
+  const token = newToken();
+  db.resets[digest(token)] = { userId, exp: now + ms };
+  return token;
+}
+
+/** The account a reset link belongs to, if it is still good. Call inside mutate(): the link is used up. */
+export function takeReset(db: Db, token: string): User | null {
+  const key = digest(token);
+  const r = db.resets?.[key];
+  if (!r) return null;
+  delete db.resets![key];
+  if (r.exp < Date.now()) return null;
+  return db.users.find((u) => u.id === r.userId) ?? null;
+}
+
+/** Whether a reset link is still good, without using it up (to show the form or an expired message). */
+export function resetValid(db: Db, token: string) {
+  const r = db.resets?.[digest(token)];
+  return !!r && r.exp >= Date.now();
+}
+
 export function endSession(db: Db, token: string | undefined) {
   if (token) delete db.sessions[digest(token)];
 }

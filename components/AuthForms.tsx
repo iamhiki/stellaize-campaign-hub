@@ -67,6 +67,11 @@ export function LoginForm() {
       <Link href="/signup" className={`${ui.secondary} h-14 text-[17px]`}>
         회원가입
       </Link>
+      <p className="text-center text-[15px] text-ink-800">
+        <Link href="/forgot" className={text}>
+          비밀번호 · 아이디 찾기
+        </Link>
+      </p>
       <p className={note}>회원가입은 스텔라이즈팀 담당자와 개발자용이고 가입 코드가 필요합니다. 크리에이터는 담당자가 보낸 초대 링크로 가입합니다.</p>
     </form>
   );
@@ -180,6 +185,123 @@ export function JoinPanel() {
       </button>
       <button type="button" onClick={() => setHasAccount(!hasAccount)} className={`${text} w-fit`}>
         {hasAccount ? "처음이라면 가입하기" : "이미 계정이 있다면 로그인"}
+      </button>
+    </form>
+  );
+}
+
+/** 비밀번호 찾기 (11/19): a mailed link once mail is connected; until then, and for a lost ID, a developer helps. */
+export function ForgotForm() {
+  const [mail, setMail] = useState<boolean | null>(null);
+  const [sent, setSent] = useState("");
+  const { error, busy, run } = useSubmit();
+  useEffect(() => {
+    fetch("/api/auth/forgot", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { mail: boolean }) => setMail(d.mail))
+      .catch(() => setMail(false));
+  }, []);
+  if (mail === null) return <Loading />;
+
+  const help = (
+    <div className="border border-line bg-[#f5f7fa] px-5 py-5 text-[15px] leading-relaxed text-ink-800">
+      <p className="font-bold text-ink-900">아이디(로그인 이메일)를 모르면</p>
+      <p className="mt-1">개발자에게 이름을 알려 주세요. 가입한 이메일을 확인해 드립니다.</p>
+      <p className="mt-4 font-bold text-ink-900">{mail ? "메일이 오지 않으면" : "비밀번호를 잊었으면"}</p>
+      <p className="mt-1">
+        개발자에게 비밀번호 재설정 링크를 요청해 주세요. 받은 링크를 열어 새 비밀번호를 정하면 됩니다.
+        {" "}크리에이터는 캠페인 담당자에게 요청해 주세요.
+      </p>
+    </div>
+  );
+
+  if (!mail)
+    return (
+      <div className={box}>
+        <p className={note}>아직 허브에서 메일을 보낼 수 없어서, 비밀번호 재설정 링크는 개발자가 만들어 전달합니다.</p>
+        {help}
+        <Link href="/login" className={`${ui.secondary} h-14 text-[17px]`}>
+          로그인으로
+        </Link>
+      </div>
+    );
+
+  return (
+    <form
+      className={box}
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        const v = values(new FormData(ev.currentTarget));
+        run("/api/auth/forgot", v, () => setSent(v.email));
+      }}
+    >
+      {sent ? (
+        <p role="status" className="text-[16px] leading-relaxed text-ink-900">
+          <b>{sent}</b>(으)로 가입한 계정이 있으면 비밀번호 재설정 링크를 보냈습니다. 30분 안에 메일의 링크를 열어 주세요.
+        </p>
+      ) : (
+        <>
+          <p className={note}>가입한 이메일을 넣으면 새 비밀번호를 정하는 링크를 메일로 보냅니다.</p>
+          <Field label="이메일" name="email" type="email" autoComplete="username" />
+          <Problem>{error}</Problem>
+          <button type="submit" disabled={busy} className={`${ui.primary} h-14 text-[17px]`}>
+            {busy ? "보내는 중" : "재설정 링크 받기"}
+          </button>
+        </>
+      )}
+      {help}
+      <Link href="/login" className={`${ui.secondary} h-14 text-[17px]`}>
+        로그인으로
+      </Link>
+    </form>
+  );
+}
+
+/** /reset?t=…: set a new password from a one-time link (mailed, or made by a developer). */
+export function ResetForm() {
+  const token = useSearchParams().get("t") ?? "";
+  const [valid, setValid] = useState<boolean | null>(token ? null : false);
+  const [mismatch, setMismatch] = useState("");
+  const { error, busy, run } = useSubmit();
+  useEffect(() => {
+    if (!token) return;
+    fetch(`/api/auth/reset?t=${encodeURIComponent(token)}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: { valid: boolean }) => setValid(d.valid))
+      .catch(() => setValid(false));
+  }, [token]);
+  if (valid === null) return <Loading />;
+  if (!valid)
+    return (
+      <div className={box}>
+        <p role="alert" className="text-[16px] font-semibold text-danger-700">
+          이 링크는 이미 썼거나 기한이 지났습니다.
+        </p>
+        <p className={note}>비밀번호 찾기에서 새 링크를 받거나, 개발자에게 다시 요청해 주세요.</p>
+        <Link href="/forgot" className={`${ui.primary} h-14 text-[17px]`}>
+          비밀번호 찾기
+        </Link>
+      </div>
+    );
+
+  return (
+    <form
+      className={box}
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        const v = values(new FormData(ev.currentTarget));
+        if (v.password !== v.again) return setMismatch("새 비밀번호와 확인이 서로 다릅니다.");
+        setMismatch("");
+        // Signed in by the answer; the proxy sends each role to its own first screen.
+        run("/api/auth/reset", { token, password: v.password }, () => go("/login"));
+      }}
+    >
+      <p className={note}>새 비밀번호를 정하면 바로 로그인됩니다. 다른 기기에서는 다시 로그인해야 합니다.</p>
+      <Field label="새 비밀번호" name="password" type="password" autoComplete="new-password" minLength={8} hint="8자 이상" />
+      <Field label="새 비밀번호 확인" name="again" type="password" autoComplete="new-password" minLength={8} />
+      <Problem>{mismatch || error}</Problem>
+      <button type="submit" disabled={busy} className={`${ui.primary} h-14 text-[17px]`}>
+        {busy ? "저장하는 중" : "새 비밀번호 저장"}
       </button>
     </form>
   );
