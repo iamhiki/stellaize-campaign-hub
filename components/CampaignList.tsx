@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { UPLOAD, type Campaign } from "@/lib/campaigns";
 import { daysBetween } from "@/lib/date";
@@ -13,6 +13,15 @@ import { ProgressBar } from "./ProgressBar";
 export function CampaignList() {
   const campaigns = useCampaigns();
   const [adding, setAdding] = useState(false);
+  // 기획자 11/19: 등록한 캠페인도 목록에서 바로 수정. The form opens in the same place as 캠페인 등록.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+  const editing = campaigns?.find((c) => c.id === editingId);
+  const edit = (id: string) => {
+    setAdding(false);
+    setEditingId(id);
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
   const today = useToday();
   // 기획자 11/17: a passed upload date stays in 진행 중 (red D+n); a campaign moves to 완료 once everyone has uploaded.
   const [view, setView] = useState<"live" | "done">("live");
@@ -32,14 +41,14 @@ export function CampaignList() {
           )}
         </p>
         {!adding && (
-          <button type="button" onClick={() => setAdding(true)} className={ui.primary}>
+          <button type="button" onClick={() => (setEditingId(null), setAdding(true))} className={ui.primary}>
             + 캠페인 등록
           </button>
         )}
       </div>
-      {adding && (
-        <div className="mb-10">
-          <CampaignForm onClose={() => setAdding(false)} />
+      {(adding || editing) && (
+        <div ref={formRef} className="mb-10 scroll-mt-4">
+          {editing ? <CampaignForm key={editing.id} campaign={editing} onClose={() => setEditingId(null)} /> : <CampaignForm onClose={() => setAdding(false)} />}
         </div>
       )}
 
@@ -62,7 +71,7 @@ export function CampaignList() {
           <table className={table.wrap}>
             <thead>
               <tr>
-                {["캠페인 이름", "광고주", "채널", "업로드 날짜", "담당자", "진행률"].map((h) => (
+                {["캠페인 이름", "광고주", "채널", "업로드 날짜", "담당자", "진행률", "수정"].map((h) => (
                   <th key={h} className={table.th}>
                     {h}
                   </th>
@@ -92,6 +101,17 @@ export function CampaignList() {
                     <td className={table.td}>{c.owners.join(", ")}</td>
                     <td className={`${table.td} w-[180px]`}>
                       <ProgressBar label={c.name} entries={c.entries} delay={200 + i * 120} />
+                    </td>
+                    <td className={table.td}>
+                      <button
+                        type="button"
+                        onClick={() => edit(c.id)}
+                        aria-label={`${c.name} 정보 수정`}
+                        aria-pressed={editingId === c.id}
+                        className="min-h-9 whitespace-nowrap text-[14px] font-semibold text-ink-800 underline underline-offset-4 hover:text-primary-600 aria-pressed:text-primary-600"
+                      >
+                        수정
+                      </button>
                     </td>
                   </tr>
                 );
