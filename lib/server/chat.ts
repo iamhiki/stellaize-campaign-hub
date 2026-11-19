@@ -121,10 +121,13 @@ export async function latest(entryIds: string[]): Promise<Record<string, ChatMes
   return out;
 }
 
-/** A deleted campaign takes its threads with it. The file copy is cleared in the campaigns route's own save. */
-export async function dropCampaign(campaignId: string) {
-  if (!supabase) return;
-  await rest(`hub_messages?campaign_id=eq.${q(campaignId)}`, { method: "DELETE" });
+/**
+ * Whether anyone wrote in a campaign's rooms (creator rooms and 담당자방). Such a campaign can't be deleted
+ * (11/19: 대화 기록은 남아야 나중에 뒷말이 없다); once it ends its rooms move to the 끝난 캠페인 folder instead.
+ */
+export async function hasMessages(campaignId: string): Promise<boolean> {
+  if (supabase) return ((await rest(`hub_messages?campaign_id=eq.${q(campaignId)}&select=id&limit=1`)) as unknown[]).length > 0;
+  return ((await readDb()).messages ?? []).some((m) => m.campaignId === campaignId);
 }
 
 // ---- live "new message" signal (Supabase Realtime broadcast) ----

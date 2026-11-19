@@ -135,7 +135,7 @@ export function CampaignDetail({ id }: { id: string }) {
             </button>
           </p>
         )}
-        <DeleteCampaign name={campaign.name} onDelete={() => (deleteCampaign(campaign.id), router.push("/campaigns"))} />
+        <DeleteCampaign id={campaign.id} name={campaign.name} onDelete={() => (deleteCampaign(campaign.id), router.push("/campaigns"))} />
       </main>
     </>
   );
@@ -169,11 +169,35 @@ function AddCreator({ campaignId }: { campaignId: string }) {
 }
 
 // Deleting can't be undone, so it asks once inline (same pattern as 드랍).
-function DeleteCampaign({ name, onDelete }: { name: string; onDelete: () => void }) {
+/**
+ * 캠페인 삭제, asked once inline. A campaign whose rooms hold messages can't be deleted (11/19: 대화 기록 보관);
+ * the server refuses too, this only says so before anyone confirms.
+ */
+function DeleteCampaign({ id, name, onDelete }: { id: string; name: string; onDelete: () => void }) {
   const [asking, setAsking] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [blocked, setBlocked] = useState("");
+
+  async function ask() {
+    setChecking(true);
+    const d = await fetch(`/api/campaigns?chat=${encodeURIComponent(id)}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+    setChecking(false);
+    if (d?.hasMessages) return setBlocked(d.why);
+    setAsking(true);
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-3 border-t border-line py-8 text-[14px]">
-      {asking ? (
+      {blocked ? (
+        <p role="status" className="max-w-2xl leading-relaxed text-ink-800">
+          {blocked}{" "}
+          <button type="button" onClick={() => setBlocked("")} className="min-h-9 text-ink-600 underline underline-offset-4 hover:text-primary-600">
+            닫기
+          </button>
+        </p>
+      ) : asking ? (
         <>
           <span className="text-ink-800">{name} 캠페인을 삭제할까요? 크리에이터 진행 기록과 제출 링크도 함께 지워집니다.</span>
           <button type="button" onClick={onDelete} className="min-h-10 bg-danger-700 px-4 font-semibold text-white hover:bg-[#8c2525]">
@@ -184,8 +208,8 @@ function DeleteCampaign({ name, onDelete }: { name: string; onDelete: () => void
           </button>
         </>
       ) : (
-        <button type="button" onClick={() => setAsking(true)} className="min-h-10 text-ink-600 underline underline-offset-4 hover:text-danger-700">
-          캠페인 삭제
+        <button type="button" onClick={ask} disabled={checking} className="min-h-10 text-ink-600 underline underline-offset-4 hover:text-danger-700">
+          {checking ? "확인하는 중…" : "캠페인 삭제"}
         </button>
       )}
     </div>

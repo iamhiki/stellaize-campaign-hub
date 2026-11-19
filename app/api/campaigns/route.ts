@@ -4,7 +4,7 @@ import { todayKST } from "@/lib/date";
 import { applyOp, parseOp } from "@/lib/ops";
 import { body, fail, guard, newToken } from "@/lib/server/auth";
 import { mutate, readDb, type Db } from "@/lib/server/db";
-import { dropCampaign } from "@/lib/server/chat";
+import { hasMessages } from "@/lib/server/chat";
 import { mailReady } from "@/lib/server/mail";
 
 /**
@@ -50,8 +50,13 @@ const send = (db: Db, userName: string) => NextResponse.json(snapshot(db, userNa
 export async function GET(req: NextRequest) {
   const g = await guard(req, "staff");
   if (g.deny) return g.deny;
+  // ?chat=ID → whether that campaign's rooms hold any message (캠페인 삭제 asks before offering itself).
+  const chat = req.nextUrl.searchParams.get("chat");
+  if (chat) return NextResponse.json({ hasMessages: await hasMessages(chat), why: KEEP_CHAT }, { headers: { "Cache-Control": "no-store" } });
   return send(await readDb(), g.user.name);
 }
+
+const KEEP_CHAT = "대화 기록이 있는 캠페인은 삭제할 수 없습니다. 크리에이터를 모두 리포트 작성까지 체크하면 끝난 캠페인이 되고, 대화방은 ‘끝난 캠페인’ 폴더로 옮겨져 기록이 그대로 남습니다.";
 
 export async function POST(req: NextRequest) {
   const g = await guard(req, "staff");
@@ -61,6 +66,7 @@ export async function POST(req: NextRequest) {
   if (op.op === "invite" && op.token !== null) op.token = newToken();
   const target = "campaignId" in op ? op.campaignId : op.id;
   const name = g.user.name;
+  if (op.op === "deleteCampaign" && (await hasMessages(op.id))) return fail(409, KEEP_CHAT);
   const out = await mutate((db) => {
       // 대외비: a campaign this account can't see can't be changed either, and only a 담당자 sets or lifts 대외비.
       const existing = db.campaigns.find((c) => c.id === target);
@@ -69,10 +75,8 @@ export async function POST(req: NextRequest) {
       if (op.op === "deleteCampaign") {
         db.submissions = db.submissions.filter((s) => s.campaignId !== op.id);
         db.notices = db.notices.filter((n) => n.campaignId !== op.id);
-        db.messages = db.messages?.filter((m) => m.campaignId !== op.id);
       }
       return db;
   });
-  if (out && op.op === "deleteCampaign") await dropCampaign(op.id).catch((e) => console.error("대화 삭제 실패", e));
   return out ? send(out, name) : fail(403, "이 캠페인을 바꿀 권한이 없습니다.");
 }
