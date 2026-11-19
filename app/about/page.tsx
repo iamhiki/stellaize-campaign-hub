@@ -234,11 +234,13 @@ export default function AboutPage() {
                 설치할 앱은 따로 없습니다. 허브를 휴대폰 홈 화면에 추가하면 앱처럼 열리고, 새 메시지가 오면 사이트를 닫아 두어도 알림이 옵니다. 비용은 들지 않습니다.
               </p>
             </div>
-            <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-0 md:divide-x md:divide-line">
+            <div className="mt-12 grid gap-10 md:grid-cols-3 md:gap-x-0 md:gap-y-0 md:divide-x md:divide-line">
               {MOBILE.map((m, i) => (
-                <article key={m.who} data-reveal style={delay(i * 140)} className="md:px-8 md:first:pl-0 md:last:pr-0">
+                // From 768px the three columns share one row grid (subgrid): a step that wraps to two lines makes
+                // the same step taller in the other columns too, so every line stays level across the page.
+                <article key={m.who} data-reveal style={delay(i * 140)} className="md:row-span-6 md:grid md:grid-rows-subgrid md:px-8 md:first:pl-0 md:last:pr-0">
                   <h3 className="border-b-2 border-ink-900 pb-3 text-[19px] font-bold text-ink-900 md:text-[21px]">{m.who}</h3>
-                  <ol className="mt-1">
+                  <ol className="md:row-span-4 md:grid md:grid-rows-subgrid">
                     {m.steps.map((s, j) => (
                       <li key={s} className="flex gap-3 border-b border-line py-3 text-[16px] leading-relaxed text-ink-800">
                         <span className="w-5 shrink-0 pt-px text-[14px] font-bold tabular-nums text-primary-700">{j + 1}</span>
