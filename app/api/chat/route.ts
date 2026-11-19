@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { canSee } from "@/lib/campaigns";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
-import { add, latest, liveConfig, markRead, ping, thread, threadKey, unread, unreadDirect, type ChatMessage } from "@/lib/server/chat";
+import { add, latest, liveConfig, markRead, ping, readsOf, thread, threadKey, unread, unreadDirect, type ChatMessage } from "@/lib/server/chat";
 import { readDb, type Db, type User } from "@/lib/server/db";
 
 /**
@@ -25,10 +25,14 @@ type Thread = {
   /** What this viewer sees as the thread's name, and the line under it. */
   title: string;
   sub: string;
+  /** The other person's 별명 (1:1 only), shown in gray next to the name. */
+  nick: string;
   joined: boolean;
   dropped: boolean;
   /** Whether a message is this viewer's own (sits on the right). */
   mine: (m: ChatMessage) => boolean;
+  /** Whose reading counts as "읽음" for this viewer's messages: the creator for staff, the team for the creator. */
+  reader: (userId: string) => boolean;
 };
 
 // ---- 1:1 threads: id "dm.<user id>.<user id>", ids sorted, so both people land on the same one ----
@@ -48,11 +52,13 @@ const direct = (user: User, other: User): Thread => ({
   id: directId(user.id, other.id),
   kind: "team",
   campaignId: "",
-  title: other.nickname ? `${other.name} (${other.nickname})` : other.name,
+  title: other.name,
   sub: ROLE[other.role],
+  nick: other.nickname ?? "",
   joined: true,
   dropped: false,
   mine: (m) => m.userId === user.id,
+  reader: (id) => id === other.id,
 });
 
 /** Every thread this user may open. A creator's 1:1 threads with developers are added once they hold a message. */
@@ -66,9 +72,11 @@ function threadsOf(db: Db, user: User): Thread[] {
         campaignId: campaign.id,
         title: staffSide(user) ? entry.name : campaign.name,
         sub: staffSide(user) ? campaign.name : "",
+        nick: "",
         joined: !!entry.creatorId,
         dropped: !!entry.droppedAt,
         mine: (m: ChatMessage) => m.from === (staffSide(user) ? "staff" : "creator"),
+        reader: (id: string) => (staffSide(user) ? id === entry.creatorId : id !== user.id),
       })),
   );
   const people = user.role === "creator" ? [] : db.users.filter((u) => mayTalk(db, user, u));
@@ -95,7 +103,17 @@ async function countsOf(user: User, all: Thread[]) {
   return { ...a, ...b };
 }
 
-const forScreen = (t: Thread, ms: ChatMessage[]) => ms.map((m) => ({ id: m.id, from: m.from, name: m.name, text: m.text, at: m.at, mine: t.mine(m) }));
+/** The thread as the screen gets it: whose each message is, and how far the other side has read (읽음 표시). */
+async function forScreen(t: Thread, ms: ChatMessage[]) {
+  const seen = (await readsOf(t.id)).filter((r) => t.reader(r.userId)).map((r) => r.at);
+  const readAt = seen.sort((a, b) => Date.parse(b) - Date.parse(a))[0] ?? null;
+  return {
+    messages: ms.map((m) => ({ id: m.id, from: m.from, name: m.name, text: m.text, at: m.at, mine: t.mine(m) })),
+    readAt,
+    joined: t.joined,
+    kind: t.kind,
+  };
+}
 
 /**
  * ?entry=ID → that thread, marked read for this user. Without it → what the header bell and the row badges need:
@@ -123,6 +141,7 @@ export async function GET(req: NextRequest) {
           campaignId: t.campaignId,
           title: t.title,
           sub: t.sub,
+          nick: t.nick,
           joined: t.joined,
           dropped: t.dropped,
           n: counts[t.id] ?? 0,
@@ -141,8 +160,11 @@ export async function GET(req: NextRequest) {
   if (!t) return fail(404, "이 대화를 볼 수 없습니다.");
   const messages = await thread(id);
   const newest = messages.filter((m) => !t.mine(m)).at(-1);
-  if (newest && (await countsOf(g.user, [t]))[id]) await markRead(g.user.id, id, newest.at);
-  return NextResponse.json({ messages: forScreen(t, messages), joined: t.joined, kind: t.kind }, { headers });
+  if (newest && (await countsOf(g.user, [t]))[id]) {
+    await markRead(g.user.id, id, newest.at);
+    await ping(id); // the sender's screen drops its "1"
+  }
+  return NextResponse.json(await forScreen(t, messages), { headers });
 }
 
 export async function POST(req: NextRequest) {
@@ -159,5 +181,5 @@ export async function POST(req: NextRequest) {
   const at = new Date().toISOString();
   await add({ id: newId(), campaignId: t.campaignId, entryId: id, from: staffSide(g.user) ? "staff" : "creator", userId: g.user.id, name: g.user.name, text, at });
   await ping(id);
-  return NextResponse.json({ messages: forScreen(t, await thread(id)), joined: t.joined, kind: t.kind });
+  return NextResponse.json(await forScreen(t, await thread(id)));
 }

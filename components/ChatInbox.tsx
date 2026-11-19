@@ -12,6 +12,7 @@ type Thread = {
   campaignId: string;
   title: string;
   sub: string;
+  nick: string;
   joined: boolean;
   dropped: boolean;
   n: number;
@@ -86,7 +87,7 @@ export function ChatInbox() {
   const talked = inTab.filter((t) => t.last);
   const needle = q.trim();
   // Staff: conversations so far by default; searching or "전체" lists every thread, to start a new one.
-  const shown = inTab.filter((t) => (creator || !onlyTalked || needle || t.entryId === open ? true : !!t.last)).filter((t) => !needle || t.title.includes(needle) || t.sub.includes(needle));
+  const shown = inTab.filter((t) => (creator || !onlyTalked || needle || t.entryId === open ? true : !!t.last)).filter((t) => !needle || t.title.includes(needle) || t.nick.includes(needle) || t.sub.includes(needle));
 
   return (
     <main className={`${pageWrap} py-8 md:py-10`}>
@@ -98,13 +99,13 @@ export function ChatInbox() {
               {(["creator", "team"] as const).map((k) => (
                 <button key={k} type="button" aria-pressed={tab === k} onClick={() => setPicked({ kind: k, at: open })} className="-mb-px min-h-11 flex-1 border-b-2 border-transparent text-ink-600 hover:text-ink-900 aria-pressed:border-ink-900 aria-pressed:text-ink-900">
                   {k === "creator" ? "크리에이터" : "팀원"}
-                  {unreadOf(k) > 0 && <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center bg-danger-700 px-1.5 align-[1px] text-[11px] font-bold text-white tabular-nums">{unreadOf(k)}</span>}
+                  {unreadOf(k) > 0 && <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-danger-700 px-1.5 align-[1px] text-[11px] font-bold text-white tabular-nums">{unreadOf(k)}</span>}
                 </button>
               ))}
             </div>
           )}
           <div className="border-b border-line p-3">
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={creator ? "캠페인 찾기" : tab === "team" ? "이름 찾기" : "크리에이터·캠페인 찾기"} aria-label="대화 찾기" className={`${ui.input} h-11 w-full text-[15px]`} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={creator ? "캠페인 찾기…" : tab === "team" ? "이름 찾기…" : "크리에이터·캠페인 찾기…"} autoComplete="off" aria-label="대화 찾기" className={`${ui.input} h-11 w-full text-[15px]`} />
             {!creator && (
               <div role="group" aria-label="보기" className="mt-2 flex text-[13px] font-semibold">
                 {([[true, `대화한 ${tab === "team" ? "팀원" : "사람"} ${talked.length}`], [false, `전체 ${inTab.length}`]] as const).map(([v, label]) => (
@@ -122,12 +123,16 @@ export function ChatInbox() {
                   type="button"
                   onClick={() => pick(t.entryId)}
                   aria-current={t.entryId === open ? "true" : undefined}
-                  className="flex w-full items-start gap-3 border-b border-line px-4 py-3 text-left hover:bg-[#f5f7fa] aria-[current=true]:bg-primary-100"
+                  className="flex w-full items-center gap-3 border-b border-line px-4 py-3 text-left hover:bg-[#f5f7fa] aria-[current=true]:bg-primary-100"
                 >
+                  <span aria-hidden className="flex size-10 shrink-0 items-center justify-center rounded-full bg-ink-900/[0.07] text-[15px] font-bold text-ink-800">
+                    {t.title.trim().slice(0, 1) || "?"}
+                  </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="truncate text-[15px] font-bold text-ink-900">
                         {t.title}
+                        {t.nick && <span className="ml-1.5 text-[13px] font-semibold text-ink-600">{t.nick}</span>}
                         {t.dropped && <span className="ml-1 text-[12px] font-semibold text-ink-600">드랍</span>}
                       </span>
                       {t.last && <span className="shrink-0 text-[12px] text-ink-600 tabular-nums">{when(t.last.at)}</span>}
@@ -137,7 +142,7 @@ export function ChatInbox() {
                       {t.last ? `${t.last.mine ? "나: " : ""}${t.last.text}` : t.joined || creator ? "아직 대화가 없습니다" : "아직 가입 전"}
                     </span>
                   </span>
-                  {t.n > 0 && <span className="mt-0.5 flex h-5 min-w-5 shrink-0 items-center justify-center bg-danger-700 px-1.5 text-[11px] font-bold text-white tabular-nums">{t.n}</span>}
+                  {t.n > 0 && <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-danger-700 px-1.5 text-[11px] font-bold text-white tabular-nums">{t.n}</span>}
                 </button>
               </li>
             ))}
@@ -164,7 +169,10 @@ export function ChatInbox() {
                   ‹ 목록
                 </button>
                 <div className="min-w-0">
-                  <p className="truncate text-[16px] font-bold text-ink-900">{current.kind === "team" ? current.title : creator ? `${current.title} 담당자` : current.title}</p>
+                  <p className="truncate text-[16px] font-bold text-ink-900">
+                    {current.kind === "team" ? current.title : creator ? `${current.title} 담당자` : current.title}
+                    {current.nick && <span className="ml-1.5 text-[14px] font-semibold text-ink-600">{current.nick}</span>}
+                  </p>
                   {current.kind === "team" && <p className="truncate text-[13px] text-ink-600">{current.sub}</p>}
                   {!creator && current.kind === "creator" && (
                     <a href={`/campaigns/${current.campaignId}`} className="block truncate text-[13px] text-ink-600 underline-offset-4 hover:text-primary-600 hover:underline">

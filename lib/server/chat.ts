@@ -57,6 +57,12 @@ export async function markRead(userId: string, entryId: string, at: string) {
   });
 }
 
+/** Who has read this thread up to when (for 읽음 표시). */
+export async function readsOf(entryId: string): Promise<{ userId: string; at: string }[]> {
+  if (supabase) return ((await rest(`hub_chat_reads?entry_id=eq.${q(entryId)}&select=user_id,read_at`)) as { user_id: string; read_at: string }[]).map((r) => ({ userId: r.user_id, at: r.read_at }));
+  return Object.entries((await readDb()).reads ?? {}).flatMap(([userId, r]) => (r[entryId] ? [{ userId, at: r[entryId] }] : []));
+}
+
 /** Per thread, the messages from `sender` (the other side) this user hasn't read. Threads with none are left out. */
 export async function unread(userId: string, entryIds: string[], sender: "staff" | "creator"): Promise<Record<string, number>> {
   if (!entryIds.length) return {};

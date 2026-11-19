@@ -124,3 +124,8 @@
   background: var(--color-primary-200);
   color: var(--color-ink-900);
 }
+
+/* 대화: a new message slides up a little (ChatPanel uses it under motion-safe). */
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
