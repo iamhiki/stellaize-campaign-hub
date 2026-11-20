@@ -71,6 +71,14 @@ npm run dev
 - 키: `.env.local`과 Vercel에 `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`. 없으면 앱 알림에 "알림 설정이 아직 서버에 들어가지 않았습니다"가 뜨고 아무것도 보내지 않는다. 새로 만들려면 `npx web-push generate-vapid-keys`.
 - 알림 받을 기기 목록은 허브 자료(`hub_state`) 안에 들어 있어서 Supabase에 따로 SQL을 실행할 필요가 없다.
 
+### 제출 파일 (기획안·가편안·수정본, 기획안 양식)
+
+- 파일은 Supabase Storage의 비공개 보관함 `hub-files`에 들어간다(처음 올릴 때 자동으로 만든다). Supabase가 없으면 PC의 `data/uploads`.
+- 브라우저가 서버를 거치지 않고 저장소로 바로 올린다(Vercel은 요청 하나에 4.5MB까지만 받는다). 서버는 한 번 쓰는 업로드 주소만 내주고, 다 올라갔는지 크기를 확인한 뒤 제출로 기록한다.
+- 내려받기는 2분, 광고주용 링크는 7일 동안 열리는 주소로 나간다. 항상 '내려받기'로만 열려서 올린 파일이 이 사이트의 페이지로 실행되지 않는다.
+- **한도:** 파일 하나에 50MB(Supabase 무료 플랜 한도). 무료 플랜 전체 저장 공간은 1GB다. 영상을 직접 많이 받으려면 Supabase 유료(Pro) 또는 Cloudflare R2로 옮긴다. 그 전까지 큰 영상은 링크로 받는다.
+- 한도를 바꿀 때는 `lib/uploads.ts`의 `MAX_UPLOAD_BYTES`와 Supabase 보관함 설정을 같이 바꾼다.
+
 ### 임시 테스트 계정
 
 화면을 시험해 볼 계정을 한 번에 만들고, 끝나면 한 번에 지운다. 프로젝트 폴더의 터미널에서 실행한다.

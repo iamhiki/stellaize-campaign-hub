@@ -9,6 +9,7 @@ import { useMe } from "@/lib/me";
 import { DdayText, WAITING } from "./badges";
 import { CampaignForm } from "./CampaignForm";
 import { CreatorTable } from "./CreatorTable";
+import { TemplateBox } from "./TemplateBox";
 import { Loading, PageBand, pageWrap, ui } from "./PageBand";
 import { ProgressBar } from "./ProgressBar";
 
@@ -75,6 +76,7 @@ export function CampaignDetail({ id }: { id: string }) {
             </h2>
             <AddCreator campaignId={campaign.id} />
           </div>
+          <TemplateBox campaign={campaign} />
           <CreatorTable campaign={campaign} today={today} />
         </section>
 

@@ -3,6 +3,8 @@ import { DOC_KINDS, DOC_LABEL, type DocKind } from "@/lib/files";
 import { fail, guard } from "@/lib/server/auth";
 import { readDb } from "@/lib/server/db";
 import { getFile } from "@/lib/server/files";
+import { sendStored } from "@/lib/server/send-file";
+import { canSee } from "@/lib/campaigns";
 
 const EXT = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" } as Record<string, string>;
 
@@ -13,6 +15,27 @@ const EXT = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" 
 export async function GET(req: NextRequest) {
   const g = await guard(req, "any");
   if (g.deny) return g.deny;
+  const q = req.nextUrl.searchParams;
+
+  // ?sub=ID → an uploaded 기획안·가편안·수정본 (11/20). Staff who may see the campaign, or the creator who sent it.
+  if (q.get("sub")) {
+    const db = await readDb();
+    const s = db.submissions.find((x) => x.id === q.get("sub"));
+    const c = s && db.campaigns.find((x) => x.id === s.campaignId);
+    const entry = c?.entries.find((e) => e.id === s?.entryId);
+    const may = !!c && (g.user.role === "creator" ? entry?.creatorId === g.user.id : canSee(c, g.user.name));
+    if (!s?.file?.key || !may) return fail(404, "파일을 찾을 수 없습니다.");
+    return sendStored(s.file.key, s.file.name, s.file.type, 120);
+  }
+  // ?template=CAMPAIGN → 기획안 양식. Staff who may see it, or a creator on that campaign.
+  if (q.get("template")) {
+    const db = await readDb();
+    const c = db.campaigns.find((x) => x.id === q.get("template"));
+    const may = !!c && (g.user.role === "creator" ? c.entries.some((e) => e.creatorId === g.user.id && !e.droppedAt) : canSee(c, g.user.name));
+    if (!c?.template?.key || !may) return fail(404, "양식을 찾을 수 없습니다.");
+    return sendStored(c.template.key, c.template.name, c.template.type, 120);
+  }
+
   const kind = req.nextUrl.searchParams.get("kind") as DocKind;
   const owner = g.user.role === "creator" ? g.user.id : (req.nextUrl.searchParams.get("user") ?? "");
   if (!DOC_KINDS.includes(kind) || !owner) return fail(400, "파일을 찾을 수 없습니다.");

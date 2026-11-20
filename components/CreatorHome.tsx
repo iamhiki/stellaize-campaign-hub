@@ -8,6 +8,9 @@ import { ChatPanel } from "./ChatPanel";
 import { PushToggle } from "./PushToggle";
 import { CreatorProfile } from "./CreatorProfile";
 import { Loading, pageWrap, table, ui } from "./PageBand";
+import { MAX_UPLOAD_BYTES, UPLOAD_ACCEPT, sizeText } from "@/lib/uploads";
+import { uploadFile } from "@/lib/upload-client";
+import { useUnsaved } from "@/lib/unsaved";
 
 const short = (d: string) => d.slice(5).replace("-", "/");
 const WHO = { creator: "내 차례", advertiser: "광고주 확인 중", us: "스텔라이즈팀 확인 중" };
@@ -201,20 +204,25 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
                     )}
                   </td>
                   <td className={`${table.td} ${CELL} max-md:col-span-2 ${s.submit && !preview || mine.length > 0 ? "max-md:pt-1.5" : "max-md:hidden"}`}>
+                    {/* 기획안 양식 (기획자 11/20): download it, or hand in any other format. */}
+                    {s.label === "기획안 수급" && item.template && (
+                      <p className="mb-3 text-[14px] text-ink-800">
+                        <a href={`/api/files?template=${encodeURIComponent(item.campaignId)}`} className="inline-flex min-h-9 items-center gap-1.5 border border-line bg-white px-3 font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-700">
+                          <span aria-hidden>↓</span> 기획안 양식 내려받기
+                        </a>
+                        <span className="ml-2 text-[13px] text-ink-600">
+                          {item.template.name} · 양식에 맞춰 쓰거나, 다른 형식으로 내도 됩니다
+                        </span>
+                      </p>
+                    )}
                     {mine.length > 0 && (
                       <ul className="mb-3 space-y-1">
                         {mine.map((x) => (
-                          <li key={x.id} className="text-[14px]">
-                            <span className="mr-2 tabular-nums text-ink-600">{short(x.at)}</span>
-                            <a href={x.url} target="_blank" rel="noopener noreferrer" className="break-all font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700">
-                              {x.url}
-                            </a>
-                            {x.note && <span className="block text-ink-600">{x.note}</span>}
-                          </li>
+                          <Handed key={x.id} x={x} />
                         ))}
                       </ul>
                     )}
-                    {s.submit && !preview ? <SubmitLink entryId={item.entryId} step={s.step} label={s.label.replace(" 수급", "")} again={mine.length > 0} onChange={onChange} /> : mine.length === 0 && <span className="text-ink-600">—</span>}
+                    {s.submit && !preview ? <SubmitForm entryId={item.entryId} step={s.step} label={s.label.replace(" 수급", "")} again={mine.length > 0} onChange={onChange} /> : mine.length === 0 && <span className="text-ink-600">—</span>}
                   </td>
                 </tr>
               );
@@ -232,10 +240,53 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
   );
 }
 
-function SubmitLink({ entryId, step, label, again, onChange }: { entryId: string; step: number; label: string; again: boolean; onChange: (items: CreatorItem[]) => void }) {
+type Mode = "file" | "link" | "text";
+const MODES: [Mode, string][] = [
+  ["file", "파일 올리기"],
+  ["link", "링크로 내기"],
+  ["text", "글로 쓰기"],
+];
+
+/** One hand-in, as the creator sees it in their list. */
+function Handed({ x }: { x: CreatorItem["submissions"][number] }) {
   const [open, setOpen] = useState(false);
+  return (
+    <li className="text-[14px]">
+      <span className="mr-2 tabular-nums text-ink-600">{short(x.at)}</span>
+      {x.file ? (
+        <a href={`/api/files?sub=${encodeURIComponent(x.id)}`} className="break-all font-semibold text-primary-700 underline underline-offset-4 hover:text-primary-600">
+          {x.file.name}
+          <span className="ml-1 font-normal text-ink-600 no-underline">({sizeText(x.file.size)})</span>
+        </a>
+      ) : x.text ? (
+        <>
+          <button type="button" onClick={() => setOpen(!open)} aria-expanded={open} className="font-semibold text-primary-700 underline underline-offset-4 hover:text-primary-600">
+            글로 제출 {open ? "접기" : "보기"}
+          </button>
+          {open && <p className="mt-1 max-h-60 overflow-y-auto whitespace-pre-wrap border-l-2 border-line pl-3 text-ink-800 wrap-anywhere">{x.text}</p>}
+        </>
+      ) : (
+        <a href={x.url} target="_blank" rel="noopener noreferrer" className="break-all font-semibold text-primary-700 underline underline-offset-4 hover:text-primary-600">
+          {x.url}
+        </a>
+      )}
+      {x.note && <span className="block text-ink-600">{x.note}</span>}
+    </li>
+  );
+}
+
+/**
+ * 기획안·가편안·수정본 제출 (기획자 11/20: 플랫폼 안에서 업로드). A file goes straight into storage (progress
+ * shown), or a link (큰 영상은 드라이브·유튜브 일부 공개), or text typed here (텍스트로 막 주면).
+ */
+function SubmitForm({ entryId, step, label, again, onChange }: { entryId: string; step: number; label: string; again: boolean; onChange: (items: CreatorItem[]) => void }) {
+  const video = label !== "기획안";
+  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("file");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pct, setPct] = useState<number | null>(null);
+  const unsaved = useUnsaved();
 
   if (!open)
     return (
@@ -244,30 +295,69 @@ function SubmitLink({ entryId, step, label, again, onChange }: { entryId: string
       </button>
     );
 
+  async function hand(payload: Record<string, unknown>) {
+    const res = await fetch("/api/creator", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entryId, step, ...payload }) }).catch(() => null);
+    const d = res && (await res.json().catch(() => null));
+    if (!res?.ok || !d?.items) throw new Error(d?.error ?? "제출하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
+    unsaved.saved();
+    onChange(d.items);
+    setOpen(false);
+  }
+
   async function submit(form: FormData) {
     setBusy(true);
     setError("");
+    const note = String(form.get("note") ?? "");
     try {
-      const res = await fetch("/api/creator", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ entryId, step, url: String(form.get("url") ?? ""), note: String(form.get("note") ?? "") }),
-      });
-      const d = await res.json().catch(() => null);
-      if (res.ok && d?.items) {
-        onChange(d.items);
-        setOpen(false);
-      } else setError(d?.error ?? "제출하지 못했습니다. 잠시 뒤 다시 시도해 주세요.");
-    } catch {
-      setError("서버에 연결하지 못했습니다. 연결을 확인해 주세요.");
+      if (mode === "file") {
+        const file = form.get("file");
+        if (!(file instanceof File) || !file.size) throw new Error("올릴 파일을 골라 주세요.");
+        setPct(0);
+        const up = await uploadFile(file, { purpose: "sub", entryId, step }, setPct);
+        await hand({ file: up, note });
+      } else if (mode === "link") await hand({ url: String(form.get("url") ?? ""), note });
+      else await hand({ text: String(form.get("text") ?? ""), note });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "제출하지 못했습니다.");
     }
+    setPct(null);
     setBusy(false);
   }
 
   return (
-    <form action={submit} aria-label={`${label} 제출`} className="flex max-w-[520px] flex-col gap-2">
-      <input autoComplete="off" name="url" type="url" required maxLength={1000} aria-label={`${label} 링크`} placeholder="https://  (드라이브, 유튜브 일부 공개 등 링크)" className={`${ui.input} h-10 text-[14px]`} />
+    <form action={submit} onInput={unsaved.onInput} aria-label={`${label} 제출`} className="flex max-w-[560px] flex-col gap-2">
+      <div role="group" aria-label="제출 방법" className="grid grid-cols-3 border border-line text-[13px] font-semibold">
+        {MODES.map(([m, text]) => (
+          <button key={m} type="button" aria-pressed={mode === m} onClick={() => (setMode(m), setError(""))} className="min-h-10 border-line text-ink-800 not-last:border-r hover:text-primary-700 aria-pressed:bg-ink-900 aria-pressed:text-white">
+            {text}
+          </button>
+        ))}
+      </div>
+      {mode === "file" && (
+        <>
+          <input name="file" type="file" required accept={UPLOAD_ACCEPT} aria-label={`${label} 파일`} className="block w-full text-[14px] text-ink-800 file:mr-3 file:h-10 file:border file:border-line file:bg-white file:px-4 file:font-semibold file:text-ink-800 hover:file:border-primary-600" />
+          <p className="text-[13px] text-ink-600">
+            {video ? "영상(mp4·mov 등)" : "워드·PDF·한글·PPT·텍스트·이미지"} 등 어떤 형식이든 올릴 수 있습니다. 파일 하나에 {Math.round(MAX_UPLOAD_BYTES / 1024 / 1024)}MB까지입니다.
+            {video && " 더 큰 영상은 드라이브나 유튜브(일부 공개)에 올리고 ‘링크로 내기’를 써 주세요."}
+          </p>
+        </>
+      )}
+      {mode === "link" && (
+        <>
+          <input autoComplete="off" name="url" type="url" required maxLength={1000} aria-label={`${label} 링크`} placeholder="https://  (드라이브, 유튜브 일부 공개 등 링크)" className={`${ui.input} h-10 text-[14px]`} />
+          <p className="text-[13px] text-ink-600">담당자가 열어 볼 수 있게 링크 공유 권한을 확인해 주세요.</p>
+        </>
+      )}
+      {mode === "text" && <textarea autoComplete="off" name="text" required maxLength={10000} rows={8} aria-label={`${label} 내용`} placeholder={`${label} 내용을 자유롭게 적어 주세요…`} className="min-w-0 border border-line bg-white px-4 py-3 text-[15px] leading-relaxed text-ink-900 placeholder:text-ink-600 focus:border-primary-600 focus:outline-none" />}
       <input autoComplete="off" name="note" maxLength={500} aria-label="메모" placeholder="메모 (선택)" className={`${ui.input} h-10 text-[14px]`} />
+      {pct !== null && (
+        <div role="status" aria-live="polite" className="flex items-center gap-3 text-[13px] tabular-nums text-ink-600">
+          <span className="h-1.5 flex-1 bg-[#e6e8eb]">
+            <span className="block h-full bg-primary-600 transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${pct}%` }} />
+          </span>
+          {pct < 100 ? `올리는 중… ${pct}%` : "마무리하는 중…"}
+        </div>
+      )}
       {error && (
         <p role="alert" className="text-[14px] font-semibold text-danger-700">
           {error}
@@ -275,13 +365,12 @@ function SubmitLink({ entryId, step, label, again, onChange }: { entryId: string
       )}
       <div className="flex gap-2">
         <button type="submit" disabled={busy} className={`${ui.primary} h-10 px-4 text-[14px]`}>
-          {busy ? "제출하는 중" : "제출"}
+          {busy ? "제출하는 중…" : "제출"}
         </button>
-        <button type="button" onClick={() => setOpen(false)} className={`${ui.secondary} h-10 px-4 text-[14px]`}>
+        <button type="button" disabled={busy} onClick={() => setOpen(false)} className={`${ui.secondary} h-10 px-4 text-[14px]`}>
           취소
         </button>
       </div>
-      <p className="text-[13px] text-ink-600">담당자가 열어 볼 수 있게 링크 공유 권한을 확인해 주세요.</p>
     </form>
   );
 }

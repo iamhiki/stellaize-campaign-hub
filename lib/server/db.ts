@@ -31,6 +31,8 @@ export type Db = {
   messages?: Message[];
   /** user id → entry id → the time (ISO) that user last read that thread. */
   reads?: Record<string, Record<string, string>>;
+  /** sha256(share token) → which hand-in an advertiser may download, until when (광고주에게 넘기기, 11/20). */
+  shares?: Record<string, { subId: string; exp: number; by: string }>;
   /** Devices that asked for app notifications (마이페이지 알림 켜기, 11/19). Missing in data saved before 11/19. */
   pushSubs?: PushSub[];
 };

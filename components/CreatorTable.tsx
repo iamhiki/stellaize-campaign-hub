@@ -11,6 +11,8 @@ import { contractLink } from "@/lib/contract";
 import { DeadlineLine, WaitingLine } from "./badges";
 import { LateDrop } from "./FollowUp";
 import { MailForm } from "./MailForm";
+import { Handins } from "./Handins";
+import type { Submission } from "@/lib/campaigns";
 
 const th = "border-b border-line bg-[#f5f7fa] px-2 py-3 text-[13px] font-semibold leading-tight text-ink-800";
 const td = "border-b border-line px-2 py-3 align-top";
@@ -26,12 +28,12 @@ const subscribeWide = (l: () => void) => {
 };
 const useWide = () => useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => true);
 
-type Panel = "edit" | "chat" | "mail";
+type Panel = "edit" | "chat" | "mail" | "subs";
 // Small square buttons for a row's actions: big enough to tap, in the site's line-ruled style.
 const act = "inline-flex min-h-9 items-center gap-1.5 border border-line bg-white px-2.5 text-[13px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-700 aria-expanded:border-ink-900 aria-expanded:bg-ink-900 aria-expanded:text-white";
 
 /** 계약서 작성 · 마감·단가·초대 · 대화 · 알림 메일, as one row of buttons (table and card alike). */
-function RowActions({ campaign, e, panel, toggle, unread, late }: { campaign: Campaign; e: Entry; panel: Panel | null; toggle: (p: Panel) => void; unread: number; late: boolean }) {
+function RowActions({ campaign, e, panel, toggle, unread, late, handed }: { campaign: Campaign; e: Entry; panel: Panel | null; toggle: (p: Panel) => void; unread: number; late: boolean; handed: number }) {
   return (
     <div className="mt-2 flex flex-wrap gap-1.5">
       <a href={contractLink(campaign, e)} target="_blank" rel="noopener noreferrer" className={act}>
@@ -50,6 +52,11 @@ function RowActions({ campaign, e, panel, toggle, unread, late }: { campaign: Ca
           </span>
         )}
       </button>
+      {handed > 0 && (
+        <button type="button" aria-expanded={panel === "subs"} onClick={() => toggle("subs")} className={act}>
+          제출본 <span className="tabular-nums">{handed}</span>
+        </button>
+      )}
       {late && (
         <button type="button" aria-expanded={panel === "mail"} onClick={() => toggle("mail")} className={`${act} border-danger-700 text-danger-700 hover:border-danger-700 hover:text-danger-700`}>
           알림 메일
@@ -77,7 +84,8 @@ function StatusLines({ campaign, e, today }: { campaign: Campaign; e: Entry; tod
 }
 
 /** What opens under a row: 마감·단가·초대, the conversation, or the reminder mail. */
-function RowPanel({ campaign, e, panel, close }: { campaign: Campaign; e: Entry; panel: Panel; close: () => void }) {
+function RowPanel({ campaign, e, panel, close, handed }: { campaign: Campaign; e: Entry; panel: Panel; close: () => void; handed: Submission[] }) {
+  if (panel === "subs") return <Handins entry={e} list={handed} />;
   if (panel === "chat")
     return (
       <div id={`chat-${e.id}`} className="max-w-2xl scroll-mt-24">
@@ -124,6 +132,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
   }, [campaign.entries]);
   const submissions = useSubmissions();
   const late = (e: Entry) => entryStatus(e, campaign, today).overdue;
+  const mineOf = (e: Entry) => submissions.filter((x) => x.entryId === e.id);
 
   return (
     <>
@@ -143,7 +152,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
       ) : !wide ? (
         <ul className="border-t-2 border-ink-900">
           {live.map((e) => (
-            <CreatorCard key={e.id} campaign={campaign} e={e} today={today} panel={panels[e.id] ?? null} toggle={(p) => toggle(e.id, p)} close={() => close(e.id)} unread={unread[e.id] ?? 0} late={late(e)} handedIn={(i) => submissions.filter((x) => x.entryId === e.id && x.step === i)} />
+            <CreatorCard key={e.id} campaign={campaign} e={e} today={today} panel={panels[e.id] ?? null} toggle={(p) => toggle(e.id, p)} close={() => close(e.id)} unread={unread[e.id] ?? 0} late={late(e)} handed={mineOf(e)} />
           ))}
         </ul>
       ) : (
@@ -178,7 +187,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                         <span className="block max-w-[220px] text-[16px] font-bold text-ink-900 wrap-anywhere">{e.name}</span>
                         <span className="block max-w-[220px] text-[13px] text-ink-600 wrap-anywhere">{e.channel}</span>
                         {(e.creatorId || e.invite) && <span className="block text-[12px] text-ink-600">{e.creatorId ? "계정 연결됨" : "초대 링크 만듦"}</span>}
-                        <RowActions campaign={campaign} e={e} panel={panel} toggle={(p) => toggle(e.id, p)} unread={unread[e.id] ?? 0} late={late(e)} />
+                        <RowActions campaign={campaign} e={e} panel={panel} toggle={(p) => toggle(e.id, p)} unread={unread[e.id] ?? 0} late={late(e)} handed={mineOf(e).length} />
                       </th>
                       <td className={`${td} group-hover:bg-[#f5f7fa]`}>
                         <StatusLines campaign={campaign} e={e} today={today} />
@@ -201,7 +210,7 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
                     {panel && (
                       <tr>
                         <td colSpan={STEPS.length + 2} className="border-b border-line bg-[#f5f7fa] px-3 py-5">
-                          <RowPanel campaign={campaign} e={e} panel={panel} close={() => close(e.id)} />
+                          <RowPanel campaign={campaign} e={e} panel={panel} close={() => close(e.id)} handed={mineOf(e)} />
                         </td>
                       </tr>
                     )}
@@ -243,9 +252,14 @@ export function CreatorTable({ campaign, today }: { campaign: Campaign; today: s
 }
 
 /** 제출본 link under a step: the newest one opens, the count shows resubmits. */
-function Handed({ e, label, handed }: { e: Entry; label: string; handed: { url: string; note: string }[] }) {
+function Handed({ e, label, handed }: { e: Entry; label: string; handed: Submission[] }) {
+  const last = handed.at(-1)!;
+  // A file downloads through the hub; text has no address, so the cell just says it is there (제출본 버튼 opens it).
+  if (last.text && !last.file)
+    return <span className="mt-1 inline-flex min-h-8 items-center text-[12px] font-semibold text-ink-800">제출본(글){handed.length > 1 ? ` ${handed.length}` : ""}</span>;
+  const href = last.file ? `/api/files?sub=${encodeURIComponent(last.id)}` : last.url;
   return (
-    <a href={handed.at(-1)!.url} target="_blank" rel="noopener noreferrer" title={handed.at(-1)!.note || undefined} className="mt-1 inline-flex min-h-8 items-center text-[12px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700">
+    <a href={href} {...(last.file ? {} : { target: "_blank", rel: "noopener noreferrer" })} title={last.file?.name ?? (last.note || undefined)} className="mt-1 inline-flex min-h-8 items-center text-[12px] font-semibold text-primary-600 underline underline-offset-4 hover:text-primary-700">
       제출본{handed.length > 1 ? ` ${handed.length}` : ""}
       <span aria-hidden>↗</span>
       <span className="sr-only">
@@ -260,7 +274,7 @@ function Handed({ e, label, handed }: { e: Entry; label: string; handed: { url: 
  * Phone: one card per creator (11/19 휴대폰 보기). The next step is one big button; every step, with its date,
  * deadline and 제출본, folds open under it. Same data and actions as the table row.
  */
-function CreatorCard({ campaign, e, today, panel, toggle, close, unread, late, handedIn }: {
+function CreatorCard({ campaign, e, today, panel, toggle, close, unread, late, handed }: {
   campaign: Campaign;
   e: Entry;
   today: string;
@@ -269,8 +283,9 @@ function CreatorCard({ campaign, e, today, panel, toggle, close, unread, late, h
   close: () => void;
   unread: number;
   late: boolean;
-  handedIn: (step: number) => { url: string; note: string }[];
+  handed: Submission[];
 }) {
+  const handedIn = (step: number) => handed.filter((x) => x.step === step);
   const [all, setAll] = useState(false);
   const done = doneList(e);
   const next = done.findIndex((d) => !d);
@@ -301,7 +316,7 @@ function CreatorCard({ campaign, e, today, panel, toggle, close, unread, late, h
           {STEPS[next].label} 체크
         </button>
       )}
-      <RowActions campaign={campaign} e={e} panel={panel} toggle={toggle} unread={unread} late={late} />
+      <RowActions campaign={campaign} e={e} panel={panel} toggle={toggle} unread={unread} late={late} handed={handed.length} />
       <button type="button" aria-expanded={all} onClick={() => setAll(!all)} className="mt-3 flex min-h-10 w-full items-center justify-between border-t border-line pt-1 text-[14px] font-semibold text-ink-800 hover:text-primary-700">
         단계 전체 보기
         <span aria-hidden className={`transition-transform duration-200 motion-reduce:transition-none ${all ? "rotate-180" : ""}`}>
@@ -334,7 +349,7 @@ function CreatorCard({ campaign, e, today, panel, toggle, close, unread, late, h
       )}
       {panel && (
         <div className="mt-3 border-t border-line bg-[#f5f7fa] px-3 py-4">
-          <RowPanel campaign={campaign} e={e} panel={panel} close={close} />
+          <RowPanel campaign={campaign} e={e} panel={panel} close={close} handed={handed} />
         </div>
       )}
     </li>

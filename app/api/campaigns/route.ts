@@ -12,7 +12,7 @@ import { mailReady } from "@/lib/server/mail";
  * notices, accounts and shipping info that belong to those campaigns.
  */
 const snapshot = (db: Db, userName: string) => {
-  const campaigns = db.campaigns.filter((c) => canSee(c, userName));
+  const campaigns = db.campaigns.filter((c) => canSee(c, userName)).map((c) => (c.template ? { ...c, template: { name: c.template.name, size: c.template.size, type: c.template.type, at: c.template.at } } : c));
   const shown = new Set(campaigns.map((c) => c.id));
   const joined = new Map(db.users.filter((u) => u.role === "creator").map((u) => [u.id, u.name]));
   const accounts: Record<string, string> = {};
@@ -32,7 +32,7 @@ const snapshot = (db: Db, userName: string) => {
   return {
     profiles,
     campaigns,
-    submissions: db.submissions.filter((x) => shown.has(x.campaignId)),
+    submissions: db.submissions.filter((x) => shown.has(x.campaignId)).map((x) => (x.file ? { ...x, file: { name: x.file.name, size: x.file.size, type: x.file.type } } : x)),
     emails,
     /** Whether a mail service is connected, and the team address every reminder is copied to. */
     mail: { ready: mailReady, teamCc: (process.env.MAIL_CC ?? "").trim() },

@@ -4,6 +4,9 @@ import { todayKST } from "@/lib/date";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
 import { creatorView, previewChoices, previewView } from "@/lib/server/creator";
 import { mutate, readDb, type Db } from "@/lib/server/db";
+import { claim } from "@/lib/server/uploads";
+
+const MAX_TEXT = 10000; // 기획안을 글로 쓸 때 (11/20)
 
 const send = (db: Db, userId: string) => NextResponse.json({ items: creatorView(db, userId) }, { headers: { "Cache-Control": "no-store" } });
 
@@ -19,8 +22,9 @@ export async function GET(req: NextRequest) {
 }
 
 /**
- * A creator hands in a link for 기획안, 가편안 or 수정본. The step is checked with today's date, the same as
- * staff checking "수급" by hand, so the row moves on to the advertiser's confirmation.
+ * A creator hands in 기획안, 가편안 or 수정본 in one of three ways: a link (`url`), a file already put into storage
+ * with an upload ticket (`file`, 11/20), or text typed in the hub (`text`, 11/20: 텍스트로 막 주면). The step is
+ * checked with today's date, the same as staff checking "수급" by hand, so the row moves on to the advertiser.
  */
 export async function POST(req: NextRequest) {
   const g = await guard(req, "creator");
@@ -29,22 +33,33 @@ export async function POST(req: NextRequest) {
   const entryId = str(b.entryId, 120);
   const step = b.step;
   const note = str(b.note, 500);
-  const raw = str(b.url, 1000);
   if (typeof step !== "number" || !SUBMIT_STEPS.includes(step)) return fail(400, "제출할 수 없는 단계입니다.");
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    return fail(400, "링크 주소를 확인해 주세요. https:// 로 시작해야 합니다.");
+  let link = "";
+  let file: Awaited<ReturnType<typeof claim>> = null;
+  let text = "";
+  if (b.file) {
+    file = await claim(g.user.id, "sub", `${entryId}#${step}`, b.file);
+    if (!file) return fail(400, "파일이 다 올라가지 않았습니다. 다시 올려 주세요.");
+  } else if (typeof b.text === "string") {
+    text = b.text.trim().slice(0, MAX_TEXT);
+    if (!text) return fail(400, "내용을 입력해 주세요.");
+  } else {
+    let url: URL;
+    try {
+      url = new URL(str(b.url, 1000));
+    } catch {
+      return fail(400, "링크 주소를 확인해 주세요. https:// 로 시작해야 합니다.");
+    }
+    if (url.protocol !== "https:" && url.protocol !== "http:") return fail(400, "링크 주소를 확인해 주세요. https:// 로 시작해야 합니다.");
+    link = url.href;
   }
-  if (url.protocol !== "https:" && url.protocol !== "http:") return fail(400, "링크 주소를 확인해 주세요. https:// 로 시작해야 합니다.");
 
   const out = await mutate((db) => {
     const campaign = db.campaigns.find((c) => c.entries.some((e) => e.id === entryId && e.creatorId === g.user.id && !e.droppedAt));
     const entry = campaign?.entries.find((e) => e.id === entryId);
     if (!campaign || !entry) return null; // not this creator's row
     const today = todayKST();
-    db.submissions.push({ id: newId(), campaignId: campaign.id, entryId, step, url: url.href, note, at: today });
+    db.submissions.push({ id: newId(), campaignId: campaign.id, entryId, step, url: link, note, at: today, ...(file ? { file } : {}), ...(text ? { text } : {}) });
     if (!entry.done[step]) entry.done[step] = today;
     return db;
   });

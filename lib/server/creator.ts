@@ -48,7 +48,9 @@ function view(db: Db, mine: (e: Entry) => boolean) {
           paPrice: e.paPrice ?? null,
           tracking: e.tracking ?? "",
           steps: STEPS.slice(0, UPLOAD + 1).map((s, i) => ({ step: i, label: s.label, waits: s.waits, due: dues[i], done: done[i], next: i === next, submit: SUBMIT_STEPS.includes(i) })),
-          submissions: db.submissions.filter((s) => s.entryId === e.id).map(({ id, step, url, note, at }) => ({ id, step, url, note, at })),
+          submissions: db.submissions.filter((s) => s.entryId === e.id).map(({ id, step, url, note, at, file, text }) => ({ id, step, url, note, at, file: file ? { name: file.name, size: file.size } : null, text: text ?? "" })),
+          // 기획안 양식 to download (기획자 11/20). Name and size only; the file comes from /api/files.
+          template: c.template ? { name: c.template.name, size: c.template.size } : null,
           notices: db.notices.filter((n) => n.entryId === e.id && n.userId === e.creatorId && !done[n.step]).map(({ id, step, due, createdAt }) => ({ id, step, due, createdAt })),
         };
       }),

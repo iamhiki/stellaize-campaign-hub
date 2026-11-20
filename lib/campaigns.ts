@@ -55,7 +55,12 @@ export type Entry = {
 export const SUBMIT_STEPS = ["기획안 수급", "가편안 수급", "수정본 수급"].map((l) => STEPS.findIndex((s) => s.label === l));
 
 /** A link the creator handed in for one step. Files stay where the creator keeps them (드라이브, 유튜브 등). */
-export type Submission = { id: string; campaignId: string; entryId: string; step: number; url: string; note: string; at: string };
+/**
+ * One hand-in for 기획안·가편안·수정본: a link, a file (11/20, `file`) or text typed in the hub (11/20, `text`).
+ * `url` is "" for a file or text. The file's storage key never leaves the server; screens get name and size.
+ */
+export type Submission = { id: string; campaignId: string; entryId: string; step: number; url: string; note: string; at: string; file?: SubmittedFile; text?: string };
+export type SubmittedFile = { key?: string; name: string; size: number; type: string };
 
 /** A reminder mail staff sent about one step (11/14: staff press 메일 보내기; nothing goes out by itself). `emailedAt` is the day it went. */
 export type Notice = { id: string; key: string; userId: string; campaignId: string; entryId: string; step: number; due: string; createdAt: string; emailedAt: string | null };
@@ -71,6 +76,8 @@ export type Campaign = {
   entries: Entry[];
   /** 대외비: only the staff named in `owners` get this campaign from the server. */
   confidential?: boolean;
+  /** 기획안 양식 (기획자 11/20): a file staff put up for the creators to fill in. They may hand in another format too. */
+  template?: SubmittedFile & { at: string };
 };
 
 /**
