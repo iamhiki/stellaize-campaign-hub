@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SUBMIT_STEPS, canSee } from "@/lib/campaigns";
+import { LINK_ONLY_STEPS, SUBMIT_STEPS, canSee } from "@/lib/campaigns";
 import { MAX_UPLOAD_BYTES } from "@/lib/uploads";
 import { body, fail, guard, str } from "@/lib/server/auth";
 import { readDb, supabase } from "@/lib/server/db";
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const entryId = str(b.entryId, 120);
     const step = b.step;
     if (g.user.role !== "creator") return fail(403, "제출은 크리에이터 계정으로 합니다.");
-    if (typeof step !== "number" || !SUBMIT_STEPS.includes(step)) return fail(400, "제출할 수 없는 단계입니다.");
+    if (typeof step !== "number" || !SUBMIT_STEPS.includes(step) || LINK_ONLY_STEPS.includes(step)) return fail(400, "제출할 수 없는 단계입니다.");
     if (!db.campaigns.some((c) => c.entries.some((e) => e.id === entryId && e.creatorId === g.user.id && !e.droppedAt))) return fail(404, "내 캠페인에서 찾을 수 없습니다.");
     target = `${entryId}#${step}`;
   } else if (purpose === "template") {

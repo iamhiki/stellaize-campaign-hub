@@ -52,7 +52,9 @@ export type Entry = {
 };
 
 /** Steps where the creator hands something in (기획자 11/11: 기획안, 가편안, 수정본을 플랫폼에서 받기). */
-export const SUBMIT_STEPS = ["기획안 수급", "가편안 수급", "수정본 수급"].map((l) => STEPS.findIndex((s) => s.label === l));
+export const SUBMIT_STEPS = ["기획안 수급", "가편안 수급", "수정본 수급", "업로드"].map((l) => STEPS.findIndex((s) => s.label === l));
+/** 업로드 (11/20): the creator hands in the address of the post on their channel, a link only (no file, no text). */
+export const LINK_ONLY_STEPS = [STEPS.findIndex((s) => s.label === "업로드")];
 
 /** A link the creator handed in for one step. Files stay where the creator keeps them (드라이브, 유튜브 등). */
 /**

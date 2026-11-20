@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SUBMIT_STEPS } from "@/lib/campaigns";
+import { LINK_ONLY_STEPS, SUBMIT_STEPS } from "@/lib/campaigns";
 import { todayKST } from "@/lib/date";
 import { body, fail, guard, newId, str } from "@/lib/server/auth";
 import { creatorView, previewChoices, previewView } from "@/lib/server/creator";
@@ -37,6 +37,7 @@ export async function POST(req: NextRequest) {
   let link = "";
   let file: Awaited<ReturnType<typeof claim>> = null;
   let text = "";
+  if (LINK_ONLY_STEPS.includes(step) && (b.file || typeof b.text === "string")) return fail(400, "업로드는 게시물 링크로 제출합니다.");
   if (b.file) {
     file = await claim(g.user.id, "sub", `${entryId}#${step}`, b.file);
     if (!file) return fail(400, "파일이 다 올라가지 않았습니다. 다시 올려 주세요.");

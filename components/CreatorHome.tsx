@@ -296,8 +296,10 @@ function Handed({ x }: { x: CreatorItem["submissions"][number] }) {
  */
 function SubmitForm({ entryId, step, label, again, onChange }: { entryId: string; step: number; label: string; again: boolean; onChange: (items: CreatorItem[]) => void }) {
   const video = label !== "기획안";
+  // 업로드: the address of the post on the creator's channel, so only a link (11/20).
+  const post = label === "업로드";
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<Mode>("file");
+  const [mode, setMode] = useState<Mode>(post ? "link" : "file");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [pct, setPct] = useState<number | null>(null);
@@ -306,7 +308,7 @@ function SubmitForm({ entryId, step, label, again, onChange }: { entryId: string
   if (!open)
     return (
       <button type="button" onClick={() => setOpen(true)} className={again ? "min-h-9 text-[14px] text-ink-600 underline underline-offset-4 hover:text-primary-600" : "inline-flex h-11 w-full items-center justify-center border border-line bg-white px-4 text-[14px] font-semibold text-ink-800 hover:border-primary-600 hover:text-primary-600 md:-my-1.5 md:h-9 md:w-auto"}>
-        {again ? "다시 제출" : `${label} 제출`}
+        {again ? "다시 제출" : post ? "게시물 링크 제출" : `${label} 제출`}
       </button>
     );
 
@@ -341,6 +343,7 @@ function SubmitForm({ entryId, step, label, again, onChange }: { entryId: string
 
   return (
     <form action={submit} onInput={unsaved.onInput} aria-label={`${label} 제출`} className="flex max-w-[560px] flex-col gap-2">
+      {!post && (
       <div role="group" aria-label="제출 방법" className="grid grid-cols-3 border border-line text-[13px] font-semibold">
         {MODES.map(([m, text]) => (
           <button key={m} type="button" aria-pressed={mode === m} onClick={() => (setMode(m), setError(""))} className="min-h-10 border-line text-ink-800 not-last:border-r hover:text-primary-700 aria-pressed:bg-ink-900 aria-pressed:text-white">
@@ -348,6 +351,7 @@ function SubmitForm({ entryId, step, label, again, onChange }: { entryId: string
           </button>
         ))}
       </div>
+      )}
       {mode === "file" && (
         <>
           <input name="file" type="file" required accept={UPLOAD_ACCEPT} aria-label={`${label} 파일`} className="block w-full text-[14px] text-ink-800 file:mr-3 file:h-10 file:border file:border-line file:bg-white file:px-4 file:font-semibold file:text-ink-800 hover:file:border-primary-600" />
@@ -359,8 +363,8 @@ function SubmitForm({ entryId, step, label, again, onChange }: { entryId: string
       )}
       {mode === "link" && (
         <>
-          <input autoComplete="off" name="url" type="url" required maxLength={1000} aria-label={`${label} 링크`} placeholder="https://  (드라이브, 유튜브 일부 공개 등 링크)" className={`${ui.input} h-10 text-[14px]`} />
-          <p className="text-[13px] text-ink-600">담당자가 열어 볼 수 있게 링크 공유 권한을 확인해 주세요.</p>
+          <input autoComplete="off" name="url" type="url" required maxLength={1000} aria-label={post ? "게시물 링크" : `${label} 링크`} placeholder={post ? "https://  (인스타그램·유튜브·틱톡에 올린 게시물 주소)" : "https://  (드라이브, 유튜브 일부 공개 등 링크)"} className={`${ui.input} h-10 text-[14px]`} />
+          <p className="text-[13px] text-ink-600">{post ? "채널에 올린 게시물의 주소를 붙여 넣어 주세요. 제출하면 업로드가 완료로 체크됩니다." : "담당자가 열어 볼 수 있게 링크 공유 권한을 확인해 주세요."}</p>
         </>
       )}
       {mode === "text" && <textarea autoComplete="off" name="text" required maxLength={10000} rows={8} aria-label={`${label} 내용`} placeholder={`${label} 내용을 자유롭게 적어 주세요…`} className="min-w-0 border border-line bg-white px-4 py-3 text-[15px] leading-relaxed text-ink-900 placeholder:text-ink-600 focus:border-primary-600 focus:outline-none" />}
