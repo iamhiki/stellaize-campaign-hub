@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
   } else if (purpose === "template") {
     const campaignId = str(b.campaignId, 120);
     const c = db.campaigns.find((x) => x.id === campaignId);
-    if (g.user.role === "creator" || !c || !canSee(c, g.user.name)) return fail(403, "이 캠페인에 양식을 올릴 권한이 없습니다.");
+    // "default" = 기본 양식 for every campaign; any staff account may set it.
+    if (g.user.role === "creator" || (campaignId !== "default" && (!c || !canSee(c, g.user.name)))) return fail(403, "이 캠페인에 양식을 올릴 권한이 없습니다.");
     target = campaignId;
   } else return fail(400, "올릴 수 없는 파일입니다.");
 

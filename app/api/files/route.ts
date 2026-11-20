@@ -28,12 +28,19 @@ export async function GET(req: NextRequest) {
     return sendStored(s.file.key, s.file.name, s.file.type, 120);
   }
   // ?template=CAMPAIGN → 기획안 양식. Staff who may see it, or a creator on that campaign.
+  if (q.get("template") === "default") {
+    const t = (await readDb()).defaultTemplate;
+    if (!t?.key || g.user.role === "creator") return fail(404, "양식을 찾을 수 없습니다.");
+    return sendStored(t.key, t.name, t.type, 120);
+  }
   if (q.get("template")) {
     const db = await readDb();
     const c = db.campaigns.find((x) => x.id === q.get("template"));
     const may = !!c && (g.user.role === "creator" ? c.entries.some((e) => e.creatorId === g.user.id && !e.droppedAt) : canSee(c, g.user.name));
-    if (!c?.template?.key || !may) return fail(404, "양식을 찾을 수 없습니다.");
-    return sendStored(c.template.key, c.template.name, c.template.type, 120);
+    // The campaign's own template, else the team's 기본 양식.
+    const t = c?.template ?? db.defaultTemplate;
+    if (!t?.key || !may) return fail(404, "양식을 찾을 수 없습니다.");
+    return sendStored(t.key, t.name, t.type, 120);
   }
 
   const kind = req.nextUrl.searchParams.get("kind") as DocKind;

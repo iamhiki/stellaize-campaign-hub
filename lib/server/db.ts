@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { Campaign, Notice, Submission } from "../campaigns";
+import type { Campaign, Notice, Submission, SubmittedFile } from "../campaigns";
 import { todayKST } from "../date";
 import { demoCampaigns } from "../demo";
 
@@ -31,6 +31,8 @@ export type Db = {
   messages?: Message[];
   /** user id → entry id → the time (ISO) that user last read that thread. */
   reads?: Record<string, Record<string, string>>;
+  /** 기본 기획안 양식 (11/20): used by every campaign that has no template of its own. */
+  defaultTemplate?: SubmittedFile & { key: string; at: string };
   /** sha256(share token) → which hand-in an advertiser may download, until when (광고주에게 넘기기, 11/20). */
   shares?: Record<string, { subId: string; exp: number; by: string }>;
   /** Devices that asked for app notifications (마이페이지 알림 켜기, 11/19). Missing in data saved before 11/19. */
