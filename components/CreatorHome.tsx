@@ -77,13 +77,19 @@ export function CreatorHome() {
               ))}
             </select>
           </label>
-          <p className="text-[14px] text-ink-600">고른 크리에이터가 로그인했을 때 보는 화면입니다. 보기 전용이라 링크 제출은 할 수 없습니다.</p>
+          <p className="text-[14px] text-ink-600">고른 크리에이터가 로그인했을 때 보는 화면입니다. 보기 전용이라 제출은 할 수 없고, 제출 버튼 자리만 표시됩니다. 실제로 제출해 보려면 크리에이터 계정으로 로그인하세요.</p>
         </div>
-        <CreatorProfile preview />
-        {(items ?? []).map((item) => (
-          <Campaign key={item.entryId} item={item} today={today} onChange={setItems} preview />
-        ))}
-        {!entry && <p className="py-10 text-center text-[16px] text-ink-600">위에서 크리에이터를 고르면 그 사람의 내 일정 화면이 나옵니다.</p>}
+        {/* Nothing picked yet: only the prompt, so the empty shipping form doesn't look like the whole page. */}
+        {entry ? (
+          <>
+            <CreatorProfile preview />
+            {(items ?? []).map((item) => (
+              <Campaign key={item.entryId} item={item} today={today} onChange={setItems} preview />
+            ))}
+          </>
+        ) : (
+          <p className="border-t-2 border-ink-900 py-14 text-center text-[17px] font-semibold text-ink-800">위 ‘개발자 미리보기’에서 크리에이터를 고르면 그 사람의 내 일정 화면(단계 표, 기획안 양식, 제출 자리)이 나옵니다.</p>
+        )}
       </main>
     );
 
@@ -203,7 +209,7 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
                       <span className="text-ink-600">예정</span>
                     )}
                   </td>
-                  <td className={`${table.td} ${CELL} max-md:col-span-2 ${s.submit && !preview || mine.length > 0 ? "max-md:pt-1.5" : "max-md:hidden"}`}>
+                  <td className={`${table.td} ${CELL} max-md:col-span-2 ${s.submit || mine.length > 0 ? "max-md:pt-1.5" : "max-md:hidden"}`}>
                     {/* 기획안 양식 (기획자 11/20): download it, or hand in any other format. */}
                     {s.label === "기획안 수급" && item.template && (
                       <p className="mb-3 text-[14px] text-ink-800">
@@ -222,7 +228,16 @@ function Campaign({ item, today, onChange, preview }: { item: CreatorItem; today
                         ))}
                       </ul>
                     )}
-                    {s.submit && !preview ? <SubmitForm entryId={item.entryId} step={s.step} label={s.label.replace(" 수급", "")} again={mine.length > 0} onChange={onChange} /> : mine.length === 0 && <span className="text-ink-600">—</span>}
+                    {s.submit && !preview ? (
+                      <SubmitForm entryId={item.entryId} step={s.step} label={s.label.replace(" 수급", "")} again={mine.length > 0} onChange={onChange} />
+                    ) : s.submit ? (
+                      // 개발자 미리보기: where the creator's 제출 button sits, without letting anyone hand in for them.
+                      <span className="inline-flex h-11 w-full items-center justify-center border border-dashed border-line-strong px-4 text-[14px] font-semibold text-ink-600 md:-my-1.5 md:h-9 md:w-auto">
+                        {s.label.replace(" 수급", "")} 제출 버튼 자리 (미리보기라 누를 수 없음)
+                      </span>
+                    ) : (
+                      mine.length === 0 && <span className="text-ink-600">—</span>
+                    )}
                   </td>
                 </tr>
               );
